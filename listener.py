@@ -1,37 +1,43 @@
 from core.CParser import CParser
 from core.CListener import CListener
 from io import FileIO
+from antlr4.tree.Tree import TerminalNodeImpl
 
 
 class Listener(CListener):
     def __init__(self, output):
         self.output: FileIO = output
 
-    def enterProgram(self, ctx: CParser.CompilationUnitContext):
-        pass
-
-    def enterDeclaration(self, ctx: CParser.DeclarationContext):
-        # print(ctx.getChild(0))
-        # print(ctx.getChild(1))
-        # print(ctx.getChild(2))
-        ...
-
-    def enterFunctionDeclaration(self, ctx: CParser.FunctionDeclarationContext):
-        func_rt = ctx.getChild(0)
-        func_name = ctx.getChild(1)
-        func_args = ctx.getChild(2)
-        func_rt = func_rt.getText() if func_rt else None
-        func_name = func_name.getText() if func_name else None
-        func_args = func_args.getText() if func_args else None
-        print(f'{func_rt=}, {func_name=}, {func_args=}')
-        self.output.write(f'{func_rt} {func_name}{func_args};')
+    def add_newline(self):
         self.output.write('\n')
 
-    def enterFunctionName(self, ctx: CParser.FunctionNameContext):
-        pass
+    def enterDeclaration(self, ctx: CParser.DeclarationContext):
+        ...
 
-    def enterBlock(self, ctx:CParser.BlockContext):
-        print(ctx.getText())
+    def enterFunctionDeclaration(self,
+                                 ctx: CParser.FunctionDeclarationContext):
+        for child in ctx.getChildren():
+            if isinstance(child, CParser.TypeSpecifierContext):
+                self.output.write(child.getText() + ' ')
+            if isinstance(child, CParser.FunctionNameContext):
+                self.output.write(child.getText())
+            if isinstance(child, CParser.FunctionArgsContext):
+                self.output.write(child.getText())
 
-    def enterTypeSpecifier(self, ctx:CParser.TypeSpecifierContext):
+        self.output.write(';')
+        self.add_newline()
+
+    def enterAssignment(self, ctx: CParser.AssignmentContext):
+        for child in ctx.getChildren():
+            if isinstance(child, TerminalNodeImpl):
+                self.output.write(child.getText() + ' ')
+            if isinstance(child, CParser.TypeSpecifierContext):
+                self.output.write(child.getText() + ' ')
+            if isinstance(child, CParser.IdentifierContext):
+                self.output.write(child.getText() + ' ')
+            if isinstance(child, CParser.ExpressionContext):
+                self.output.write(child.getText())
+        self.add_newline()
+
+    def enterBlock(self, ctx: CParser.BlockContext):
         print(ctx.getText())

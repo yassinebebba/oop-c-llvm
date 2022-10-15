@@ -26,6 +26,69 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#assignment.
+    def enterAssignment(self, ctx:CParser.AssignmentContext):
+        pass
+
+    # Exit a parse tree produced by CParser#assignment.
+    def exitAssignment(self, ctx:CParser.AssignmentContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#expression.
+    def enterExpression(self, ctx:CParser.ExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#expression.
+    def exitExpression(self, ctx:CParser.ExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#multiplyOp.
+    def enterMultiplyOp(self, ctx:CParser.MultiplyOpContext):
+        pass
+
+    # Exit a parse tree produced by CParser#multiplyOp.
+    def exitMultiplyOp(self, ctx:CParser.MultiplyOpContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#divideOp.
+    def enterDivideOp(self, ctx:CParser.DivideOpContext):
+        pass
+
+    # Exit a parse tree produced by CParser#divideOp.
+    def exitDivideOp(self, ctx:CParser.DivideOpContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#addOp.
+    def enterAddOp(self, ctx:CParser.AddOpContext):
+        pass
+
+    # Exit a parse tree produced by CParser#addOp.
+    def exitAddOp(self, ctx:CParser.AddOpContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#subtractOp.
+    def enterSubtractOp(self, ctx:CParser.SubtractOpContext):
+        pass
+
+    # Exit a parse tree produced by CParser#subtractOp.
+    def exitSubtractOp(self, ctx:CParser.SubtractOpContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#constant.
+    def enterConstant(self, ctx:CParser.ConstantContext):
+        pass
+
+    # Exit a parse tree produced by CParser#constant.
+    def exitConstant(self, ctx:CParser.ConstantContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#statementList.
     def enterStatementList(self, ctx:CParser.StatementListContext):
         pass
@@ -98,12 +161,30 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#identifier.
+    def enterIdentifier(self, ctx:CParser.IdentifierContext):
+        pass
+
+    # Exit a parse tree produced by CParser#identifier.
+    def exitIdentifier(self, ctx:CParser.IdentifierContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#typeSpecifier.
     def enterTypeSpecifier(self, ctx:CParser.TypeSpecifierContext):
         pass
 
     # Exit a parse tree produced by CParser#typeSpecifier.
     def exitTypeSpecifier(self, ctx:CParser.TypeSpecifierContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#stringLiteral.
+    def enterStringLiteral(self, ctx:CParser.StringLiteralContext):
+        pass
+
+    # Exit a parse tree produced by CParser#stringLiteral.
+    def exitStringLiteral(self, ctx:CParser.StringLiteralContext):
         pass
 
 

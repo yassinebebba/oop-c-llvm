@@ -1,11 +1,32 @@
 grammar C;
 
 compilationUnit
-    : (declarationList | definitionList)* EOF
+    : (assignment | declarationList | definitionList)* EOF
     ;
 
 block
     : LC RC
+    ;
+
+assignment: typeSpecifier? identifier '=' expression ';';
+
+expression
+    : constant
+    | expression multiplyOp expression
+    | expression divideOp expression
+    | expression addOp expression
+    | expression subtractOp expression
+    ;
+
+
+multiplyOp: '*';
+divideOp: '/';
+addOp: '+';
+subtractOp: '-';
+
+constant
+    : INTEGER
+    | stringLiteral
     ;
 
 statementList
@@ -21,8 +42,7 @@ declaration
     : functionDeclaration SEMICOLON
     ;
 functionDeclaration
-    : 'void' functionName functionArgs
- //   | functionName functionArgs
+    : typeSpecifier? functionName functionArgs
     ;
 
 definitionList
@@ -31,23 +51,16 @@ definitionList
 functionDefinition: functionDeclaration block;
 
 
-functionName: IDENTIFIER;
+functionName: identifier;
 functionArgs: LP RP;
 
-typeSpecifier
-    : VOID
-    | INT
-    ;
+identifier: IDENTIFIER;
 
-// FunctionDeclarationArgs: WS? '(' WS? ')' WS?;
-// FunctionDefinitionScope: WS? '{' WS? '}' WS?;
+INTEGER: '0' | [1-9][0-9]*;
 
-IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
+typeSpecifier: VOID | INT;
+stringLiteral: '"' ~('"')* '"';
 
-
-
-
-STRING_LITERAL: '"' ~('"')* '"';
 
 VOID: 'void';
 INT: 'int';
@@ -59,6 +72,7 @@ RC: '}';
 LSQRB: '[';
 RSQRB: ']';
 SEMICOLON: ';';
+IDENTIFIER: [a-zA-Z_][a-zA-Z_]*;
 
 WS: [ \t\r\n]+ -> skip;
 
