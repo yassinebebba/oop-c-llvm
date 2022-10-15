@@ -12,7 +12,16 @@ class Listener(CListener):
         self.output.write('\n')
 
     def enterDeclaration(self, ctx: CParser.DeclarationContext):
-        ...
+        pass
+
+    def enterVariableDeclaration(self, ctx:CParser.VariableDeclarationContext):
+        for child in ctx.getChildren():
+            if isinstance(child, CParser.TypeSpecifierContext):
+                self.output.write(child.getText() + ' ')
+            if isinstance(child, CParser.IdentifierContext):
+                self.output.write(child.getText())
+        self.output.write(';')
+        self.add_newline()
 
     def enterFunctionDeclaration(self,
                                  ctx: CParser.FunctionDeclarationContext):

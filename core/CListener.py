@@ -116,6 +116,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#variableDeclaration.
+    def enterVariableDeclaration(self, ctx:CParser.VariableDeclarationContext):
+        pass
+
+    # Exit a parse tree produced by CParser#variableDeclaration.
+    def exitVariableDeclaration(self, ctx:CParser.VariableDeclarationContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#functionDeclaration.
     def enterFunctionDeclaration(self, ctx:CParser.FunctionDeclarationContext):
         pass

@@ -8,10 +8,13 @@ block
     : LC RC
     ;
 
-assignment: typeSpecifier? identifier '=' expression ';';
+assignment
+    : typeSpecifier identifier '=' expression ';'
+    ;
 
 expression
     : constant
+    | identifier
     | expression multiplyOp expression
     | expression divideOp expression
     | expression addOp expression
@@ -40,7 +43,10 @@ declarationList
 
 declaration
     : functionDeclaration SEMICOLON
+    | variableDeclaration SEMICOLON
     ;
+
+variableDeclaration: typeSpecifier identifier;
 functionDeclaration
     : typeSpecifier? functionName functionArgs
     ;
