@@ -4,8 +4,13 @@ compilationUnit
     : (assignment | declarationList | definitionList)* EOF
     ;
 
-block
-    : LC RC
+functionBlock
+    : LC (
+      expression
+      | definitionList
+      | declarationList
+      | assignment
+     )* RC
     ;
 
 assignment
@@ -45,19 +50,21 @@ declarationList
 	;
 
 declaration
-    : functionDeclaration SEMICOLON
+    : functionDeclaration
     | variableDeclaration SEMICOLON
     ;
 
 variableDeclaration: typeSpecifier identifier;
 functionDeclaration
-    : typeSpecifier? functionName functionArgs
+    : typeSpecifier? functionName functionArgs SEMICOLON
     ;
 
 definitionList
     : functionDefinition
     ;
-functionDefinition: functionDeclaration block;
+functionDefinition
+    : typeSpecifier? functionName functionArgs functionBlock
+    ;
 
 
 functionName: identifier;

@@ -17,12 +17,12 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#block.
-    def enterBlock(self, ctx:CParser.BlockContext):
+    # Enter a parse tree produced by CParser#functionBlock.
+    def enterFunctionBlock(self, ctx:CParser.FunctionBlockContext):
         pass
 
-    # Exit a parse tree produced by CParser#block.
-    def exitBlock(self, ctx:CParser.BlockContext):
+    # Exit a parse tree produced by CParser#functionBlock.
+    def exitFunctionBlock(self, ctx:CParser.FunctionBlockContext):
         pass
 
 
