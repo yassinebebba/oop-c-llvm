@@ -89,6 +89,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#functionCallAssignment.
+    def enterFunctionCallAssignment(self, ctx:CParser.FunctionCallAssignmentContext):
+        pass
+
+    # Exit a parse tree produced by CParser#functionCallAssignment.
+    def exitFunctionCallAssignment(self, ctx:CParser.FunctionCallAssignmentContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#functionCall.
     def enterFunctionCall(self, ctx:CParser.FunctionCallContext):
         pass

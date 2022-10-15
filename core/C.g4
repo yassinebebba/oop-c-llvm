@@ -1,7 +1,12 @@
 grammar C;
 
 compilationUnit
-    : (assignment | declarationList | definitionList)* EOF
+    : (
+        assignment
+        | functionCall
+        | declarationList
+        | definitionList
+      )* EOF
     ;
 
 functionBlock
@@ -9,6 +14,7 @@ functionBlock
       expression
       | definitionList
       | declarationList
+      | functionCall
       | assignment
      )* RC
     ;
@@ -19,7 +25,7 @@ assignment
 
 expression
     : constant
-    | functionCall
+    | functionCallAssignment
     | identifier
     | expression multiplyOp expression
     | expression divideOp expression
@@ -38,7 +44,8 @@ constant
     | stringLiteral
     ;
 
-functionCall: identifier LP (expression COMMA?)* RP;
+functionCallAssignment: identifier LP (expression COMMA?)* RP;
+functionCall: identifier LP (expression COMMA?)* RP SEMICOLON;
 
 statementList
     :

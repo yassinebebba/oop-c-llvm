@@ -70,6 +70,12 @@ class Listener(CListener):
                 self.output.write(child.getText())
         self.add_newline()
 
+    def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
+        if self.state == State.FUNC_BLOCK:
+            self.output.write('\t')
+        self.output.write(ctx.getText())
+        self.add_newline()
+
     def enterFunctionBlock(self, ctx: CParser.FunctionBlockContext):
         self.state = State.FUNC_BLOCK
         self.output.write('{')
