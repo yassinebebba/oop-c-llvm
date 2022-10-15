@@ -14,6 +14,7 @@ assignment
 
 expression
     : constant
+    | functionCall
     | identifier
     | expression multiplyOp expression
     | expression divideOp expression
@@ -31,6 +32,8 @@ constant
     : INTEGER
     | stringLiteral
     ;
+
+functionCall: identifier LP (expression COMMA?)* RP;
 
 statementList
     :
@@ -78,6 +81,7 @@ RC: '}';
 LSQRB: '[';
 RSQRB: ']';
 SEMICOLON: ';';
+COMMA: ',';
 IDENTIFIER: [a-zA-Z_][a-zA-Z_]*;
 
 WS: [ \t\r\n]+ -> skip;
