@@ -63,7 +63,33 @@ class Listener(CListener):
             if isinstance(child, TerminalNodeImpl):
                 self.output.write(child.getText() + ' ')
             if isinstance(child, CParser.TypeSpecifierContext):
-                self.output.write(child.getText() + ' ')
+                chunks: list[str] = []
+                for terminal_node in child.children:
+                    match terminal_node.getText():
+                        case 'unsigned':
+                            chunks.append('unsigned')
+                        case 'signed':
+                            chunks.append('signed')
+                        case 'void':
+                            chunks.append('void')
+                        case 'char':
+                            chunks.append('char')
+                        case 'short':
+                            chunks.append('short')
+                        case 'int':
+                            chunks.append('int')
+                        case 'long':
+                            chunks.append('long')
+                        case 'float':
+                            chunks.append('float')
+                        case 'double':
+                            chunks.append('double')
+                        case '*':
+                            chunks.append('*')
+                        case _identifier:
+                            chunks.append(_identifier)
+
+                self.output.write(' '.join(chunks) + ' ')
             if isinstance(child, CParser.IdentifierContext):
                 self.output.write(child.getText() + ' ')
             if isinstance(child, CParser.ExpressionContext):

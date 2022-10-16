@@ -188,21 +188,21 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#identifier.
-    def enterIdentifier(self, ctx:CParser.IdentifierContext):
-        pass
-
-    # Exit a parse tree produced by CParser#identifier.
-    def exitIdentifier(self, ctx:CParser.IdentifierContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#typeSpecifier.
     def enterTypeSpecifier(self, ctx:CParser.TypeSpecifierContext):
         pass
 
     # Exit a parse tree produced by CParser#typeSpecifier.
     def exitTypeSpecifier(self, ctx:CParser.TypeSpecifierContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#identifier.
+    def enterIdentifier(self, ctx:CParser.IdentifierContext):
+        pass
+
+    # Exit a parse tree produced by CParser#identifier.
+    def exitIdentifier(self, ctx:CParser.IdentifierContext):
         pass
 
 

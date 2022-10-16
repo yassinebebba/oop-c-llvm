@@ -77,16 +77,39 @@ functionDefinition
 functionName: identifier;
 functionArgs: LP RP;
 
+
+typeSpecifier
+    : (
+          VOID
+        | (SIGNED | UNSIGNED)?
+            (
+                  CHAR
+                | SHORT
+                | SHORT? INT
+                | LONG
+                | FLOAT
+                | LONG? DOUBLE
+                | INT
+            )
+        | identifier
+      ) STAR*
+    ;
+
 identifier: IDENTIFIER;
 
-INTEGER: '0' | [1-9][0-9]*;
-
-typeSpecifier: VOID | INT;
 stringLiteral: '"' ~('"')* '"';
 
-
+// https://learn.microsoft.com/en-us/cpp/c-language/c-type-specifiers?view=msvc-170
+INTEGER: '0' | [1-9][0-9]*;
+SIGNED: 'signed';
+UNSIGNED: 'unsigned';
 VOID: 'void';
+CHAR: 'char';
+SHORT: 'short';
 INT: 'int';
+LONG: 'long';
+FLOAT: 'float';
+DOUBLE: 'double';
 STAR: '*';
 LP: '(';
 RP: ')';
