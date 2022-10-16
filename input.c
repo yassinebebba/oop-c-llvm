@@ -19,3 +19,8 @@ int test() {
 }
 int d;
 test(1,2, d());
+
+
+short int * testing() {
+    int nothing = 20;
+}
