@@ -45,6 +45,9 @@ constant
     ;
 
 functionCallAssignment: identifier LP (expression COMMA?)* RP;
+
+// this regex (expression COMMA?)* is not good enough to detect wrong
+// syntax like this func(1 + 2 D)
 functionCall: identifier LP (expression COMMA?)* RP SEMICOLON;
 
 statementList
@@ -63,19 +66,30 @@ declaration
 
 variableDeclaration: typeSpecifier identifier;
 functionDeclaration
-    : typeSpecifier? functionName functionArgs SEMICOLON
+    : typeSpecifier? functionName LP functionArgs? RP SEMICOLON
     ;
 
 definitionList
     : functionDefinition
     ;
 functionDefinition
-    : typeSpecifier? functionName functionArgs functionBlock
+    : typeSpecifier? functionName LP functionArgs? RP functionBlock
     ;
 
-
 functionName: identifier;
-functionArgs: LP RP;
+
+// will probably have to split functionArgs into
+// functionDeclarationArgs and functionDefinitionArgs
+// because omitting the parameter name in a function definition is a c2x extension
+// NOTE: this regex (typeSpecifier identifier? COMMA?)* is not good enough to
+// detect wrong syntax like this func(int a long b)
+// functionArgs: LP (typeSpecifier identifier? COMMA?)* RP;
+// this next parser rule fixes the above note make sure you use it if
+// you encounter the same problem
+functionArgs
+    : typeSpecifier identifier? COMMA?
+    | functionArgs COMMA functionArgs
+    ;
 
 
 typeSpecifier

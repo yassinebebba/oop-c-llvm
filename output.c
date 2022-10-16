@@ -12,6 +12,6 @@ int test(){
 }
 int d;
 test(1,2,d());
-short int * testing(){
+short int * testing(int a, int b, Point s, Point d){
 	int nothing = 20; 
 }
