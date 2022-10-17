@@ -149,7 +149,7 @@ LSQRB: '[';
 RSQRB: ']';
 SEMICOLON: ';';
 COMMA: ',';
-IDENTIFIER: [a-zA-Z_][a-zA-Z_]*;
+IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 
 WS: [ \t\r\n]+ -> skip;
 
