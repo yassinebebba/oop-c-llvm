@@ -25,7 +25,7 @@ assignment
 
 expression
     : constant
-    | functionCallAssignment
+    | functionCallExpression
     | identifier
     | expression multiplyOp expression
     | expression divideOp expression
@@ -43,12 +43,17 @@ constant
     : INTEGER
     | stringLiteral
     ;
+// expressions does not end with ';'? (question mark) what do you think?
+functionCallExpression: identifier LP functionCallArgs? RP;
 
-functionCallAssignment: identifier LP (expression COMMA?)* RP;
-
-// this regex (expression COMMA?)* is not good enough to detect wrong
+// NOTE: this regex (expression COMMA?)* is not good enough to detect wrong
 // syntax like this func(1 + 2 D)
-functionCall: identifier LP (expression COMMA?)* RP SEMICOLON;
+functionCall: identifier LP functionCallArgs? RP SEMICOLON;
+// this parser rule fixed the note above :)
+functionCallArgs
+    : expression COMMA?
+    | functionCallArgs COMMA functionCallArgs
+    ;
 
 statementList
     :
