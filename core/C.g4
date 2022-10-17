@@ -40,7 +40,8 @@ addOp: '+';
 subtractOp: '-';
 
 constant
-    : INTEGER
+    : INTEGER_CONSTANT
+    | FLOAT_CONSTANT
     | stringLiteral
     ;
 // expressions does not end with ';'? (question mark) what do you think?
@@ -98,7 +99,7 @@ functionArgs
 
 
 typeSpecifier
-    : (
+    : CONST? (
           VOID
         | (SIGNED | UNSIGNED)?
             (
@@ -118,8 +119,17 @@ identifier: IDENTIFIER;
 
 stringLiteral: '"' ~('"')* '"';
 
+
+INTEGER_CONSTANT: '0' | [1-9][0-9]*;
+FLOAT_CONSTANT
+    : [0-9]+ DOT [0-9]* EXPONENT?
+    | DOT [0-9]+ EXPONENT?
+    | [0-9]+ EXPONENT
+    ;
+EXPONENT: [eE] [+-]? [0-9]+;
+
 // https://learn.microsoft.com/en-us/cpp/c-language/c-type-specifiers?view=msvc-170
-INTEGER: '0' | [1-9][0-9]*;
+CONST: 'const';
 SIGNED: 'signed';
 UNSIGNED: 'unsigned';
 VOID: 'void';
@@ -130,6 +140,7 @@ LONG: 'long';
 FLOAT: 'float';
 DOUBLE: 'double';
 STAR: '*';
+DOT: '.';
 LP: '(';
 RP: ')';
 LC: '{';
