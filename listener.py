@@ -48,6 +48,48 @@ class Listener(CListener):
 
         self.output.write(' '.join(chunks) + ' ')
 
+    def get_args(self, parent, func_args: list):  # for parent node
+        """
+        recursively getting func args because of this
+        grammar rule :(
+        functionArgs
+            : typeSpecifier identifier? COMMA?
+            | functionArgs COMMA functionArgs
+            ;
+        which will result in if you input: (int a, int b, int c)
+        it will not create one node functionArgs ctx
+        with many children it will create something like
+        [functionArgs, COMMA, typeSpecifier, identifier]
+        conforming to the recursive rule and so on the more args
+        you add
+        """
+        if isinstance(parent.getChild(0),
+                      CParser.TypeSpecifierContext):
+            func_args.append(' '.join(
+                [
+                    tn.getText() for tn in parent.getChildren()
+                ]
+            ))
+            return
+        # if isinstance(parent, TerminalNodeImpl):
+        #     # uncommenting this line will result in args having
+        #     # this value:
+        #     # ['int a', ',', 'int b', ',', 'Point s', ',', 'Point']
+        #     # this line: >>> args.append(parent.getText())
+        #
+        #     #
+        #     return
+
+        # doing it in EAFP
+        # Easier to Ask Forgiveness Than Permission
+        try:
+            for expr in parent.getChildren():
+                self.get_args(expr, func_args)
+        except AttributeError:
+            # we reached a TerminalNodeImpl it does not have
+            # children, guess why, hehe because it is terminal
+            return
+
     def enterDeclaration(self, ctx: CParser.DeclarationContext):
         pass
 
@@ -75,7 +117,10 @@ class Listener(CListener):
             if (x := child.getText()) in '()':
                 self.output.write(x)
             if isinstance(child, CParser.FunctionArgsContext):
-                print('yeah what is next')
+                func_args = []
+                # recursive func to visit nodes
+                self.get_args(child, func_args)
+                self.output.write(', '.join(func_args))
 
         self.output.write(';')
         self.add_newline()
@@ -91,52 +136,8 @@ class Listener(CListener):
                     self.output.write(x)
             if isinstance(child, CParser.FunctionArgsContext):
                 func_args = []
-
-                def get_args(parent):  # for parent node
-                    """
-                    recursively getting func args because of this
-                    grammar rule :(
-                    functionArgs
-                        : typeSpecifier identifier? COMMA?
-                        | functionArgs COMMA functionArgs
-                        ;
-                    which will result in if you input: (int a, int b, int c)
-                    it will not create one node functionArgs ctx
-                    with many children it will create something like
-                    [functionArgs, COMMA, typeSpecifier, identifier]
-                    conforming to the recursive rule and so on the more args
-                    you add
-                    """
-                    if isinstance(parent.getChild(0),
-                                  CParser.TypeSpecifierContext):
-                        func_args.append(' '.join(
-                            [
-                                tn.getText() for tn in parent.getChildren()
-                            ]
-                        ))
-                        return
-                    # if isinstance(parent, TerminalNodeImpl):
-                    #     # uncommenting this line will result in args having
-                    #     # this value:
-                    #     # ['int a', ',', 'int b', ',', 'Point s', ',', 'Point']
-                    #     # this line: >>> args.append(parent.getText())
-                    #
-                    #     #
-                    #     return
-
-                    # doing it in EAFP
-                    # Easier to Ask Forgiveness Than Permission
-                    try:
-                        for expr in parent.getChildren():
-                            get_args(expr)
-                    except AttributeError:
-                        # we reached a TerminalNodeImpl it does not have
-                        # children, guess why, hehe because it is terminal
-                        return
-
-                for node in child.getChildren():
-                    # recursive func to visit nodes
-                    get_args(node)
+                # recursive func to visit nodes
+                self.get_args(child, func_args)
                 self.output.write(', '.join(func_args))
 
     def enterAssignment(self, ctx: CParser.AssignmentContext):
