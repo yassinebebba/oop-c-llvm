@@ -215,14 +215,5 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#stringLiteral.
-    def enterStringLiteral(self, ctx:CParser.StringLiteralContext):
-        pass
-
-    # Exit a parse tree produced by CParser#stringLiteral.
-    def exitStringLiteral(self, ctx:CParser.StringLiteralContext):
-        pass
-
-
 
 del CParser

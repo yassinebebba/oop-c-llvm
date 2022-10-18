@@ -42,7 +42,8 @@ subtractOp: '-';
 constant
     : INTEGER_CONSTANT
     | FLOAT_CONSTANT
-    | stringLiteral
+    | CHAR_CONSTANT
+    | STRING_LITERAL+
     ;
 // expressions does not end with ';'? (question mark) what do you think?
 functionCallExpression: identifier LP functionCallArgs? RP;
@@ -117,9 +118,8 @@ typeSpecifier
 
 identifier: IDENTIFIER;
 
-stringLiteral: '"' ~('"')* '"';
-
-
+STRING_LITERAL: '"' ~('"')* '"';
+CHAR_CONSTANT: '\'' ~('\'')* '\'';
 INTEGER_CONSTANT: '0' | [1-9][0-9]*;
 FLOAT_CONSTANT
     : [0-9]+ DOT [0-9]* EXPONENT?

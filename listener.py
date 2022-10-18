@@ -132,6 +132,7 @@ class Listener(CListener):
             if isinstance(child, CParser.FunctionNameContext):
                 self.output.write(child.getText())
             if isinstance(child, TerminalNodeImpl):
+                # TODO: this should probably be changed to enter FunctionArgs
                 if (x := child.getText()) in '()':
                     self.output.write(x)
             if isinstance(child, CParser.FunctionArgsContext):

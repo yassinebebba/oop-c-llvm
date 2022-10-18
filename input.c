@@ -1,3 +1,5 @@
+int a = "'''''''''''''asdada'das'dad#wqd'qdsadqaw" "awdsadasd";
+int a = '""';
 Point *** a(int, int, double, Point);
 long * a(int);
 unsigned short int * b = 3 * 4 * 5 * 6+9+9 + 0;
@@ -18,7 +20,7 @@ int test() {
 
 }
 int d;
-test(1,2, d());
+test(1,2, d(), "asd" "asd", 'c');
 
 
 short int * testing(int a, int b, int c) {
