@@ -15,7 +15,7 @@ class Listener(CListener):
         self.output: FileIO = output
         self.state = State.NOTHING
 
-    def add_newline(self):
+    def add_newline(self) -> None:
         self.output.write('\n')
 
     def match_type_specifier(self, ctx: CParser.TypeSpecifierContext):
@@ -159,6 +159,15 @@ class Listener(CListener):
         if self.state == State.FUNC_BLOCK:
             self.output.write('\t')
         self.output.write(ctx.getText())
+        self.add_newline()
+
+    def enterFunctionReturn(self, ctx: CParser.FunctionReturnContext):
+        if self.state == State.FUNC_BLOCK:
+            self.output.write('\t')
+        if ctx.expression():
+            self.output.write(f'return {ctx.expression().getText()};')
+        else:
+            self.output.write('return;')
         self.add_newline()
 
     def enterFunctionBlock(self, ctx: CParser.FunctionBlockContext):

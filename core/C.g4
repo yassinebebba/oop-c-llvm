@@ -11,11 +11,12 @@ compilationUnit
 
 functionBlock
     : LC (
-      expression
+        expression
       | definitionList
       | declarationList
       | functionCall
       | assignment
+      | functionReturn
      )* RC
     ;
 
@@ -32,7 +33,6 @@ expression
     | expression PLUS expression
     | expression MINUS expression
     ;
-
 
 // this block might be used for compiler optimisation
 multiplyExpression: '*';
@@ -85,6 +85,10 @@ functionDefinition
     : typeSpecifier? functionName LP functionArgs? RP functionBlock
     ;
 
+functionReturn
+    : RETURN expression? SEMI
+    ;
+
 functionName: identifier;
 
 // will probably have to split functionArgs into
@@ -131,6 +135,9 @@ FLOAT_CONSTANT
 EXPONENT: [eE] [+-]? [0-9]+;
 
 // https://learn.microsoft.com/en-us/cpp/c-language/c-type-specifiers?view=msvc-170
+
+RETURN: 'return';
+
 CONST: 'const';
 SIGNED: 'signed';
 UNSIGNED: 'unsigned';

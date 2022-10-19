@@ -44,39 +44,48 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#multiplyOp.
-    def enterMultiplyOp(self, ctx:CParser.MultiplyOpContext):
+    # Enter a parse tree produced by CParser#functionReturn.
+    def enterFunctionReturn(self, ctx:CParser.FunctionReturnContext):
         pass
 
-    # Exit a parse tree produced by CParser#multiplyOp.
-    def exitMultiplyOp(self, ctx:CParser.MultiplyOpContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#divideOp.
-    def enterDivideOp(self, ctx:CParser.DivideOpContext):
-        pass
-
-    # Exit a parse tree produced by CParser#divideOp.
-    def exitDivideOp(self, ctx:CParser.DivideOpContext):
+    # Exit a parse tree produced by CParser#functionReturn.
+    def exitFunctionReturn(self, ctx:CParser.FunctionReturnContext):
         pass
 
 
-    # Enter a parse tree produced by CParser#addOp.
-    def enterAddOp(self, ctx:CParser.AddOpContext):
+    # Enter a parse tree produced by CParser#multiplyExpression.
+    def enterMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
         pass
 
-    # Exit a parse tree produced by CParser#addOp.
-    def exitAddOp(self, ctx:CParser.AddOpContext):
+    # Exit a parse tree produced by CParser#multiplyExpression.
+    def exitMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
         pass
 
 
-    # Enter a parse tree produced by CParser#subtractOp.
-    def enterSubtractOp(self, ctx:CParser.SubtractOpContext):
+    # Enter a parse tree produced by CParser#divideExpression.
+    def enterDivideExpression(self, ctx:CParser.DivideExpressionContext):
         pass
 
-    # Exit a parse tree produced by CParser#subtractOp.
-    def exitSubtractOp(self, ctx:CParser.SubtractOpContext):
+    # Exit a parse tree produced by CParser#divideExpression.
+    def exitDivideExpression(self, ctx:CParser.DivideExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#addExpression.
+    def enterAddExpression(self, ctx:CParser.AddExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#addExpression.
+    def exitAddExpression(self, ctx:CParser.AddExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#subtractExpression.
+    def enterSubtractExpression(self, ctx:CParser.SubtractExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#subtractExpression.
+    def exitSubtractExpression(self, ctx:CParser.SubtractExpressionContext):
         pass
 
 
