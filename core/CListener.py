@@ -44,15 +44,6 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#functionReturn.
-    def enterFunctionReturn(self, ctx:CParser.FunctionReturnContext):
-        pass
-
-    # Exit a parse tree produced by CParser#functionReturn.
-    def exitFunctionReturn(self, ctx:CParser.FunctionReturnContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#multiplyExpression.
     def enterMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
         pass
@@ -185,6 +176,15 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#functionDefinition.
     def exitFunctionDefinition(self, ctx:CParser.FunctionDefinitionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#functionReturn.
+    def enterFunctionReturn(self, ctx:CParser.FunctionReturnContext):
+        pass
+
+    # Exit a parse tree produced by CParser#functionReturn.
+    def exitFunctionReturn(self, ctx:CParser.FunctionReturnContext):
         pass
 
 

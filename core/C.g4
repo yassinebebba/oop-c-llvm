@@ -35,10 +35,10 @@ expression
     ;
 
 // this block might be used for compiler optimisation
-multiplyExpression: '*';
-divideExpression: '/';
-addExpression: '+';
-subtractExpression: '-';
+multiplyExpression: expression STAR expression;
+divideExpression: expression DIV expression;
+addExpression: expression PLUS expression;
+subtractExpression: expression MINUS expression;
 // this block might be used for compiler optimisation
 
 constant
@@ -104,7 +104,6 @@ functionArgs
     | functionArgs COMMA functionArgs
     ;
 
-
 typeSpecifier
     : CONST? (
           VOID
@@ -136,7 +135,30 @@ EXPONENT: [eE] [+-]? [0-9]+;
 
 // https://learn.microsoft.com/en-us/cpp/c-language/c-type-specifiers?view=msvc-170
 
+AUTO: 'auto';
+BREAK: 'break';
+CASE: 'case';
+CONTINUE: 'continue';
+DEFAULT: 'default';
+DO: 'do';
+ELSE: 'else';
+ENUM: 'enum';
+EXTERN : 'extern';
+FOR: 'for';
+GOTO: 'goto';
+IF: 'if';
+INLINE: 'inline';
+REGISTER: 'register';
+RESTRICT: 'restrict';
 RETURN: 'return';
+SIZEOF: 'sizeof'; // sizeof is an operator
+STATIC : 'static';
+STRUCT : 'struct';
+SWITCH : 'switch';
+TYPEDEF: 'typedef';
+UNION: 'union';
+VOLATILE: 'volatile';
+WHILE: 'while';
 
 CONST: 'const';
 SIGNED: 'signed';
