@@ -20,24 +20,26 @@ functionBlock
     ;
 
 assignment
-    : typeSpecifier identifier '=' expression ';'
+    : typeSpecifier identifier ASSIGN expression SEMI
     ;
 
 expression
     : constant
     | functionCallExpression
     | identifier
-    | expression multiplyOp expression
-    | expression divideOp expression
-    | expression addOp expression
-    | expression subtractOp expression
+    | expression STAR expression
+    | expression DIV expression
+    | expression PLUS expression
+    | expression MINUS expression
     ;
 
 
-multiplyOp: '*';
-divideOp: '/';
-addOp: '+';
-subtractOp: '-';
+// this block might be used for compiler optimisation
+multiplyExpression: '*';
+divideExpression: '/';
+addExpression: '+';
+subtractExpression: '-';
+// this block might be used for compiler optimisation
 
 constant
     : INTEGER_CONSTANT
@@ -50,7 +52,7 @@ functionCallExpression: identifier LP functionCallArgs? RP;
 
 // NOTE: this regex (expression COMMA?)* is not good enough to detect wrong
 // syntax like this func(1 + 2 D)
-functionCall: identifier LP functionCallArgs? RP SEMICOLON;
+functionCall: identifier LP functionCallArgs? RP SEMI;
 // this parser rule fixed the note above :)
 functionCallArgs
     : expression COMMA?
@@ -68,12 +70,12 @@ declarationList
 
 declaration
     : functionDeclaration
-    | variableDeclaration SEMICOLON
+    | variableDeclaration SEMI
     ;
 
 variableDeclaration: typeSpecifier identifier;
 functionDeclaration
-    : typeSpecifier? functionName LP functionArgs? RP SEMICOLON
+    : typeSpecifier? functionName LP functionArgs? RP SEMI
     ;
 
 definitionList
@@ -139,16 +141,64 @@ INT: 'int';
 LONG: 'long';
 FLOAT: 'float';
 DOUBLE: 'double';
+
+PLUS: '+';
+PLUS_PLUS: '++';
+MINUS: '-';
+MINUS_MINUS: '--';
 STAR: '*';
-DOT: '.';
+DIV: '/';
+MOD: '%';
+
 LP: '(';
 RP: ')';
 LC: '{';
 RC: '}';
 LSQRB: '[';
 RSQRB: ']';
-SEMICOLON: ';';
+
+LT : '<';
+LTE : '<=';
+GT : '>';
+GTE : '>=';
+LEFT_SHIFT : '<<';
+RIGHT_SHIFT : '>>';
+
+AND : '&';
+OR : '|';
+AND_AND : '&&';
+OR_OR : '||';
+CARET : '^';
+NOT : '!';
+TILDE : '~';
+
+QUESTION: '?';
+COLON: ':';
+SEMI: ';';
 COMMA: ',';
+
+
+ASSIGN : '=';
+// inplace assignment
+// '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='
+STAR_ASSIGN : '*=';
+DIV_ASSIGN : '/=';
+MOD_ASSIGN : '%=';
+PLUS_ASSIGN : '+=';
+MINUS_ASSIGN : '-=';
+LEFT_SHIFT_ASSIGN : '<<=';
+RIGHT_SHIFT_ASSIGN : '>>=';
+BITWISE_AND_ASSIGN : '&=';
+BITWISE_XOR_ASSIGN : '^=';
+BITWISE_OR_ASSIGN : '|=';
+
+EQ : '==';
+NEQ : '!=';
+
+ARROW : '->';
+DOT : '.';
+ELLIPSIS : '...';
+
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 
 WS: [ \t\r\n]+ -> skip;
