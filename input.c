@@ -31,7 +31,9 @@ short int * testing(int a, int b, int c) {
 pyint * integer_builder(int64_t value)
 {
     if (a + 2) {
+        int a = 120;
         if () {
+            a = 30;
         }
     }
     pyint  * integer = malloc(sizeof(pyint));

@@ -2,21 +2,37 @@ from core.CParser import CParser
 from core.CListener import CListener
 from io import FileIO
 from antlr4.tree.Tree import TerminalNodeImpl
-from enum import Enum
 
 
-class State(Enum):
-    NOTHING = 0
-    BLOCK = 1
+class State:
+    def __init__(self):
+        self.global_scope = True
+        self.block_scope = False
+        self.indentation_count = 0
+
+    def enter_block_scope(self):
+        self.indentation_count += 1
+        self.global_scope = False
+        self.block_scope = True
+
+    def exit_block_scope(self):
+        self.indentation_count -= 1
+        if self.indentation_count == 0:
+            self.global_scope = True
+            self.block_scope = False
 
 
 class Listener(CListener):
     def __init__(self, output):
         self.output: FileIO = output
-        self.state = State.NOTHING
+        self.state = State()
 
     def add_newline(self) -> None:
         self.output.write('\n')
+
+    def add_indentation(self):
+        if self.state.block_scope:
+            self.output.write('\t' * self.state.indentation_count)
 
     def match_type_specifier(self, ctx: CParser.TypeSpecifierContext):
         # custom method to not repeat type matching
@@ -95,8 +111,7 @@ class Listener(CListener):
 
     def enterVariableInitialization(self,
                                     ctx: CParser.VariableInitializationContext):
-        if self.state == State.BLOCK:
-            self.output.write('\t')
+        self.add_indentation()
         for child in ctx.typeSpecifier().getChildren():
             self.output.write(f'{child.getText()} ')
         self.output.write(
@@ -105,9 +120,7 @@ class Listener(CListener):
 
     def enterVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext):
-        if self.state == State.BLOCK:
-            self.output.write('\t')
-
+        self.add_indentation()
         for child in ctx.getChildren():
             if isinstance(child, CParser.TypeSpecifierContext):
                 self.match_type_specifier(child)
@@ -152,8 +165,8 @@ class Listener(CListener):
                 self.output.write(', '.join(func_args))
 
     def enterAssignment(self, ctx: CParser.AssignmentContext):
-        if self.state == State.BLOCK:
-            self.output.write('\t')
+        self.add_indentation()
+
         for child in ctx.getChildren():
             if isinstance(child, TerminalNodeImpl):
                 self.output.write(child.getText() + ' ')
@@ -166,14 +179,12 @@ class Listener(CListener):
         self.add_newline()
 
     def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
-        if self.state == State.BLOCK:
-            self.output.write('\t')
+        self.add_indentation()
         self.output.write(ctx.getText())
         self.add_newline()
 
     def enterFunctionReturn(self, ctx: CParser.FunctionReturnContext):
-        if self.state == State.BLOCK:
-            self.output.write('\t')
+        self.add_indentation()
         if ctx.expression():
             self.output.write(f'return {ctx.expression().getText()};')
         else:
@@ -181,21 +192,19 @@ class Listener(CListener):
         self.add_newline()
 
     def enterIfStatement(self, ctx: CParser.IfStatementContext):
-        if self.state == State.BLOCK:
-            self.output.write('\t')
+        self.add_indentation()
         if ctx.condition():
             self.output.write(f'if ({ctx.condition().getText()})')
         else:
             self.output.write(f'if ()')
 
     def enterBlock(self, ctx: CParser.BlockContext):
-        self.state = State.BLOCK
+        self.state.enter_block_scope()
         self.output.write('{')
         self.add_newline()
 
     def exitBlock(self, ctx: CParser.BlockContext):
-        if self.state == State.BLOCK:
-            self.output.write('\t')
-        self.state = State.BLOCK
+        self.state.exit_block_scope()
+        self.add_indentation()
         self.output.write('}')
         self.add_newline()
