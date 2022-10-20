@@ -17,15 +17,6 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#assignment.
-    def enterAssignment(self, ctx:CParser.AssignmentContext):
-        pass
-
-    # Exit a parse tree produced by CParser#assignment.
-    def exitAssignment(self, ctx:CParser.AssignmentContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#expression.
     def enterExpression(self, ctx:CParser.ExpressionContext):
         pass
@@ -203,6 +194,24 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#functionArgs.
     def exitFunctionArgs(self, ctx:CParser.FunctionArgsContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#assignment.
+    def enterAssignment(self, ctx:CParser.AssignmentContext):
+        pass
+
+    # Exit a parse tree produced by CParser#assignment.
+    def exitAssignment(self, ctx:CParser.AssignmentContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#inplaceAssignment.
+    def enterInplaceAssignment(self, ctx:CParser.InplaceAssignmentContext):
+        pass
+
+    # Exit a parse tree produced by CParser#inplaceAssignment.
+    def exitInplaceAssignment(self, ctx:CParser.InplaceAssignmentContext):
         pass
 
 

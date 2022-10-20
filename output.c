@@ -19,6 +19,15 @@ short int * testing(int a, int b, int c){
 	int nothing = 20+1.2E10;
 }
 pyint * integer_builder(int64_t value){
+	d += 10+a()-20; 
+	d -= 10; 
+	d *= 10; 
+	d /= 10; 
+	d <<= 10; 
+	d >>= 10; 
+	d &= 10; 
+	d |= 10; 
+	d ^= 10; 
 	if (a+2){
 		int a = 120;
 		if (){

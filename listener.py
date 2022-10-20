@@ -166,12 +166,22 @@ class Listener(CListener):
 
     def enterAssignment(self, ctx: CParser.AssignmentContext):
         self.add_indentation()
-
         for child in ctx.getChildren():
             if isinstance(child, TerminalNodeImpl):
                 self.output.write(child.getText() + ' ')
             if isinstance(child, CParser.TypeSpecifierContext):
                 self.match_type_specifier(child)
+            if isinstance(child, CParser.IdentifierContext):
+                self.output.write(child.getText() + ' ')
+            if isinstance(child, CParser.ExpressionContext):
+                self.output.write(child.getText())
+        self.add_newline()
+
+    def enterInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
+        self.add_indentation()
+        for child in ctx.getChildren():
+            if isinstance(child, TerminalNodeImpl):
+                self.output.write(child.getText() + ' ')
             if isinstance(child, CParser.IdentifierContext):
                 self.output.write(child.getText() + ' ')
             if isinstance(child, CParser.ExpressionContext):

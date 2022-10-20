@@ -30,7 +30,16 @@ short int * testing(int a, int b, int c) {
 
 pyint * integer_builder(int64_t value)
 {
-    if (a + 2) {
+  d += 10 + a() - 20;
+  d -= 10;
+  d *= 10;
+  d /= 10;
+  d <<= 10;
+  d >>= 10;
+  d &= 10;
+  d |= 10;
+  d ^= 10;
+  if (a + 2) {
         int a = 120;
         if () {
             a = 30;

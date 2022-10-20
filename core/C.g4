@@ -11,10 +11,6 @@ compilationUnit
       )* EOF
     ;
 
-assignment
-    : identifier ASSIGN expression SEMI
-    ;
-
 expression
     : constant
     | functionCallExpression
@@ -99,6 +95,27 @@ functionArgs
     | functionArgs COMMA functionArgs
     ;
 
+assignment
+    : identifier ASSIGN expression SEMI
+    ;
+
+inplaceAssignment
+    : identifier
+        (
+              STAR_ASSIGN
+            | DIV_ASSIGN
+            | MOD_ASSIGN
+            | PLUS_ASSIGN
+            | MINUS_ASSIGN
+            | LEFT_SHIFT_ASSIGN
+            | RIGHT_SHIFT_ASSIGN
+            | BITWISE_AND_ASSIGN
+            | BITWISE_XOR_ASSIGN
+            | BITWISE_OR_ASSIGN
+        )
+      expression SEMI
+    ;
+
 typeSpecifier
     : CONST? (
           VOID
@@ -134,7 +151,7 @@ block
       | declarationList
       | functionCall
       | assignment
-      | assignment
+      | inplaceAssignment
       | functionReturn
      )* RC
    ;
