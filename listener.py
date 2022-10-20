@@ -1,5 +1,3 @@
-import os
-
 from core.CParser import CParser
 from core.CListener import CListener
 from io import FileIO
@@ -9,7 +7,7 @@ from enum import Enum
 
 class State(Enum):
     NOTHING = 0
-    FUNC_BLOCK = 1
+    BLOCK = 1
 
 
 class Listener(CListener):
@@ -97,7 +95,7 @@ class Listener(CListener):
 
     def enterVariableInitialization(self,
                                     ctx: CParser.VariableInitializationContext):
-        if self.state == State.FUNC_BLOCK:
+        if self.state == State.BLOCK:
             self.output.write('\t')
         for child in ctx.typeSpecifier().getChildren():
             self.output.write(f'{child.getText()} ')
@@ -107,7 +105,7 @@ class Listener(CListener):
 
     def enterVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext):
-        if self.state == State.FUNC_BLOCK:
+        if self.state == State.BLOCK:
             self.output.write('\t')
 
         for child in ctx.getChildren():
@@ -154,7 +152,7 @@ class Listener(CListener):
                 self.output.write(', '.join(func_args))
 
     def enterAssignment(self, ctx: CParser.AssignmentContext):
-        if self.state == State.FUNC_BLOCK:
+        if self.state == State.BLOCK:
             self.output.write('\t')
         for child in ctx.getChildren():
             if isinstance(child, TerminalNodeImpl):
@@ -168,13 +166,13 @@ class Listener(CListener):
         self.add_newline()
 
     def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
-        if self.state == State.FUNC_BLOCK:
+        if self.state == State.BLOCK:
             self.output.write('\t')
         self.output.write(ctx.getText())
         self.add_newline()
 
     def enterFunctionReturn(self, ctx: CParser.FunctionReturnContext):
-        if self.state == State.FUNC_BLOCK:
+        if self.state == State.BLOCK:
             self.output.write('\t')
         if ctx.expression():
             self.output.write(f'return {ctx.expression().getText()};')
@@ -182,12 +180,22 @@ class Listener(CListener):
             self.output.write('return;')
         self.add_newline()
 
-    def enterFunctionBlock(self, ctx: CParser.FunctionBlockContext):
-        self.state = State.FUNC_BLOCK
+    def enterIfStatement(self, ctx: CParser.IfStatementContext):
+        if self.state == State.BLOCK:
+            self.output.write('\t')
+        if ctx.condition():
+            self.output.write(f'if ({ctx.condition().getText()})')
+        else:
+            self.output.write(f'if ()')
+
+    def enterBlock(self, ctx: CParser.BlockContext):
+        self.state = State.BLOCK
         self.output.write('{')
         self.add_newline()
 
-    def exitFunctionBlock(self, ctx: CParser.FunctionBlockContext):
-        self.state = State.NOTHING
+    def exitBlock(self, ctx: CParser.BlockContext):
+        if self.state == State.BLOCK:
+            self.output.write('\t')
+        self.state = State.BLOCK
         self.output.write('}')
         self.add_newline()

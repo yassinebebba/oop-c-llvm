@@ -30,6 +30,10 @@ short int * testing(int a, int b, int c) {
 
 pyint * integer_builder(int64_t value)
 {
+    if (a + 2) {
+        if () {
+        }
+    }
     pyint  * integer = malloc(sizeof(pyint));
     return 1 + 3 * A();
 }

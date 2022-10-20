@@ -17,15 +17,6 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#functionBlock.
-    def enterFunctionBlock(self, ctx:CParser.FunctionBlockContext):
-        pass
-
-    # Exit a parse tree produced by CParser#functionBlock.
-    def exitFunctionBlock(self, ctx:CParser.FunctionBlockContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#assignment.
     def enterAssignment(self, ctx:CParser.AssignmentContext):
         pass
@@ -221,6 +212,33 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#typeSpecifier.
     def exitTypeSpecifier(self, ctx:CParser.TypeSpecifierContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#ifStatement.
+    def enterIfStatement(self, ctx:CParser.IfStatementContext):
+        pass
+
+    # Exit a parse tree produced by CParser#ifStatement.
+    def exitIfStatement(self, ctx:CParser.IfStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#condition.
+    def enterCondition(self, ctx:CParser.ConditionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#condition.
+    def exitCondition(self, ctx:CParser.ConditionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#block.
+    def enterBlock(self, ctx:CParser.BlockContext):
+        pass
+
+    # Exit a parse tree produced by CParser#block.
+    def exitBlock(self, ctx:CParser.BlockContext):
         pass
 
 

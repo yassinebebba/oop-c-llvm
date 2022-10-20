@@ -11,19 +11,6 @@ compilationUnit
       )* EOF
     ;
 
-functionBlock
-    : LC (
-        expression
-      | variableInitialization
-      | variableDeclaration
-      | definitionList
-      | declarationList
-      | functionCall
-      | assignment
-      | functionReturn
-     )* RC
-    ;
-
 assignment
     : identifier ASSIGN expression SEMI
     ;
@@ -90,7 +77,7 @@ definitionList
     : functionDefinition
     ;
 functionDefinition
-    : typeSpecifier? functionName LP functionArgs? RP functionBlock
+    : typeSpecifier? functionName LP functionArgs? RP block
     ;
 
 functionReturn
@@ -128,6 +115,29 @@ typeSpecifier
         | identifier
       ) STAR*
     ;
+
+ifStatement: IF LP condition? RP block;
+
+condition
+    : expression COMMA?
+    | expression COMMA expression
+    ;
+
+// I think block and functionBlock are the same?!!!
+block
+    : LC (
+        expression
+      | ifStatement
+      | variableInitialization
+      | variableDeclaration
+      | definitionList
+      | declarationList
+      | functionCall
+      | assignment
+      | assignment
+      | functionReturn
+     )* RC
+   ;
 
 identifier: IDENTIFIER;
 
