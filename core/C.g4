@@ -2,7 +2,9 @@ grammar C;
 
 compilationUnit
     : (
-        assignment
+          assignment
+        | variableInitialization
+        | variableDeclaration
         | functionCall
         | declarationList
         | definitionList
@@ -12,6 +14,8 @@ compilationUnit
 functionBlock
     : LC (
         expression
+      | variableInitialization
+      | variableDeclaration
       | definitionList
       | declarationList
       | functionCall
@@ -21,13 +25,14 @@ functionBlock
     ;
 
 assignment
-    : typeSpecifier identifier ASSIGN expression SEMI
+    : identifier ASSIGN expression SEMI
     ;
 
 expression
     : constant
     | functionCallExpression
     | identifier
+    | SIZEOF (expression | LP expression RP)
     | expression STAR expression
     | expression DIV expression
     | expression PLUS expression
@@ -74,6 +79,9 @@ declaration
     ;
 
 variableDeclaration: typeSpecifier identifier;
+
+variableInitialization: typeSpecifier identifier ASSIGN expression SEMI;
+
 functionDeclaration
     : typeSpecifier? functionName LP functionArgs? RP SEMI
     ;

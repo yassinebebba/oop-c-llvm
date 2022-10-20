@@ -1,5 +1,6 @@
 int a = "'''''''''''''asdada'das'dad#wqd'qdsadqaw" "awdsadasd";
 int a = '""';
+a = 10;
 Point *** a(int, int, double, Point);
 long * a(int);
 unsigned short int * b = 3 * 4 * 5 * 6+9+9 + 0;

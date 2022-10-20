@@ -1,3 +1,5 @@
+import os
+
 from core.CParser import CParser
 from core.CListener import CListener
 from io import FileIO
@@ -92,6 +94,16 @@ class Listener(CListener):
 
     def enterDeclaration(self, ctx: CParser.DeclarationContext):
         pass
+
+    def enterVariableInitialization(self,
+                                    ctx: CParser.VariableInitializationContext):
+        if self.state == State.FUNC_BLOCK:
+            self.output.write('\t')
+        for child in ctx.typeSpecifier().getChildren():
+            self.output.write(f'{child.getText()} ')
+        self.output.write(
+            f'{ctx.identifier().getText()} = {ctx.expression().getText()};')
+        self.add_newline()
 
     def enterVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext):
