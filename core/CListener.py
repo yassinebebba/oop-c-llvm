@@ -17,30 +17,12 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#expression.
-    def enterExpression(self, ctx:CParser.ExpressionContext):
+    # Enter a parse tree produced by CParser#constantExpression.
+    def enterConstantExpression(self, ctx:CParser.ConstantExpressionContext):
         pass
 
-    # Exit a parse tree produced by CParser#expression.
-    def exitExpression(self, ctx:CParser.ExpressionContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#multiplyExpression.
-    def enterMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
-        pass
-
-    # Exit a parse tree produced by CParser#multiplyExpression.
-    def exitMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#divideExpression.
-    def enterDivideExpression(self, ctx:CParser.DivideExpressionContext):
-        pass
-
-    # Exit a parse tree produced by CParser#divideExpression.
-    def exitDivideExpression(self, ctx:CParser.DivideExpressionContext):
+    # Exit a parse tree produced by CParser#constantExpression.
+    def exitConstantExpression(self, ctx:CParser.ConstantExpressionContext):
         pass
 
 
@@ -59,6 +41,51 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#subtractExpression.
     def exitSubtractExpression(self, ctx:CParser.SubtractExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#identiferExpression.
+    def enterIdentiferExpression(self, ctx:CParser.IdentiferExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#identiferExpression.
+    def exitIdentiferExpression(self, ctx:CParser.IdentiferExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#multiplyExpression.
+    def enterMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#multiplyExpression.
+    def exitMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#sizeofExpression.
+    def enterSizeofExpression(self, ctx:CParser.SizeofExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#sizeofExpression.
+    def exitSizeofExpression(self, ctx:CParser.SizeofExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#funcCallExpression.
+    def enterFuncCallExpression(self, ctx:CParser.FuncCallExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#funcCallExpression.
+    def exitFuncCallExpression(self, ctx:CParser.FuncCallExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#divideExpression.
+    def enterDivideExpression(self, ctx:CParser.DivideExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#divideExpression.
+    def exitDivideExpression(self, ctx:CParser.DivideExpressionContext):
         pass
 
 
@@ -224,12 +251,39 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#ifStatementStructure.
+    def enterIfStatementStructure(self, ctx:CParser.IfStatementStructureContext):
+        pass
+
+    # Exit a parse tree produced by CParser#ifStatementStructure.
+    def exitIfStatementStructure(self, ctx:CParser.IfStatementStructureContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#ifStatement.
     def enterIfStatement(self, ctx:CParser.IfStatementContext):
         pass
 
     # Exit a parse tree produced by CParser#ifStatement.
     def exitIfStatement(self, ctx:CParser.IfStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#elseIfStatement.
+    def enterElseIfStatement(self, ctx:CParser.ElseIfStatementContext):
+        pass
+
+    # Exit a parse tree produced by CParser#elseIfStatement.
+    def exitElseIfStatement(self, ctx:CParser.ElseIfStatementContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#elseStatement.
+    def enterElseStatement(self, ctx:CParser.ElseStatementContext):
+        pass
+
+    # Exit a parse tree produced by CParser#elseStatement.
+    def exitElseStatement(self, ctx:CParser.ElseStatementContext):
         pass
 
 

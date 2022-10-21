@@ -115,7 +115,7 @@ class Listener(CListener):
         for child in ctx.typeSpecifier().getChildren():
             self.output.write(f'{child.getText()} ')
         self.output.write(
-            f'{ctx.identifier().getText()} = {ctx.expression().getText()};')
+            f'{ctx.identifier().getText()} = {self.enterExpression(ctx.expression())};')
         self.add_newline()
 
     def enterVariableDeclaration(self,
@@ -174,7 +174,7 @@ class Listener(CListener):
             if isinstance(child, CParser.IdentifierContext):
                 self.output.write(child.getText() + ' ')
             if isinstance(child, CParser.ExpressionContext):
-                self.output.write(child.getText())
+                self.output.write(self.enterExpression(child))
         self.add_newline()
 
     def enterInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
@@ -185,7 +185,7 @@ class Listener(CListener):
             if isinstance(child, CParser.IdentifierContext):
                 self.output.write(child.getText() + ' ')
             if isinstance(child, CParser.ExpressionContext):
-                self.output.write(child.getText())
+                self.output.write(self.enterExpression(child))
         self.add_newline()
 
     def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
@@ -201,16 +201,55 @@ class Listener(CListener):
             self.output.write('return;')
         self.add_newline()
 
-    def enterIfStatement(self, ctx: CParser.IfStatementContext):
+    def enterIfStatementStructure(self,
+                                  ctx: CParser.IfStatementStructureContext):
         self.add_indentation()
-        if ctx.condition():
-            self.output.write(f'if ({ctx.condition().getText()})')
-        else:
-            self.output.write(f'if ()')
+        for child in ctx.getChildren():
+            if isinstance(child, CParser.IfStatementContext):
+                self.output.write(self.enterIfStatement(child))
+
+    def enterIfStatement(self, ctx: CParser.IfStatementContext):
+        conditions: list[CParser.ConditionContext] = [
+            condition for condition in ctx.getChildren()
+            if isinstance(condition, CParser.ConditionContext)
+        ]
+        values = list(map(self.enterCondition, conditions))
+        return f'if ({", ".join(values)})'
+
+    def enterElseIfStatement(self, ctx: CParser.ElseIfStatementContext):
+        self.add_indentation()
+        self.output.write(f'else {self.enterIfStatement(ctx.ifStatement())}')
+
+    def enterElseStatement(self, ctx: CParser.ElseStatementContext):
+        self.add_indentation()
+        self.output.write(f'else ')
+
+    def enterCondition(self, ctx: CParser.ConditionContext):
+        expressions: list[CParser.ExpressionContext] = [
+            expression for expression in ctx.getChildren()
+            if isinstance(expression, CParser.ExpressionContext)
+        ]
+        values = list(map(self.enterExpression, expressions))
+        return ' '.join(values)
+
+    def enterExpression(self, ctx: CParser.ExpressionContext):
+        values = []
+        for child in ctx.getChildren():
+            if isinstance(child, CParser.ExpressionContext):
+                values.append(self.enterExpression(child))
+            elif isinstance(child, CParser.ConstantContext):
+                values.append(child.getText())
+            elif isinstance(child, CParser.FunctionCallExpressionContext):
+                values.append(child.getText())
+            elif isinstance(child, CParser.IdentifierContext):
+                values.append(child.getText())
+            elif isinstance(child, TerminalNodeImpl):
+                values.append(child.getText())
+        return ' '.join(values)
 
     def enterBlock(self, ctx: CParser.BlockContext):
         self.state.enter_block_scope()
-        self.output.write('{')
+        self.output.write(' {')
         self.add_newline()
 
     def exitBlock(self, ctx: CParser.BlockContext):

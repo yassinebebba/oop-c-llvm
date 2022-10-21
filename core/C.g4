@@ -12,22 +12,15 @@ compilationUnit
     ;
 
 expression
-    : constant
-    | functionCallExpression
-    | identifier
-    | SIZEOF (expression | LP expression RP)
-    | expression STAR expression
-    | expression DIV expression
-    | expression PLUS expression
-    | expression MINUS expression
+    : constant                                #constantExpression
+    | functionCallExpression                  #funcCallExpression
+    | identifier                              #identiferExpression
+    | SIZEOF (expression | LP expression RP)  #sizeofExpression
+    | expression STAR expression              #multiplyExpression
+    | expression DIV expression               #divideExpression
+    | expression PLUS expression              #addExpression
+    | expression MINUS expression             #subtractExpression
     ;
-
-// this block might be used for compiler optimisation
-multiplyExpression: expression STAR expression;
-divideExpression: expression DIV expression;
-addExpression: expression PLUS expression;
-subtractExpression: expression MINUS expression;
-// this block might be used for compiler optimisation
 
 constant
     : INTEGER_CONSTANT
@@ -133,7 +126,13 @@ typeSpecifier
       ) STAR*
     ;
 
-ifStatement: IF LP condition? RP block;
+
+ifStatementStructure
+    : ifStatement elseIfStatement* elseStatement?
+    ;
+ifStatement: IF LP condition+ RP block;
+elseIfStatement: ELSE ifStatement;
+elseStatement: ELSE block;
 
 condition
     : expression COMMA?
@@ -144,7 +143,7 @@ condition
 block
     : LC (
         expression
-      | ifStatement
+      | ifStatementStructure
       | variableInitialization
       | variableDeclaration
       | definitionList
