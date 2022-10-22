@@ -283,6 +283,8 @@ class Listener(CListener):
         for child in ctx.getChildren():
             if isinstance(child, CParser.ExpressionContext):
                 values.append(self.enterExpression(child))
+            elif isinstance(child, CParser.UnarySignContext):
+                values.append(child.getText())
             elif isinstance(child, CParser.ConstantContext):
                 values.append(child.getText())
             elif isinstance(child, CParser.FunctionCallExpressionContext):

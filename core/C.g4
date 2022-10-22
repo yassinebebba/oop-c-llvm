@@ -13,8 +13,8 @@ compilationUnit
 
 expression
     : constant                                #constantExpression
-    | functionCallExpression                  #funcCallExpression
-    | identifier                              #identiferExpression
+    | unarySign? functionCallExpression       #funcCallExpression
+    | unarySign? identifier                   #identiferExpression
     | SIZEOF (expression | LP expression RP)  #sizeofExpression
     | expression STAR expression              #multiplyExpression
     | expression DIV expression               #divideExpression
@@ -23,11 +23,28 @@ expression
     ;
 
 constant
-    : INTEGER_CONSTANT
-    | FLOAT_CONSTANT
-    | CHAR_CONSTANT
-    | STRING_LITERAL+
+    : unarySign? INTEGER_CONSTANT
+    | unarySign? FLOAT_CONSTANT
+    | unarySign? CHAR_CONSTANT
+    | (unarySign STAR)? STRING_LITERAL+
     ;
+
+// unaryPlus and unaryMinus are for eg:
+// +-+-+-+-5 or -+-+-identifier or +-+-+-+-foo()
+unaryPlus
+    : PLUS MINUS?
+    | unaryPlus unaryPlus
+    ;
+
+unaryMinus
+    : MINUS PLUS?
+    | unaryMinus unaryMinus
+    ;
+unarySign
+    : unaryPlus
+    | unaryMinus
+    ;
+
 // expressions does not end with ';'? (question mark) what do you think?
 functionCallExpression: identifier LP functionCallArgs? RP;
 

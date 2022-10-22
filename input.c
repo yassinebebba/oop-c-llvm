@@ -1,13 +1,13 @@
-a = 10 + 2 *3465456E2;
-int a = "'''''''''''''asdada'das'dad#wqd'qdsadqaw" "awdsadasd";
-int a = '""';
-a = 10 + 2;
+a = 10 + 2 * -+-+-+-+3465456E2;
+int a = -+-+-+- *"'''''''''''''asdada'das'dad#wqd'qdsadqaw" "awdsadasd";
+int a = -+-+-+-'""';
+a = 10 + 2 + -+-+-+-2.2;
 Point *** a(int, int, double, Point);
 long * a(int);
 unsigned short int * b = 3 * 4 * 5 * 6+9+9 + 0;
 Point b = 3 * 4 * 5 * 6+9+9 + 0;
 b = 3 * 4 * 5 * 6+9+9 + 0;
-int c = 3 + 6 + b * 7 + D + a(1 + 2, 2);
+int c = 3 + 6 + -+-+-+-b * -+-+-+-+-7 + +-+-+-+-D + +-+-+a(1+2,2);
 int d;
 //    int a = 10;
 
@@ -23,18 +23,18 @@ int test() {
 
 }
 int d;
-test(1,2, d(), "asd" "asd", 'c');
+test(1,2, -+-+-+-d(), "asd" "asd", 'c');
 
 
 short int * testing(int a, int b, int c) {
-    int nothing = 20 + 1.2E10;
+    int nothing = 20 + -1.2E-10;
 }
 
 pyint * integer_builder(int64_t value)
 {
     do {
 
-    } while (1);
+    } while (-+-+-+-1);
 	while (1 + x, 2) {
 		while (x + 2, as, asd, ads(x+2)) {
 		while (1 + x, 2) {
@@ -43,7 +43,7 @@ pyint * integer_builder(int64_t value)
 	}
 	}
 	}
-    d += 10 + a() - 20 * 3;
+    d += 10 + a() - -+-+-+-+20 * 3;
     d -= 10 + sizeof 10 + 3;
     d *= 10;
     d /= 10;

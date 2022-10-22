@@ -98,6 +98,33 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#unaryPlus.
+    def enterUnaryPlus(self, ctx:CParser.UnaryPlusContext):
+        pass
+
+    # Exit a parse tree produced by CParser#unaryPlus.
+    def exitUnaryPlus(self, ctx:CParser.UnaryPlusContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#unaryMinus.
+    def enterUnaryMinus(self, ctx:CParser.UnaryMinusContext):
+        pass
+
+    # Exit a parse tree produced by CParser#unaryMinus.
+    def exitUnaryMinus(self, ctx:CParser.UnaryMinusContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#unarySign.
+    def enterUnarySign(self, ctx:CParser.UnarySignContext):
+        pass
+
+    # Exit a parse tree produced by CParser#unarySign.
+    def exitUnarySign(self, ctx:CParser.UnarySignContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#functionCallExpression.
     def enterFunctionCallExpression(self, ctx:CParser.FunctionCallExpressionContext):
         pass
