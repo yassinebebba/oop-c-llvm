@@ -138,6 +138,10 @@ whileStatement
     : WHILE LP condition+ RP block
     ;
 
+doWhileStatement
+    : DO block WHILE LP condition+ RP SEMI
+    ;
+
 condition
     : expression COMMA?
     | expression COMMA expression
@@ -149,6 +153,7 @@ block
         expression
       | ifStatementStructure
       | whileStatement
+      | doWhileStatement
       | variableInitialization
       | variableDeclaration
       | definitionList

@@ -1,3 +1,4 @@
+import os
 from core.CParser import CParser
 from core.CListener import CListener
 from io import FileIO
@@ -33,6 +34,11 @@ class Listener(CListener):
     def add_indentation(self):
         if self.state.block_scope:
             self.output.write('\t' * self.state.indentation_count)
+
+    def ungetch(self):
+        cur = self.output.tell()
+        self.output.seek(cur - 1, os.SEEK_SET)
+        self.output.truncate()
 
     def match_type_specifier(self, ctx: CParser.TypeSpecifierContext):
         # custom method to not repeat type matching
@@ -156,13 +162,21 @@ class Listener(CListener):
                 self.output.write(child.getText())
             if isinstance(child, TerminalNodeImpl):
                 # TODO: this should probably be changed to enter FunctionArgs
-                if (x := child.getText()) in '()':
-                    self.output.write(x)
+                match child.getText():
+                    case '(':
+                        self.output.write('(')
+                    case ')':
+                        self.output.write(') ')
+
             if isinstance(child, CParser.FunctionArgsContext):
                 func_args = []
                 # recursive func to visit nodes
                 self.get_args(child, func_args)
                 self.output.write(', '.join(func_args))
+
+    def exitFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
+        # overriding this method just for styling purpose
+        self.add_newline()
 
     def enterAssignment(self, ctx: CParser.AssignmentContext):
         self.add_indentation()
@@ -203,6 +217,7 @@ class Listener(CListener):
 
     def enterIfStatementStructure(self,
                                   ctx: CParser.IfStatementStructureContext):
+        self.add_newline()
         self.add_indentation()
         for child in ctx.getChildren():
             if isinstance(child, CParser.IfStatementContext):
@@ -214,15 +229,20 @@ class Listener(CListener):
             if isinstance(condition, CParser.ConditionContext)
         ]
         values = list(map(self.enterCondition, conditions))
-        return f'if ({", ".join(values)})'
+        return f'if ({", ".join(values)}) '
 
     def enterElseIfStatement(self, ctx: CParser.ElseIfStatementContext):
-        self.add_indentation()
-        self.output.write(f'else {self.enterIfStatement(ctx.ifStatement())}')
+        self.output.write(f' else {self.enterIfStatement(ctx.ifStatement())} ')
+
+    def exitElseIfStatement(self, ctx: CParser.ElseIfStatementContext):
+        self.add_newline()
 
     def enterElseStatement(self, ctx: CParser.ElseStatementContext):
-        self.add_indentation()
-        self.output.write(f'else')
+        self.ungetch()
+        self.output.write(f' else ')
+
+    def exitElseStatement(self, ctx: CParser.ElseIfStatementContext):
+        self.add_newline()
 
     def enterWhileStatement(self, ctx: CParser.WhileStatementContext):
         self.add_indentation()
@@ -231,7 +251,24 @@ class Listener(CListener):
             if isinstance(condition, CParser.ConditionContext)
         ]
         values = list(map(self.enterCondition, conditions))
-        self.output.write(f'while ({", ".join(values)})')
+        self.output.write(f'while ({", ".join(values)}) ')
+
+    def exitWhileStatement(self, ctx: CParser.WhileStatementContext):
+        # overriding this method just for styling purpose
+        self.add_newline()
+
+    def enterDoWhileStatement(self, ctx: CParser.DoWhileStatementContext):
+        self.add_indentation()
+        self.output.write(f'do ')
+
+    def exitDoWhileStatement(self, ctx: CParser.DoWhileStatementContext):
+        conditions: list[CParser.ConditionContext] = [
+            condition for condition in ctx.getChildren()
+            if isinstance(condition, CParser.ConditionContext)
+        ]
+        values = list(map(self.enterCondition, conditions))
+        self.output.write(f' while ({", ".join(values)});')
+        self.add_newline()
 
     def enterCondition(self, ctx: CParser.ConditionContext):
         expressions: list[CParser.ExpressionContext] = [
@@ -258,11 +295,10 @@ class Listener(CListener):
 
     def enterBlock(self, ctx: CParser.BlockContext):
         self.state.enter_block_scope()
-        self.output.write(' {')
+        self.output.write('{')
         self.add_newline()
 
     def exitBlock(self, ctx: CParser.BlockContext):
         self.state.exit_block_scope()
         self.add_indentation()
         self.output.write('}')
-        self.add_newline()

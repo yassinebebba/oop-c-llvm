@@ -10,124 +10,129 @@ else:
 
 def serializedATN():
     return [
-        4,1,90,322,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,90,337,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,
         7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,
-        2,27,7,27,1,0,1,0,1,0,1,0,1,0,1,0,5,0,63,8,0,10,0,12,0,66,9,0,1,
-        0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,80,8,1,3,1,82,
-        8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,1,96,8,1,10,
-        1,12,1,99,9,1,1,2,1,2,1,2,1,2,4,2,105,8,2,11,2,12,2,106,3,2,109,
-        8,2,1,3,1,3,1,3,3,3,114,8,3,1,3,1,3,1,4,1,4,1,4,3,4,121,8,4,1,4,
-        1,4,1,4,1,5,1,5,1,5,3,5,129,8,5,1,5,1,5,1,5,5,5,134,8,5,10,5,12,
-        5,137,9,5,1,6,1,6,1,7,1,7,1,7,1,7,1,7,5,7,146,8,7,10,7,12,7,149,
-        9,7,1,8,1,8,1,8,1,8,3,8,155,8,8,1,9,1,9,1,9,1,10,1,10,1,10,1,10,
-        1,10,1,10,1,11,3,11,167,8,11,1,11,1,11,1,11,3,11,172,8,11,1,11,1,
-        11,1,11,1,12,1,12,1,13,3,13,180,8,13,1,13,1,13,1,13,3,13,185,8,13,
-        1,13,1,13,1,13,1,14,1,14,3,14,192,8,14,1,14,1,14,1,15,1,15,1,16,
-        1,16,1,16,3,16,201,8,16,1,16,3,16,204,8,16,1,16,1,16,1,16,5,16,209,
-        8,16,10,16,12,16,212,9,16,1,17,1,17,1,17,1,17,1,17,1,18,1,18,1,18,
-        1,18,1,18,1,19,3,19,225,8,19,1,19,1,19,3,19,229,8,19,1,19,1,19,1,
-        19,3,19,234,8,19,1,19,1,19,1,19,1,19,3,19,240,8,19,1,19,1,19,3,19,
-        244,8,19,1,19,3,19,247,8,19,1,19,5,19,250,8,19,10,19,12,19,253,9,
-        19,1,20,1,20,5,20,257,8,20,10,20,12,20,260,9,20,1,20,3,20,263,8,
-        20,1,21,1,21,1,21,4,21,268,8,21,11,21,12,21,269,1,21,1,21,1,21,1,
-        22,1,22,1,22,1,23,1,23,1,23,1,24,1,24,1,24,4,24,284,8,24,11,24,12,
-        24,285,1,24,1,24,1,24,1,25,1,25,3,25,293,8,25,1,25,1,25,1,25,1,25,
-        3,25,299,8,25,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,1,26,
-        1,26,1,26,5,26,313,8,26,10,26,12,26,316,9,26,1,26,1,26,1,27,1,27,
-        1,27,0,4,2,10,14,32,28,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,
-        32,34,36,38,40,42,44,46,48,50,52,54,0,2,1,0,71,80,1,0,31,32,355,
-        0,64,1,0,0,0,2,81,1,0,0,0,4,108,1,0,0,0,6,110,1,0,0,0,8,117,1,0,
-        0,0,10,125,1,0,0,0,12,138,1,0,0,0,14,140,1,0,0,0,16,154,1,0,0,0,
-        18,156,1,0,0,0,20,159,1,0,0,0,22,166,1,0,0,0,24,176,1,0,0,0,26,179,
-        1,0,0,0,28,189,1,0,0,0,30,195,1,0,0,0,32,197,1,0,0,0,34,213,1,0,
-        0,0,36,218,1,0,0,0,38,224,1,0,0,0,40,254,1,0,0,0,42,264,1,0,0,0,
-        44,274,1,0,0,0,46,277,1,0,0,0,48,280,1,0,0,0,50,298,1,0,0,0,52,300,
-        1,0,0,0,54,319,1,0,0,0,56,63,3,34,17,0,57,63,3,20,10,0,58,63,3,18,
-        9,0,59,63,3,8,4,0,60,63,3,14,7,0,61,63,3,24,12,0,62,56,1,0,0,0,62,
-        57,1,0,0,0,62,58,1,0,0,0,62,59,1,0,0,0,62,60,1,0,0,0,62,61,1,0,0,
-        0,63,66,1,0,0,0,64,62,1,0,0,0,64,65,1,0,0,0,65,67,1,0,0,0,66,64,
-        1,0,0,0,67,68,5,0,0,1,68,1,1,0,0,0,69,70,6,1,-1,0,70,82,3,4,2,0,
-        71,82,3,6,3,0,72,82,3,54,27,0,73,79,5,22,0,0,74,80,3,2,1,0,75,76,
-        5,47,0,0,76,77,3,2,1,0,77,78,5,48,0,0,78,80,1,0,0,0,79,74,1,0,0,
-        0,79,75,1,0,0,0,80,82,1,0,0,0,81,69,1,0,0,0,81,71,1,0,0,0,81,72,
-        1,0,0,0,81,73,1,0,0,0,82,97,1,0,0,0,83,84,10,4,0,0,84,85,5,44,0,
-        0,85,96,3,2,1,5,86,87,10,3,0,0,87,88,5,45,0,0,88,96,3,2,1,4,89,90,
-        10,2,0,0,90,91,5,40,0,0,91,96,3,2,1,3,92,93,10,1,0,0,93,94,5,42,
-        0,0,94,96,3,2,1,2,95,83,1,0,0,0,95,86,1,0,0,0,95,89,1,0,0,0,95,92,
-        1,0,0,0,96,99,1,0,0,0,97,95,1,0,0,0,97,98,1,0,0,0,98,3,1,0,0,0,99,
-        97,1,0,0,0,100,109,5,3,0,0,101,109,5,4,0,0,102,109,5,2,0,0,103,105,
-        5,1,0,0,104,103,1,0,0,0,105,106,1,0,0,0,106,104,1,0,0,0,106,107,
-        1,0,0,0,107,109,1,0,0,0,108,100,1,0,0,0,108,101,1,0,0,0,108,102,
-        1,0,0,0,108,104,1,0,0,0,109,5,1,0,0,0,110,111,3,54,27,0,111,113,
-        5,47,0,0,112,114,3,10,5,0,113,112,1,0,0,0,113,114,1,0,0,0,114,115,
-        1,0,0,0,115,116,5,48,0,0,116,7,1,0,0,0,117,118,3,54,27,0,118,120,
-        5,47,0,0,119,121,3,10,5,0,120,119,1,0,0,0,120,121,1,0,0,0,121,122,
-        1,0,0,0,122,123,5,48,0,0,123,124,5,68,0,0,124,9,1,0,0,0,125,126,
-        6,5,-1,0,126,128,3,2,1,0,127,129,5,69,0,0,128,127,1,0,0,0,128,129,
-        1,0,0,0,129,135,1,0,0,0,130,131,10,1,0,0,131,132,5,69,0,0,132,134,
-        3,10,5,2,133,130,1,0,0,0,134,137,1,0,0,0,135,133,1,0,0,0,135,136,
-        1,0,0,0,136,11,1,0,0,0,137,135,1,0,0,0,138,139,1,0,0,0,139,13,1,
-        0,0,0,140,141,6,7,-1,0,141,142,3,16,8,0,142,147,1,0,0,0,143,144,
-        10,1,0,0,144,146,3,16,8,0,145,143,1,0,0,0,146,149,1,0,0,0,147,145,
-        1,0,0,0,147,148,1,0,0,0,148,15,1,0,0,0,149,147,1,0,0,0,150,155,3,
-        22,11,0,151,152,3,18,9,0,152,153,5,68,0,0,153,155,1,0,0,0,154,150,
-        1,0,0,0,154,151,1,0,0,0,155,17,1,0,0,0,156,157,3,38,19,0,157,158,
-        3,54,27,0,158,19,1,0,0,0,159,160,3,38,19,0,160,161,3,54,27,0,161,
-        162,5,70,0,0,162,163,3,2,1,0,163,164,5,68,0,0,164,21,1,0,0,0,165,
-        167,3,38,19,0,166,165,1,0,0,0,166,167,1,0,0,0,167,168,1,0,0,0,168,
-        169,3,30,15,0,169,171,5,47,0,0,170,172,3,32,16,0,171,170,1,0,0,0,
-        171,172,1,0,0,0,172,173,1,0,0,0,173,174,5,48,0,0,174,175,5,68,0,
-        0,175,23,1,0,0,0,176,177,3,26,13,0,177,25,1,0,0,0,178,180,3,38,19,
-        0,179,178,1,0,0,0,179,180,1,0,0,0,180,181,1,0,0,0,181,182,3,30,15,
-        0,182,184,5,47,0,0,183,185,3,32,16,0,184,183,1,0,0,0,184,185,1,0,
-        0,0,185,186,1,0,0,0,186,187,5,48,0,0,187,188,3,52,26,0,188,27,1,
-        0,0,0,189,191,5,21,0,0,190,192,3,2,1,0,191,190,1,0,0,0,191,192,1,
-        0,0,0,192,193,1,0,0,0,193,194,5,68,0,0,194,29,1,0,0,0,195,196,3,
-        54,27,0,196,31,1,0,0,0,197,198,6,16,-1,0,198,200,3,38,19,0,199,201,
-        3,54,27,0,200,199,1,0,0,0,200,201,1,0,0,0,201,203,1,0,0,0,202,204,
-        5,69,0,0,203,202,1,0,0,0,203,204,1,0,0,0,204,210,1,0,0,0,205,206,
-        10,1,0,0,206,207,5,69,0,0,207,209,3,32,16,2,208,205,1,0,0,0,209,
-        212,1,0,0,0,210,208,1,0,0,0,210,211,1,0,0,0,211,33,1,0,0,0,212,210,
-        1,0,0,0,213,214,3,54,27,0,214,215,5,70,0,0,215,216,3,2,1,0,216,217,
-        5,68,0,0,217,35,1,0,0,0,218,219,3,54,27,0,219,220,7,0,0,0,220,221,
-        3,2,1,0,221,222,5,68,0,0,222,37,1,0,0,0,223,225,5,30,0,0,224,223,
-        1,0,0,0,224,225,1,0,0,0,225,246,1,0,0,0,226,247,5,33,0,0,227,229,
-        7,1,0,0,228,227,1,0,0,0,228,229,1,0,0,0,229,243,1,0,0,0,230,244,
-        5,34,0,0,231,244,5,35,0,0,232,234,5,35,0,0,233,232,1,0,0,0,233,234,
-        1,0,0,0,234,235,1,0,0,0,235,244,5,36,0,0,236,244,5,37,0,0,237,244,
-        5,38,0,0,238,240,5,37,0,0,239,238,1,0,0,0,239,240,1,0,0,0,240,241,
-        1,0,0,0,241,244,5,39,0,0,242,244,5,36,0,0,243,230,1,0,0,0,243,231,
-        1,0,0,0,243,233,1,0,0,0,243,236,1,0,0,0,243,237,1,0,0,0,243,239,
-        1,0,0,0,243,242,1,0,0,0,244,247,1,0,0,0,245,247,3,54,27,0,246,226,
-        1,0,0,0,246,228,1,0,0,0,246,245,1,0,0,0,247,251,1,0,0,0,248,250,
-        5,44,0,0,249,248,1,0,0,0,250,253,1,0,0,0,251,249,1,0,0,0,251,252,
-        1,0,0,0,252,39,1,0,0,0,253,251,1,0,0,0,254,258,3,42,21,0,255,257,
-        3,44,22,0,256,255,1,0,0,0,257,260,1,0,0,0,258,256,1,0,0,0,258,259,
-        1,0,0,0,259,262,1,0,0,0,260,258,1,0,0,0,261,263,3,46,23,0,262,261,
-        1,0,0,0,262,263,1,0,0,0,263,41,1,0,0,0,264,265,5,17,0,0,265,267,
-        5,47,0,0,266,268,3,50,25,0,267,266,1,0,0,0,268,269,1,0,0,0,269,267,
-        1,0,0,0,269,270,1,0,0,0,270,271,1,0,0,0,271,272,5,48,0,0,272,273,
-        3,52,26,0,273,43,1,0,0,0,274,275,5,12,0,0,275,276,3,42,21,0,276,
-        45,1,0,0,0,277,278,5,12,0,0,278,279,3,52,26,0,279,47,1,0,0,0,280,
-        281,5,29,0,0,281,283,5,47,0,0,282,284,3,50,25,0,283,282,1,0,0,0,
-        284,285,1,0,0,0,285,283,1,0,0,0,285,286,1,0,0,0,286,287,1,0,0,0,
-        287,288,5,48,0,0,288,289,3,52,26,0,289,49,1,0,0,0,290,292,3,2,1,
-        0,291,293,5,69,0,0,292,291,1,0,0,0,292,293,1,0,0,0,293,299,1,0,0,
-        0,294,295,3,2,1,0,295,296,5,69,0,0,296,297,3,2,1,0,297,299,1,0,0,
-        0,298,290,1,0,0,0,298,294,1,0,0,0,299,51,1,0,0,0,300,314,5,49,0,
-        0,301,313,3,2,1,0,302,313,3,40,20,0,303,313,3,48,24,0,304,313,3,
-        20,10,0,305,313,3,18,9,0,306,313,3,24,12,0,307,313,3,14,7,0,308,
-        313,3,8,4,0,309,313,3,34,17,0,310,313,3,36,18,0,311,313,3,28,14,
-        0,312,301,1,0,0,0,312,302,1,0,0,0,312,303,1,0,0,0,312,304,1,0,0,
-        0,312,305,1,0,0,0,312,306,1,0,0,0,312,307,1,0,0,0,312,308,1,0,0,
-        0,312,309,1,0,0,0,312,310,1,0,0,0,312,311,1,0,0,0,313,316,1,0,0,
-        0,314,312,1,0,0,0,314,315,1,0,0,0,315,317,1,0,0,0,316,314,1,0,0,
-        0,317,318,5,50,0,0,318,53,1,0,0,0,319,320,5,86,0,0,320,55,1,0,0,
-        0,37,62,64,79,81,95,97,106,108,113,120,128,135,147,154,166,171,179,
-        184,191,200,203,210,224,228,233,239,243,246,251,258,262,269,285,
-        292,298,312,314
+        2,27,7,27,2,28,7,28,1,0,1,0,1,0,1,0,1,0,1,0,5,0,65,8,0,10,0,12,0,
+        68,9,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,82,8,
+        1,3,1,84,8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,1,
+        98,8,1,10,1,12,1,101,9,1,1,2,1,2,1,2,1,2,4,2,107,8,2,11,2,12,2,108,
+        3,2,111,8,2,1,3,1,3,1,3,3,3,116,8,3,1,3,1,3,1,4,1,4,1,4,3,4,123,
+        8,4,1,4,1,4,1,4,1,5,1,5,1,5,3,5,131,8,5,1,5,1,5,1,5,5,5,136,8,5,
+        10,5,12,5,139,9,5,1,6,1,6,1,7,1,7,1,7,1,7,1,7,5,7,148,8,7,10,7,12,
+        7,151,9,7,1,8,1,8,1,8,1,8,3,8,157,8,8,1,9,1,9,1,9,1,10,1,10,1,10,
+        1,10,1,10,1,10,1,11,3,11,169,8,11,1,11,1,11,1,11,3,11,174,8,11,1,
+        11,1,11,1,11,1,12,1,12,1,13,3,13,182,8,13,1,13,1,13,1,13,3,13,187,
+        8,13,1,13,1,13,1,13,1,14,1,14,3,14,194,8,14,1,14,1,14,1,15,1,15,
+        1,16,1,16,1,16,3,16,203,8,16,1,16,3,16,206,8,16,1,16,1,16,1,16,5,
+        16,211,8,16,10,16,12,16,214,9,16,1,17,1,17,1,17,1,17,1,17,1,18,1,
+        18,1,18,1,18,1,18,1,19,3,19,227,8,19,1,19,1,19,3,19,231,8,19,1,19,
+        1,19,1,19,3,19,236,8,19,1,19,1,19,1,19,1,19,3,19,242,8,19,1,19,1,
+        19,3,19,246,8,19,1,19,3,19,249,8,19,1,19,5,19,252,8,19,10,19,12,
+        19,255,9,19,1,20,1,20,5,20,259,8,20,10,20,12,20,262,9,20,1,20,3,
+        20,265,8,20,1,21,1,21,1,21,4,21,270,8,21,11,21,12,21,271,1,21,1,
+        21,1,21,1,22,1,22,1,22,1,23,1,23,1,23,1,24,1,24,1,24,4,24,286,8,
+        24,11,24,12,24,287,1,24,1,24,1,24,1,25,1,25,1,25,1,25,1,25,4,25,
+        298,8,25,11,25,12,25,299,1,25,1,25,1,25,1,26,1,26,3,26,307,8,26,
+        1,26,1,26,1,26,1,26,3,26,313,8,26,1,27,1,27,1,27,1,27,1,27,1,27,
+        1,27,1,27,1,27,1,27,1,27,1,27,1,27,5,27,328,8,27,10,27,12,27,331,
+        9,27,1,27,1,27,1,28,1,28,1,28,0,4,2,10,14,32,29,0,2,4,6,8,10,12,
+        14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,
+        0,2,1,0,71,80,1,0,31,32,371,0,66,1,0,0,0,2,83,1,0,0,0,4,110,1,0,
+        0,0,6,112,1,0,0,0,8,119,1,0,0,0,10,127,1,0,0,0,12,140,1,0,0,0,14,
+        142,1,0,0,0,16,156,1,0,0,0,18,158,1,0,0,0,20,161,1,0,0,0,22,168,
+        1,0,0,0,24,178,1,0,0,0,26,181,1,0,0,0,28,191,1,0,0,0,30,197,1,0,
+        0,0,32,199,1,0,0,0,34,215,1,0,0,0,36,220,1,0,0,0,38,226,1,0,0,0,
+        40,256,1,0,0,0,42,266,1,0,0,0,44,276,1,0,0,0,46,279,1,0,0,0,48,282,
+        1,0,0,0,50,292,1,0,0,0,52,312,1,0,0,0,54,314,1,0,0,0,56,334,1,0,
+        0,0,58,65,3,34,17,0,59,65,3,20,10,0,60,65,3,18,9,0,61,65,3,8,4,0,
+        62,65,3,14,7,0,63,65,3,24,12,0,64,58,1,0,0,0,64,59,1,0,0,0,64,60,
+        1,0,0,0,64,61,1,0,0,0,64,62,1,0,0,0,64,63,1,0,0,0,65,68,1,0,0,0,
+        66,64,1,0,0,0,66,67,1,0,0,0,67,69,1,0,0,0,68,66,1,0,0,0,69,70,5,
+        0,0,1,70,1,1,0,0,0,71,72,6,1,-1,0,72,84,3,4,2,0,73,84,3,6,3,0,74,
+        84,3,56,28,0,75,81,5,22,0,0,76,82,3,2,1,0,77,78,5,47,0,0,78,79,3,
+        2,1,0,79,80,5,48,0,0,80,82,1,0,0,0,81,76,1,0,0,0,81,77,1,0,0,0,82,
+        84,1,0,0,0,83,71,1,0,0,0,83,73,1,0,0,0,83,74,1,0,0,0,83,75,1,0,0,
+        0,84,99,1,0,0,0,85,86,10,4,0,0,86,87,5,44,0,0,87,98,3,2,1,5,88,89,
+        10,3,0,0,89,90,5,45,0,0,90,98,3,2,1,4,91,92,10,2,0,0,92,93,5,40,
+        0,0,93,98,3,2,1,3,94,95,10,1,0,0,95,96,5,42,0,0,96,98,3,2,1,2,97,
+        85,1,0,0,0,97,88,1,0,0,0,97,91,1,0,0,0,97,94,1,0,0,0,98,101,1,0,
+        0,0,99,97,1,0,0,0,99,100,1,0,0,0,100,3,1,0,0,0,101,99,1,0,0,0,102,
+        111,5,3,0,0,103,111,5,4,0,0,104,111,5,2,0,0,105,107,5,1,0,0,106,
+        105,1,0,0,0,107,108,1,0,0,0,108,106,1,0,0,0,108,109,1,0,0,0,109,
+        111,1,0,0,0,110,102,1,0,0,0,110,103,1,0,0,0,110,104,1,0,0,0,110,
+        106,1,0,0,0,111,5,1,0,0,0,112,113,3,56,28,0,113,115,5,47,0,0,114,
+        116,3,10,5,0,115,114,1,0,0,0,115,116,1,0,0,0,116,117,1,0,0,0,117,
+        118,5,48,0,0,118,7,1,0,0,0,119,120,3,56,28,0,120,122,5,47,0,0,121,
+        123,3,10,5,0,122,121,1,0,0,0,122,123,1,0,0,0,123,124,1,0,0,0,124,
+        125,5,48,0,0,125,126,5,68,0,0,126,9,1,0,0,0,127,128,6,5,-1,0,128,
+        130,3,2,1,0,129,131,5,69,0,0,130,129,1,0,0,0,130,131,1,0,0,0,131,
+        137,1,0,0,0,132,133,10,1,0,0,133,134,5,69,0,0,134,136,3,10,5,2,135,
+        132,1,0,0,0,136,139,1,0,0,0,137,135,1,0,0,0,137,138,1,0,0,0,138,
+        11,1,0,0,0,139,137,1,0,0,0,140,141,1,0,0,0,141,13,1,0,0,0,142,143,
+        6,7,-1,0,143,144,3,16,8,0,144,149,1,0,0,0,145,146,10,1,0,0,146,148,
+        3,16,8,0,147,145,1,0,0,0,148,151,1,0,0,0,149,147,1,0,0,0,149,150,
+        1,0,0,0,150,15,1,0,0,0,151,149,1,0,0,0,152,157,3,22,11,0,153,154,
+        3,18,9,0,154,155,5,68,0,0,155,157,1,0,0,0,156,152,1,0,0,0,156,153,
+        1,0,0,0,157,17,1,0,0,0,158,159,3,38,19,0,159,160,3,56,28,0,160,19,
+        1,0,0,0,161,162,3,38,19,0,162,163,3,56,28,0,163,164,5,70,0,0,164,
+        165,3,2,1,0,165,166,5,68,0,0,166,21,1,0,0,0,167,169,3,38,19,0,168,
+        167,1,0,0,0,168,169,1,0,0,0,169,170,1,0,0,0,170,171,3,30,15,0,171,
+        173,5,47,0,0,172,174,3,32,16,0,173,172,1,0,0,0,173,174,1,0,0,0,174,
+        175,1,0,0,0,175,176,5,48,0,0,176,177,5,68,0,0,177,23,1,0,0,0,178,
+        179,3,26,13,0,179,25,1,0,0,0,180,182,3,38,19,0,181,180,1,0,0,0,181,
+        182,1,0,0,0,182,183,1,0,0,0,183,184,3,30,15,0,184,186,5,47,0,0,185,
+        187,3,32,16,0,186,185,1,0,0,0,186,187,1,0,0,0,187,188,1,0,0,0,188,
+        189,5,48,0,0,189,190,3,54,27,0,190,27,1,0,0,0,191,193,5,21,0,0,192,
+        194,3,2,1,0,193,192,1,0,0,0,193,194,1,0,0,0,194,195,1,0,0,0,195,
+        196,5,68,0,0,196,29,1,0,0,0,197,198,3,56,28,0,198,31,1,0,0,0,199,
+        200,6,16,-1,0,200,202,3,38,19,0,201,203,3,56,28,0,202,201,1,0,0,
+        0,202,203,1,0,0,0,203,205,1,0,0,0,204,206,5,69,0,0,205,204,1,0,0,
+        0,205,206,1,0,0,0,206,212,1,0,0,0,207,208,10,1,0,0,208,209,5,69,
+        0,0,209,211,3,32,16,2,210,207,1,0,0,0,211,214,1,0,0,0,212,210,1,
+        0,0,0,212,213,1,0,0,0,213,33,1,0,0,0,214,212,1,0,0,0,215,216,3,56,
+        28,0,216,217,5,70,0,0,217,218,3,2,1,0,218,219,5,68,0,0,219,35,1,
+        0,0,0,220,221,3,56,28,0,221,222,7,0,0,0,222,223,3,2,1,0,223,224,
+        5,68,0,0,224,37,1,0,0,0,225,227,5,30,0,0,226,225,1,0,0,0,226,227,
+        1,0,0,0,227,248,1,0,0,0,228,249,5,33,0,0,229,231,7,1,0,0,230,229,
+        1,0,0,0,230,231,1,0,0,0,231,245,1,0,0,0,232,246,5,34,0,0,233,246,
+        5,35,0,0,234,236,5,35,0,0,235,234,1,0,0,0,235,236,1,0,0,0,236,237,
+        1,0,0,0,237,246,5,36,0,0,238,246,5,37,0,0,239,246,5,38,0,0,240,242,
+        5,37,0,0,241,240,1,0,0,0,241,242,1,0,0,0,242,243,1,0,0,0,243,246,
+        5,39,0,0,244,246,5,36,0,0,245,232,1,0,0,0,245,233,1,0,0,0,245,235,
+        1,0,0,0,245,238,1,0,0,0,245,239,1,0,0,0,245,241,1,0,0,0,245,244,
+        1,0,0,0,246,249,1,0,0,0,247,249,3,56,28,0,248,228,1,0,0,0,248,230,
+        1,0,0,0,248,247,1,0,0,0,249,253,1,0,0,0,250,252,5,44,0,0,251,250,
+        1,0,0,0,252,255,1,0,0,0,253,251,1,0,0,0,253,254,1,0,0,0,254,39,1,
+        0,0,0,255,253,1,0,0,0,256,260,3,42,21,0,257,259,3,44,22,0,258,257,
+        1,0,0,0,259,262,1,0,0,0,260,258,1,0,0,0,260,261,1,0,0,0,261,264,
+        1,0,0,0,262,260,1,0,0,0,263,265,3,46,23,0,264,263,1,0,0,0,264,265,
+        1,0,0,0,265,41,1,0,0,0,266,267,5,17,0,0,267,269,5,47,0,0,268,270,
+        3,52,26,0,269,268,1,0,0,0,270,271,1,0,0,0,271,269,1,0,0,0,271,272,
+        1,0,0,0,272,273,1,0,0,0,273,274,5,48,0,0,274,275,3,54,27,0,275,43,
+        1,0,0,0,276,277,5,12,0,0,277,278,3,42,21,0,278,45,1,0,0,0,279,280,
+        5,12,0,0,280,281,3,54,27,0,281,47,1,0,0,0,282,283,5,29,0,0,283,285,
+        5,47,0,0,284,286,3,52,26,0,285,284,1,0,0,0,286,287,1,0,0,0,287,285,
+        1,0,0,0,287,288,1,0,0,0,288,289,1,0,0,0,289,290,5,48,0,0,290,291,
+        3,54,27,0,291,49,1,0,0,0,292,293,5,11,0,0,293,294,3,54,27,0,294,
+        295,5,29,0,0,295,297,5,47,0,0,296,298,3,52,26,0,297,296,1,0,0,0,
+        298,299,1,0,0,0,299,297,1,0,0,0,299,300,1,0,0,0,300,301,1,0,0,0,
+        301,302,5,48,0,0,302,303,5,68,0,0,303,51,1,0,0,0,304,306,3,2,1,0,
+        305,307,5,69,0,0,306,305,1,0,0,0,306,307,1,0,0,0,307,313,1,0,0,0,
+        308,309,3,2,1,0,309,310,5,69,0,0,310,311,3,2,1,0,311,313,1,0,0,0,
+        312,304,1,0,0,0,312,308,1,0,0,0,313,53,1,0,0,0,314,329,5,49,0,0,
+        315,328,3,2,1,0,316,328,3,40,20,0,317,328,3,48,24,0,318,328,3,50,
+        25,0,319,328,3,20,10,0,320,328,3,18,9,0,321,328,3,24,12,0,322,328,
+        3,14,7,0,323,328,3,8,4,0,324,328,3,34,17,0,325,328,3,36,18,0,326,
+        328,3,28,14,0,327,315,1,0,0,0,327,316,1,0,0,0,327,317,1,0,0,0,327,
+        318,1,0,0,0,327,319,1,0,0,0,327,320,1,0,0,0,327,321,1,0,0,0,327,
+        322,1,0,0,0,327,323,1,0,0,0,327,324,1,0,0,0,327,325,1,0,0,0,327,
+        326,1,0,0,0,328,331,1,0,0,0,329,327,1,0,0,0,329,330,1,0,0,0,330,
+        332,1,0,0,0,331,329,1,0,0,0,332,333,5,50,0,0,333,55,1,0,0,0,334,
+        335,5,86,0,0,335,57,1,0,0,0,38,64,66,81,83,97,99,108,110,115,122,
+        130,137,149,156,168,173,181,186,193,202,205,212,226,230,235,241,
+        245,248,253,260,264,271,287,299,306,312,327,329
     ]
 
 class CParser ( Parser ):
@@ -200,9 +205,10 @@ class CParser ( Parser ):
     RULE_elseIfStatement = 22
     RULE_elseStatement = 23
     RULE_whileStatement = 24
-    RULE_condition = 25
-    RULE_block = 26
-    RULE_identifier = 27
+    RULE_doWhileStatement = 25
+    RULE_condition = 26
+    RULE_block = 27
+    RULE_identifier = 28
 
     ruleNames =  [ "compilationUnit", "expression", "constant", "functionCallExpression", 
                    "functionCall", "functionCallArgs", "statementList", 
@@ -211,8 +217,8 @@ class CParser ( Parser ):
                    "functionDefinition", "functionReturn", "functionName", 
                    "functionArgs", "assignment", "inplaceAssignment", "typeSpecifier", 
                    "ifStatementStructure", "ifStatement", "elseIfStatement", 
-                   "elseStatement", "whileStatement", "condition", "block", 
-                   "identifier" ]
+                   "elseStatement", "whileStatement", "doWhileStatement", 
+                   "condition", "block", "identifier" ]
 
     EOF = Token.EOF
     STRING_LITERAL=1
@@ -388,49 +394,49 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 64
+            self.state = 66
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while (((_la - 30)) & ~0x3f) == 0 and ((1 << (_la - 30)) & 72057594037928959) != 0:
-                self.state = 62
+                self.state = 64
                 self._errHandler.sync(self)
                 la_ = self._interp.adaptivePredict(self._input,0,self._ctx)
                 if la_ == 1:
-                    self.state = 56
+                    self.state = 58
                     self.assignment()
                     pass
 
                 elif la_ == 2:
-                    self.state = 57
+                    self.state = 59
                     self.variableInitialization()
                     pass
 
                 elif la_ == 3:
-                    self.state = 58
+                    self.state = 60
                     self.variableDeclaration()
                     pass
 
                 elif la_ == 4:
-                    self.state = 59
+                    self.state = 61
                     self.functionCall()
                     pass
 
                 elif la_ == 5:
-                    self.state = 60
+                    self.state = 62
                     self.declarationList(0)
                     pass
 
                 elif la_ == 6:
-                    self.state = 61
+                    self.state = 63
                     self.definitionList()
                     pass
 
 
-                self.state = 66
+                self.state = 68
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 67
+            self.state = 69
             self.match(CParser.EOF)
         except RecognitionException as re:
             localctx.exception = re
@@ -645,7 +651,7 @@ class CParser ( Parser ):
         self.enterRecursionRule(localctx, 2, self.RULE_expression, _p)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 81
+            self.state = 83
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,3,self._ctx)
             if la_ == 1:
@@ -653,7 +659,7 @@ class CParser ( Parser ):
                 self._ctx = localctx
                 _prevctx = localctx
 
-                self.state = 70
+                self.state = 72
                 self.constant()
                 pass
 
@@ -661,7 +667,7 @@ class CParser ( Parser ):
                 localctx = CParser.FuncCallExpressionContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
-                self.state = 71
+                self.state = 73
                 self.functionCallExpression()
                 pass
 
@@ -669,7 +675,7 @@ class CParser ( Parser ):
                 localctx = CParser.IdentiferExpressionContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
-                self.state = 72
+                self.state = 74
                 self.identifier()
                 pass
 
@@ -677,21 +683,21 @@ class CParser ( Parser ):
                 localctx = CParser.SizeofExpressionContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
-                self.state = 73
+                self.state = 75
                 self.match(CParser.SIZEOF)
-                self.state = 79
+                self.state = 81
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
                 if token in [1, 2, 3, 4, 22, 86]:
-                    self.state = 74
+                    self.state = 76
                     self.expression(0)
                     pass
                 elif token in [47]:
-                    self.state = 75
-                    self.match(CParser.LP)
-                    self.state = 76
-                    self.expression(0)
                     self.state = 77
+                    self.match(CParser.LP)
+                    self.state = 78
+                    self.expression(0)
+                    self.state = 79
                     self.match(CParser.RP)
                     pass
                 else:
@@ -701,7 +707,7 @@ class CParser ( Parser ):
 
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 97
+            self.state = 99
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,5,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
@@ -709,63 +715,63 @@ class CParser ( Parser ):
                     if self._parseListeners is not None:
                         self.triggerExitRuleEvent()
                     _prevctx = localctx
-                    self.state = 95
+                    self.state = 97
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,4,self._ctx)
                     if la_ == 1:
                         localctx = CParser.MultiplyExpressionContext(self, CParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 83
+                        self.state = 85
                         if not self.precpred(self._ctx, 4):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
-                        self.state = 84
+                        self.state = 86
                         self.match(CParser.STAR)
-                        self.state = 85
+                        self.state = 87
                         self.expression(5)
                         pass
 
                     elif la_ == 2:
                         localctx = CParser.DivideExpressionContext(self, CParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 86
+                        self.state = 88
                         if not self.precpred(self._ctx, 3):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 3)")
-                        self.state = 87
+                        self.state = 89
                         self.match(CParser.DIV)
-                        self.state = 88
+                        self.state = 90
                         self.expression(4)
                         pass
 
                     elif la_ == 3:
                         localctx = CParser.AddExpressionContext(self, CParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 89
+                        self.state = 91
                         if not self.precpred(self._ctx, 2):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
-                        self.state = 90
+                        self.state = 92
                         self.match(CParser.PLUS)
-                        self.state = 91
+                        self.state = 93
                         self.expression(3)
                         pass
 
                     elif la_ == 4:
                         localctx = CParser.SubtractExpressionContext(self, CParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 92
+                        self.state = 94
                         if not self.precpred(self._ctx, 1):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
-                        self.state = 93
+                        self.state = 95
                         self.match(CParser.MINUS)
-                        self.state = 94
+                        self.state = 96
                         self.expression(2)
                         pass
 
              
-                self.state = 99
+                self.state = 101
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,5,self._ctx)
 
@@ -819,37 +825,37 @@ class CParser ( Parser ):
         localctx = CParser.ConstantContext(self, self._ctx, self.state)
         self.enterRule(localctx, 4, self.RULE_constant)
         try:
-            self.state = 108
+            self.state = 110
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [3]:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 100
+                self.state = 102
                 self.match(CParser.INTEGER_CONSTANT)
                 pass
             elif token in [4]:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 101
+                self.state = 103
                 self.match(CParser.FLOAT_CONSTANT)
                 pass
             elif token in [2]:
                 self.enterOuterAlt(localctx, 3)
-                self.state = 102
+                self.state = 104
                 self.match(CParser.CHAR_CONSTANT)
                 pass
             elif token in [1]:
                 self.enterOuterAlt(localctx, 4)
-                self.state = 104 
+                self.state = 106 
                 self._errHandler.sync(self)
                 _alt = 1
                 while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                     if _alt == 1:
-                        self.state = 103
+                        self.state = 105
                         self.match(CParser.STRING_LITERAL)
 
                     else:
                         raise NoViableAltException(self)
-                    self.state = 106 
+                    self.state = 108 
                     self._errHandler.sync(self)
                     _alt = self._interp.adaptivePredict(self._input,6,self._ctx)
 
@@ -908,19 +914,19 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 110
+            self.state = 112
             self.identifier()
-            self.state = 111
-            self.match(CParser.LP)
             self.state = 113
+            self.match(CParser.LP)
+            self.state = 115
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if ((_la) & ~0x3f) == 0 and ((1 << _la) & 4194334) != 0 or _la==86:
-                self.state = 112
+                self.state = 114
                 self.functionCallArgs(0)
 
 
-            self.state = 115
+            self.state = 117
             self.match(CParser.RP)
         except RecognitionException as re:
             localctx.exception = re
@@ -976,21 +982,21 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 117
+            self.state = 119
             self.identifier()
-            self.state = 118
-            self.match(CParser.LP)
             self.state = 120
+            self.match(CParser.LP)
+            self.state = 122
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if ((_la) & ~0x3f) == 0 and ((1 << _la) & 4194334) != 0 or _la==86:
-                self.state = 119
+                self.state = 121
                 self.functionCallArgs(0)
 
 
-            self.state = 122
+            self.state = 124
             self.match(CParser.RP)
-            self.state = 123
+            self.state = 125
             self.match(CParser.SEMI)
         except RecognitionException as re:
             localctx.exception = re
@@ -1044,18 +1050,18 @@ class CParser ( Parser ):
         self.enterRecursionRule(localctx, 10, self.RULE_functionCallArgs, _p)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 126
-            self.expression(0)
             self.state = 128
+            self.expression(0)
+            self.state = 130
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,10,self._ctx)
             if la_ == 1:
-                self.state = 127
+                self.state = 129
                 self.match(CParser.COMMA)
 
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 135
+            self.state = 137
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,11,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
@@ -1065,15 +1071,15 @@ class CParser ( Parser ):
                     _prevctx = localctx
                     localctx = CParser.FunctionCallArgsContext(self, _parentctx, _parentState)
                     self.pushNewRecursionContext(localctx, _startState, self.RULE_functionCallArgs)
-                    self.state = 130
+                    self.state = 132
                     if not self.precpred(self._ctx, 1):
                         from antlr4.error.Errors import FailedPredicateException
                         raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
-                    self.state = 131
+                    self.state = 133
                     self.match(CParser.COMMA)
-                    self.state = 132
+                    self.state = 134
                     self.functionCallArgs(2) 
-                self.state = 137
+                self.state = 139
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,11,self._ctx)
 
@@ -1161,10 +1167,10 @@ class CParser ( Parser ):
         self.enterRecursionRule(localctx, 14, self.RULE_declarationList, _p)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 141
+            self.state = 143
             self.declaration()
             self._ctx.stop = self._input.LT(-1)
-            self.state = 147
+            self.state = 149
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,12,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
@@ -1174,13 +1180,13 @@ class CParser ( Parser ):
                     _prevctx = localctx
                     localctx = CParser.DeclarationListContext(self, _parentctx, _parentState)
                     self.pushNewRecursionContext(localctx, _startState, self.RULE_declarationList)
-                    self.state = 143
+                    self.state = 145
                     if not self.precpred(self._ctx, 1):
                         from antlr4.error.Errors import FailedPredicateException
                         raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
-                    self.state = 144
+                    self.state = 146
                     self.declaration() 
-                self.state = 149
+                self.state = 151
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,12,self._ctx)
 
@@ -1230,20 +1236,20 @@ class CParser ( Parser ):
         localctx = CParser.DeclarationContext(self, self._ctx, self.state)
         self.enterRule(localctx, 16, self.RULE_declaration)
         try:
-            self.state = 154
+            self.state = 156
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,13,self._ctx)
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 150
+                self.state = 152
                 self.functionDeclaration()
                 pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 151
+                self.state = 153
                 self.variableDeclaration()
-                self.state = 152
+                self.state = 154
                 self.match(CParser.SEMI)
                 pass
 
@@ -1292,9 +1298,9 @@ class CParser ( Parser ):
         self.enterRule(localctx, 18, self.RULE_variableDeclaration)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 156
+            self.state = 158
             self.typeSpecifier()
-            self.state = 157
+            self.state = 159
             self.identifier()
         except RecognitionException as re:
             localctx.exception = re
@@ -1350,15 +1356,15 @@ class CParser ( Parser ):
         self.enterRule(localctx, 20, self.RULE_variableInitialization)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 159
-            self.typeSpecifier()
-            self.state = 160
-            self.identifier()
             self.state = 161
-            self.match(CParser.ASSIGN)
+            self.typeSpecifier()
             self.state = 162
-            self.expression(0)
+            self.identifier()
             self.state = 163
+            self.match(CParser.ASSIGN)
+            self.state = 164
+            self.expression(0)
+            self.state = 165
             self.match(CParser.SEMI)
         except RecognitionException as re:
             localctx.exception = re
@@ -1418,29 +1424,29 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 166
+            self.state = 168
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,14,self._ctx)
             if la_ == 1:
-                self.state = 165
+                self.state = 167
                 self.typeSpecifier()
 
 
-            self.state = 168
+            self.state = 170
             self.functionName()
-            self.state = 169
-            self.match(CParser.LP)
             self.state = 171
+            self.match(CParser.LP)
+            self.state = 173
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if (((_la - 30)) & ~0x3f) == 0 and ((1 << (_la - 30)) & 72057594037928959) != 0:
-                self.state = 170
+                self.state = 172
                 self.functionArgs(0)
 
 
-            self.state = 173
+            self.state = 175
             self.match(CParser.RP)
-            self.state = 174
+            self.state = 176
             self.match(CParser.SEMI)
         except RecognitionException as re:
             localctx.exception = re
@@ -1482,7 +1488,7 @@ class CParser ( Parser ):
         self.enterRule(localctx, 24, self.RULE_definitionList)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 176
+            self.state = 178
             self.functionDefinition()
         except RecognitionException as re:
             localctx.exception = re
@@ -1543,29 +1549,29 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 179
+            self.state = 181
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,16,self._ctx)
             if la_ == 1:
-                self.state = 178
+                self.state = 180
                 self.typeSpecifier()
 
 
-            self.state = 181
+            self.state = 183
             self.functionName()
-            self.state = 182
-            self.match(CParser.LP)
             self.state = 184
+            self.match(CParser.LP)
+            self.state = 186
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if (((_la - 30)) & ~0x3f) == 0 and ((1 << (_la - 30)) & 72057594037928959) != 0:
-                self.state = 183
+                self.state = 185
                 self.functionArgs(0)
 
 
-            self.state = 186
+            self.state = 188
             self.match(CParser.RP)
-            self.state = 187
+            self.state = 189
             self.block()
         except RecognitionException as re:
             localctx.exception = re
@@ -1614,17 +1620,17 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 189
-            self.match(CParser.RETURN)
             self.state = 191
+            self.match(CParser.RETURN)
+            self.state = 193
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if ((_la) & ~0x3f) == 0 and ((1 << _la) & 4194334) != 0 or _la==86:
-                self.state = 190
+                self.state = 192
                 self.expression(0)
 
 
-            self.state = 193
+            self.state = 195
             self.match(CParser.SEMI)
         except RecognitionException as re:
             localctx.exception = re
@@ -1666,7 +1672,7 @@ class CParser ( Parser ):
         self.enterRule(localctx, 30, self.RULE_functionName)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 195
+            self.state = 197
             self.identifier()
         except RecognitionException as re:
             localctx.exception = re
@@ -1724,26 +1730,26 @@ class CParser ( Parser ):
         self.enterRecursionRule(localctx, 32, self.RULE_functionArgs, _p)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 198
-            self.typeSpecifier()
             self.state = 200
+            self.typeSpecifier()
+            self.state = 202
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,19,self._ctx)
             if la_ == 1:
-                self.state = 199
+                self.state = 201
                 self.identifier()
 
 
-            self.state = 203
+            self.state = 205
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,20,self._ctx)
             if la_ == 1:
-                self.state = 202
+                self.state = 204
                 self.match(CParser.COMMA)
 
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 210
+            self.state = 212
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,21,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
@@ -1753,15 +1759,15 @@ class CParser ( Parser ):
                     _prevctx = localctx
                     localctx = CParser.FunctionArgsContext(self, _parentctx, _parentState)
                     self.pushNewRecursionContext(localctx, _startState, self.RULE_functionArgs)
-                    self.state = 205
+                    self.state = 207
                     if not self.precpred(self._ctx, 1):
                         from antlr4.error.Errors import FailedPredicateException
                         raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
-                    self.state = 206
+                    self.state = 208
                     self.match(CParser.COMMA)
-                    self.state = 207
+                    self.state = 209
                     self.functionArgs(2) 
-                self.state = 212
+                self.state = 214
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,21,self._ctx)
 
@@ -1815,13 +1821,13 @@ class CParser ( Parser ):
         self.enterRule(localctx, 34, self.RULE_assignment)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 213
-            self.identifier()
-            self.state = 214
-            self.match(CParser.ASSIGN)
             self.state = 215
-            self.expression(0)
+            self.identifier()
             self.state = 216
+            self.match(CParser.ASSIGN)
+            self.state = 217
+            self.expression(0)
+            self.state = 218
             self.match(CParser.SEMI)
         except RecognitionException as re:
             localctx.exception = re
@@ -1901,18 +1907,18 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 218
+            self.state = 220
             self.identifier()
-            self.state = 219
+            self.state = 221
             _la = self._input.LA(1)
             if not((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & 1023) != 0):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
                 self.consume()
-            self.state = 220
+            self.state = 222
             self.expression(0)
-            self.state = 221
+            self.state = 223
             self.match(CParser.SEMI)
         except RecognitionException as re:
             localctx.exception = re
@@ -1991,27 +1997,27 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 224
+            self.state = 226
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==30:
-                self.state = 223
+                self.state = 225
                 self.match(CParser.CONST)
 
 
-            self.state = 246
+            self.state = 248
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [33]:
-                self.state = 226
+                self.state = 228
                 self.match(CParser.VOID)
                 pass
             elif token in [31, 32, 34, 35, 36, 37, 38, 39]:
-                self.state = 228
+                self.state = 230
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==31 or _la==32:
-                    self.state = 227
+                    self.state = 229
                     _la = self._input.LA(1)
                     if not(_la==31 or _la==32):
                         self._errHandler.recoverInline(self)
@@ -2020,77 +2026,77 @@ class CParser ( Parser ):
                         self.consume()
 
 
-                self.state = 243
+                self.state = 245
                 self._errHandler.sync(self)
                 la_ = self._interp.adaptivePredict(self._input,26,self._ctx)
                 if la_ == 1:
-                    self.state = 230
+                    self.state = 232
                     self.match(CParser.CHAR)
                     pass
 
                 elif la_ == 2:
-                    self.state = 231
+                    self.state = 233
                     self.match(CParser.SHORT)
                     pass
 
                 elif la_ == 3:
-                    self.state = 233
+                    self.state = 235
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
                     if _la==35:
-                        self.state = 232
+                        self.state = 234
                         self.match(CParser.SHORT)
 
 
-                    self.state = 235
+                    self.state = 237
                     self.match(CParser.INT)
                     pass
 
                 elif la_ == 4:
-                    self.state = 236
+                    self.state = 238
                     self.match(CParser.LONG)
                     pass
 
                 elif la_ == 5:
-                    self.state = 237
+                    self.state = 239
                     self.match(CParser.FLOAT)
                     pass
 
                 elif la_ == 6:
-                    self.state = 239
+                    self.state = 241
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
                     if _la==37:
-                        self.state = 238
+                        self.state = 240
                         self.match(CParser.LONG)
 
 
-                    self.state = 241
+                    self.state = 243
                     self.match(CParser.DOUBLE)
                     pass
 
                 elif la_ == 7:
-                    self.state = 242
+                    self.state = 244
                     self.match(CParser.INT)
                     pass
 
 
                 pass
             elif token in [86]:
-                self.state = 245
+                self.state = 247
                 self.identifier()
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 251
+            self.state = 253
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,28,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                 if _alt==1:
-                    self.state = 248
+                    self.state = 250
                     self.match(CParser.STAR) 
-                self.state = 253
+                self.state = 255
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,28,self._ctx)
 
@@ -2146,24 +2152,24 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 254
+            self.state = 256
             self.ifStatement()
-            self.state = 258
+            self.state = 260
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,29,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                 if _alt==1:
-                    self.state = 255
+                    self.state = 257
                     self.elseIfStatement() 
-                self.state = 260
+                self.state = 262
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,29,self._ctx)
 
-            self.state = 262
+            self.state = 264
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==12:
-                self.state = 261
+                self.state = 263
                 self.elseStatement()
 
 
@@ -2224,25 +2230,25 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 264
+            self.state = 266
             self.match(CParser.IF)
-            self.state = 265
+            self.state = 267
             self.match(CParser.LP)
-            self.state = 267 
+            self.state = 269 
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while True:
-                self.state = 266
+                self.state = 268
                 self.condition()
-                self.state = 269 
+                self.state = 271 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if not (((_la) & ~0x3f) == 0 and ((1 << _la) & 4194334) != 0 or _la==86):
                     break
 
-            self.state = 271
+            self.state = 273
             self.match(CParser.RP)
-            self.state = 272
+            self.state = 274
             self.block()
         except RecognitionException as re:
             localctx.exception = re
@@ -2287,9 +2293,9 @@ class CParser ( Parser ):
         self.enterRule(localctx, 44, self.RULE_elseIfStatement)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 274
+            self.state = 276
             self.match(CParser.ELSE)
-            self.state = 275
+            self.state = 277
             self.ifStatement()
         except RecognitionException as re:
             localctx.exception = re
@@ -2334,9 +2340,9 @@ class CParser ( Parser ):
         self.enterRule(localctx, 46, self.RULE_elseStatement)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 277
+            self.state = 279
             self.match(CParser.ELSE)
-            self.state = 278
+            self.state = 280
             self.block()
         except RecognitionException as re:
             localctx.exception = re
@@ -2395,26 +2401,113 @@ class CParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 280
+            self.state = 282
             self.match(CParser.WHILE)
-            self.state = 281
+            self.state = 283
             self.match(CParser.LP)
-            self.state = 283 
+            self.state = 285 
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while True:
-                self.state = 282
+                self.state = 284
                 self.condition()
-                self.state = 285 
+                self.state = 287 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if not (((_la) & ~0x3f) == 0 and ((1 << _la) & 4194334) != 0 or _la==86):
                     break
 
-            self.state = 287
+            self.state = 289
             self.match(CParser.RP)
-            self.state = 288
+            self.state = 290
             self.block()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class DoWhileStatementContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def DO(self):
+            return self.getToken(CParser.DO, 0)
+
+        def block(self):
+            return self.getTypedRuleContext(CParser.BlockContext,0)
+
+
+        def WHILE(self):
+            return self.getToken(CParser.WHILE, 0)
+
+        def LP(self):
+            return self.getToken(CParser.LP, 0)
+
+        def RP(self):
+            return self.getToken(CParser.RP, 0)
+
+        def SEMI(self):
+            return self.getToken(CParser.SEMI, 0)
+
+        def condition(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(CParser.ConditionContext)
+            else:
+                return self.getTypedRuleContext(CParser.ConditionContext,i)
+
+
+        def getRuleIndex(self):
+            return CParser.RULE_doWhileStatement
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterDoWhileStatement" ):
+                listener.enterDoWhileStatement(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitDoWhileStatement" ):
+                listener.exitDoWhileStatement(self)
+
+
+
+
+    def doWhileStatement(self):
+
+        localctx = CParser.DoWhileStatementContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 50, self.RULE_doWhileStatement)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 292
+            self.match(CParser.DO)
+            self.state = 293
+            self.block()
+            self.state = 294
+            self.match(CParser.WHILE)
+            self.state = 295
+            self.match(CParser.LP)
+            self.state = 297 
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            while True:
+                self.state = 296
+                self.condition()
+                self.state = 299 
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if not (((_la) & ~0x3f) == 0 and ((1 << _la) & 4194334) != 0 or _la==86):
+                    break
+
+            self.state = 301
+            self.match(CParser.RP)
+            self.state = 302
+            self.match(CParser.SEMI)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -2458,21 +2551,21 @@ class CParser ( Parser ):
     def condition(self):
 
         localctx = CParser.ConditionContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 50, self.RULE_condition)
+        self.enterRule(localctx, 52, self.RULE_condition)
         self._la = 0 # Token type
         try:
-            self.state = 298
+            self.state = 312
             self._errHandler.sync(self)
-            la_ = self._interp.adaptivePredict(self._input,34,self._ctx)
+            la_ = self._interp.adaptivePredict(self._input,35,self._ctx)
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 290
+                self.state = 304
                 self.expression(0)
-                self.state = 292
+                self.state = 306
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==69:
-                    self.state = 291
+                    self.state = 305
                     self.match(CParser.COMMA)
 
 
@@ -2480,11 +2573,11 @@ class CParser ( Parser ):
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 294
+                self.state = 308
                 self.expression(0)
-                self.state = 295
+                self.state = 309
                 self.match(CParser.COMMA)
-                self.state = 296
+                self.state = 310
                 self.expression(0)
                 pass
 
@@ -2530,6 +2623,13 @@ class CParser ( Parser ):
                 return self.getTypedRuleContexts(CParser.WhileStatementContext)
             else:
                 return self.getTypedRuleContext(CParser.WhileStatementContext,i)
+
+
+        def doWhileStatement(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(CParser.DoWhileStatementContext)
+            else:
+                return self.getTypedRuleContext(CParser.DoWhileStatementContext,i)
 
 
         def variableInitialization(self, i:int=None):
@@ -2605,80 +2705,85 @@ class CParser ( Parser ):
     def block(self):
 
         localctx = CParser.BlockContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 52, self.RULE_block)
+        self.enterRule(localctx, 54, self.RULE_block)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 300
-            self.match(CParser.LC)
             self.state = 314
+            self.match(CParser.LC)
+            self.state = 329
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while ((_la) & ~0x3f) == 0 and ((1 << _la) & 1098981179422) != 0 or _la==86:
-                self.state = 312
+            while ((_la) & ~0x3f) == 0 and ((1 << _la) & 1098981181470) != 0 or _la==86:
+                self.state = 327
                 self._errHandler.sync(self)
-                la_ = self._interp.adaptivePredict(self._input,35,self._ctx)
+                la_ = self._interp.adaptivePredict(self._input,36,self._ctx)
                 if la_ == 1:
-                    self.state = 301
+                    self.state = 315
                     self.expression(0)
                     pass
 
                 elif la_ == 2:
-                    self.state = 302
+                    self.state = 316
                     self.ifStatementStructure()
                     pass
 
                 elif la_ == 3:
-                    self.state = 303
+                    self.state = 317
                     self.whileStatement()
                     pass
 
                 elif la_ == 4:
-                    self.state = 304
-                    self.variableInitialization()
+                    self.state = 318
+                    self.doWhileStatement()
                     pass
 
                 elif la_ == 5:
-                    self.state = 305
-                    self.variableDeclaration()
+                    self.state = 319
+                    self.variableInitialization()
                     pass
 
                 elif la_ == 6:
-                    self.state = 306
-                    self.definitionList()
+                    self.state = 320
+                    self.variableDeclaration()
                     pass
 
                 elif la_ == 7:
-                    self.state = 307
-                    self.declarationList(0)
+                    self.state = 321
+                    self.definitionList()
                     pass
 
                 elif la_ == 8:
-                    self.state = 308
-                    self.functionCall()
+                    self.state = 322
+                    self.declarationList(0)
                     pass
 
                 elif la_ == 9:
-                    self.state = 309
-                    self.assignment()
+                    self.state = 323
+                    self.functionCall()
                     pass
 
                 elif la_ == 10:
-                    self.state = 310
-                    self.inplaceAssignment()
+                    self.state = 324
+                    self.assignment()
                     pass
 
                 elif la_ == 11:
-                    self.state = 311
+                    self.state = 325
+                    self.inplaceAssignment()
+                    pass
+
+                elif la_ == 12:
+                    self.state = 326
                     self.functionReturn()
                     pass
 
 
-                self.state = 316
+                self.state = 331
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 317
+            self.state = 332
             self.match(CParser.RC)
         except RecognitionException as re:
             localctx.exception = re
@@ -2716,10 +2821,10 @@ class CParser ( Parser ):
     def identifier(self):
 
         localctx = CParser.IdentifierContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 54, self.RULE_identifier)
+        self.enterRule(localctx, 56, self.RULE_identifier)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 319
+            self.state = 334
             self.match(CParser.IDENTIFIER)
         except RecognitionException as re:
             localctx.exception = re

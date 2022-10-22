@@ -296,6 +296,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#doWhileStatement.
+    def enterDoWhileStatement(self, ctx:CParser.DoWhileStatementContext):
+        pass
+
+    # Exit a parse tree produced by CParser#doWhileStatement.
+    def exitDoWhileStatement(self, ctx:CParser.DoWhileStatementContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#condition.
     def enterCondition(self, ctx:CParser.ConditionContext):
         pass

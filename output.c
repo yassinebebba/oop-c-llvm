@@ -21,9 +21,50 @@ short int * testing(int a, int b, int c) {
 	int nothing = 20 + 1.2E10;
 }
 pyint * integer_builder(int64_t value) {
+	do {
+	} while (1);
 	while (1 + x, 2) {
-		while (x + 2, as) {
+		while (x + 2, as, asd, ads(x+2)) {
+			while (1 + x, 2) {
+				while (1 + x, 2) {
+				}
+			}
 		}
 	}
+	d += 10 + a() - 20 * 3; 
+	d -= 10 + sizeof 10 + 3; 
+	d *= 10; 
+	d /= 10; 
+	d <<= 10; 
+	d >>= 10; 
+	d &= 10; 
+	d |= 10; 
+	d ^= 10; 
+
+	if (x + 2, as, asd, ads(x+2)) {
+	} else if (x)  {
+	} else {
+		d += 10 + a() - 20 * 3; 
+		d -= 10 + sizeof 10 + 3; 
+		d *= 10; 
+		d /= 10; 
+		d <<= 10; 
+		d >>= 10; 
+		d &= 10; 
+		d |= 10; 
+		d ^= 10; 
+
+		if (x + 2, as, asd, ads(x+2)) {
+		} else if (x)  {
+		}
+
+		if (x + 2, as, asd, ads(x+2)) {
+		} else if (x)  {
+		} else {
+		}
+		pyint * integer = malloc(sizeof(pyint));
+		return 1+3*A();
+	}
+	pyint * integer = malloc(sizeof(pyint));
+	return 1+3*A();
 }
-ads(x+2)){while(1+

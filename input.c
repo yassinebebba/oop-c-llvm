@@ -32,6 +32,9 @@ short int * testing(int a, int b, int c) {
 
 pyint * integer_builder(int64_t value)
 {
+    do {
+
+    } while (1);
 	while (1 + x, 2) {
 		while (x + 2, as, asd, ads(x+2)) {
 		while (1 + x, 2) {
@@ -64,6 +67,11 @@ pyint * integer_builder(int64_t value)
 	d &= 10;
 	d |= 10;
 	d ^= 10;
+			if (x + 2, as, asd, ads(x+2)){
+		} else if (x) {
+
+		}
+
 	if (x + 2, as, asd, ads(x+2)) {
 	}
 	else if (x) {
