@@ -134,6 +134,10 @@ ifStatement: IF LP condition+ RP block;
 elseIfStatement: ELSE ifStatement;
 elseStatement: ELSE block;
 
+whileStatement
+    : WHILE LP condition+ RP block
+    ;
+
 condition
     : expression COMMA?
     | expression COMMA expression
@@ -144,6 +148,7 @@ block
     : LC (
         expression
       | ifStatementStructure
+      | whileStatement
       | variableInitialization
       | variableDeclaration
       | definitionList

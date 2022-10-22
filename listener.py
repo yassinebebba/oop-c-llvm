@@ -222,7 +222,16 @@ class Listener(CListener):
 
     def enterElseStatement(self, ctx: CParser.ElseStatementContext):
         self.add_indentation()
-        self.output.write(f'else ')
+        self.output.write(f'else')
+
+    def enterWhileStatement(self, ctx: CParser.WhileStatementContext):
+        self.add_indentation()
+        conditions: list[CParser.ConditionContext] = [
+            condition for condition in ctx.getChildren()
+            if isinstance(condition, CParser.ConditionContext)
+        ]
+        values = list(map(self.enterCondition, conditions))
+        self.output.write(f'while ({", ".join(values)})')
 
     def enterCondition(self, ctx: CParser.ConditionContext):
         expressions: list[CParser.ExpressionContext] = [

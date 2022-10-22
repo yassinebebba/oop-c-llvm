@@ -32,6 +32,14 @@ short int * testing(int a, int b, int c) {
 
 pyint * integer_builder(int64_t value)
 {
+	while (1 + x, 2) {
+		while (x + 2, as, asd, ads(x+2)) {
+		while (1 + x, 2) {
+		while (1 + x, 2) {
+	}
+	}
+	}
+	}
     d += 10 + a() - 20 * 3;
     d -= 10 + sizeof 10 + 3;
     d *= 10;
