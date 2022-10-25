@@ -51,8 +51,7 @@ functionCallExpression: identifier LP functionCallArgs? RP;
 functionCall: identifier LP functionCallArgs? RP SEMI;
 // this parser rule fixed the note above :)
 functionCallArgs
-    : expression COMMA?
-    | functionCallArgs COMMA functionCallArgs
+    : expression (COMMA expression)* COMMA?
     ;
 
 statementList
@@ -93,9 +92,10 @@ functionReturn
 // this next parser rule fixes the above note make sure you use it if
 // you encounter the same problem
 functionArgs
-    : typeSpecifier identifier? COMMA?
-    | functionArgs COMMA functionArgs
+    : arg (COMMA arg)* COMMA?
     ;
+
+arg: typeSpecifier identifier?;
 
 assignment
     : identifier ASSIGN expression SEMI
@@ -139,21 +139,20 @@ typeSpecifier
 ifStatementStructure
     : ifStatement elseIfStatement* elseStatement?
     ;
-ifStatement: IF LP condition+ RP block;
+ifStatement: IF LP condition RP block;
 elseIfStatement: ELSE ifStatement;
 elseStatement: ELSE block;
 
 whileStatement
-    : WHILE LP condition+ RP block
+    : WHILE LP condition RP block
     ;
 
 doWhileStatement
-    : DO block WHILE LP condition+ RP SEMI
+    : DO block WHILE LP condition RP SEMI
     ;
 
 condition
-    : expression COMMA?
-    | expression COMMA expression
+    : expression (COMMA expression)* COMMA?
     ;
 
 // I think block and functionBlock are the same?!!!

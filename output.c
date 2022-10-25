@@ -14,11 +14,11 @@ int test() {
 	int b = 3 * 4 * 5 * 6 + 9 + 9 + 0;
 	int c = 3 + 6 + b * 7 + D + a(1+2,2,D);
 	int d;
-	test(1,2,d());
+	test(1, 2, d())
 }
-test(1,2,-+-+-+-d(),"asd""asd",'c');
+test(1, 2, -+-+-+- d(), "asd""asd", 'c')
 short int * testing(int a, int b, int c) {
- 	if (x) {
+ 	if (x, a, v, b) {
  
 	}
 	else if (x) {

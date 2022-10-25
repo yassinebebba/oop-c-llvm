@@ -233,6 +233,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#arg.
+    def enterArg(self, ctx:CParser.ArgContext):
+        pass
+
+    # Exit a parse tree produced by CParser#arg.
+    def exitArg(self, ctx:CParser.ArgContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#assignment.
     def enterAssignment(self, ctx:CParser.AssignmentContext):
         pass

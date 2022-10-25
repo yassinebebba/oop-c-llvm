@@ -142,49 +142,6 @@ class Listener(CListener):
 
         return ' '.join(chunks)
 
-    def get_args(self, parent, func_args: list):  # for parent node
-        """
-        recursively getting func args because of this
-        grammar rule :(
-        functionArgs
-            : typeSpecifier identifier? COMMA?
-            | functionArgs COMMA functionArgs
-            ;
-        which will result in if you input: (int a, int b, int c)
-        it will not create one node functionArgs ctx
-        with many children it will create something like
-        [functionArgs, COMMA, typeSpecifier, identifier]
-        conforming to the recursive rule and so on the more args
-        you add
-        """
-        if parent is None: return
-        if isinstance(parent.getChild(0),
-                      CParser.TypeSpecifierContext):
-            func_args.append(' '.join(
-                [
-                    tn.getText() for tn in parent.getChildren()
-                ]
-            ))
-            return
-        # if isinstance(parent, TerminalNodeImpl):
-        #     # uncommenting this line will result in args having
-        #     # this value:
-        #     # ['int a', ',', 'int b', ',', 'Point s', ',', 'Point']
-        #     # this line: >>> args.append(parent.getText())
-        #
-        #     #
-        #     return
-
-        # doing it in EAFP
-        # Easier to Ask Forgiveness Than Permission
-        try:
-            for expr in parent.getChildren():
-                self.get_args(expr, func_args)
-        except AttributeError:
-            # we reached a TerminalNodeImpl it does not have
-            # children, guess why, hehe because it is terminal
-            return
-
     def enterCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         for child in ctx.getChildren():
             match type(child):
@@ -250,10 +207,7 @@ class Listener(CListener):
                                  ctx: CParser.FunctionDeclarationContext):
         type_specifier = self.match_type_specifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        func_args = []
-        # recursive func to visit nodes
-        self.get_args(ctx.functionArgs(), func_args)
-        args = ', '.join(func_args)
+        args: str = self.enterFunctionArgs(ctx.functionArgs())
         return f'{type_specifier} {identifier}({args});'
 
     def enterFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
@@ -268,10 +222,20 @@ class Listener(CListener):
         return f'{rtype} {identifier}({args}) {"{"}\n {block}\n{"}"}'
 
     def enterFunctionArgs(self, ctx: CParser.FunctionArgsContext):
-        func_args = []
-        # recursive func to visit nodes
-        self.get_args(ctx, func_args)
-        return ', '.join(func_args)
+        if ctx is None:
+            return ''
+        args: list[CParser.ArgContext] = [
+            arg for arg in ctx.getChildren()
+            if isinstance(arg, CParser.ArgContext)
+        ]
+        values = list(map(self.enterArg, args))
+        return ', '.join(values)
+
+    def enterArg(self, ctx: CParser.ArgContext):
+        type_specifier: str = self.enterTypeSpecifier(ctx.typeSpecifier())
+        if ctx.identifier():
+            return f'{type_specifier} {ctx.identifier().getText()}'
+        return type_specifier
 
     def enterAssignment(self, ctx: CParser.AssignmentContext):
         # identifier ASSIGN expression SEMI
@@ -298,7 +262,18 @@ class Listener(CListener):
         return f'{identifier} {operator} {expression};'
 
     def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
-        return ctx.getText()
+        args = self.enterFunctionCallArgs(ctx.functionCallArgs())
+        return f'{ctx.identifier().getText()}({args})'
+
+    def enterFunctionCallArgs(self, ctx: CParser.FunctionCallArgsContext):
+        if ctx is None:
+            return ''
+        expressions: list[CParser.ExpressionContext] = [
+            arg for arg in ctx.getChildren()
+            if isinstance(arg, CParser.ExpressionContext)
+        ]
+        values: list[str] = list(map(self.enterExpression, expressions))
+        return ', '.join(values)
 
     def enterFunctionReturn(self, ctx: CParser.FunctionReturnContext):
         if ctx.expression():
@@ -380,7 +355,7 @@ class Listener(CListener):
             if isinstance(expression, CParser.ExpressionContext)
         ]
         values = list(map(self.enterExpression, expressions))
-        return ' '.join(values)
+        return ', '.join(values)
 
     def enterExpression(self, ctx: CParser.ExpressionContext):
         values = []

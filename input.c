@@ -22,7 +22,7 @@ test(1,2, -+-+-+-d(), "asd" "asd", 'c');
 
 
 short int * testing(int a, int b, int c) {
-    if (x) {
+    if (x, a, v, b,) {
     } else if (x) {
         if (x) {
 
