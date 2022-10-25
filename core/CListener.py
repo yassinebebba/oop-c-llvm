@@ -170,15 +170,6 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#declaration.
-    def enterDeclaration(self, ctx:CParser.DeclarationContext):
-        pass
-
-    # Exit a parse tree produced by CParser#declaration.
-    def exitDeclaration(self, ctx:CParser.DeclarationContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#variableDeclaration.
     def enterVariableDeclaration(self, ctx:CParser.VariableDeclarationContext):
         pass
@@ -188,12 +179,12 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#variableInitialization.
-    def enterVariableInitialization(self, ctx:CParser.VariableInitializationContext):
+    # Enter a parse tree produced by CParser#variableDefinition.
+    def enterVariableDefinition(self, ctx:CParser.VariableDefinitionContext):
         pass
 
-    # Exit a parse tree produced by CParser#variableInitialization.
-    def exitVariableInitialization(self, ctx:CParser.VariableInitializationContext):
+    # Exit a parse tree produced by CParser#variableDefinition.
+    def exitVariableDefinition(self, ctx:CParser.VariableDefinitionContext):
         pass
 
 
@@ -230,15 +221,6 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#functionReturn.
     def exitFunctionReturn(self, ctx:CParser.FunctionReturnContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#functionName.
-    def enterFunctionName(self, ctx:CParser.FunctionNameContext):
-        pass
-
-    # Exit a parse tree produced by CParser#functionName.
-    def exitFunctionName(self, ctx:CParser.FunctionNameContext):
         pass
 
 

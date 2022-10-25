@@ -3,8 +3,6 @@ grammar C;
 compilationUnit
     : (
           assignment
-        | variableInitialization
-        | variableDeclaration
         | functionCall
         | declarationList
         | definitionList
@@ -62,35 +60,29 @@ statementList
     ;
 
 declarationList
-	: declaration
-	| declarationList declaration
+	: functionDeclaration SEMI
+	| variableDeclaration SEMI
 	;
-
-declaration
-    : functionDeclaration
-    | variableDeclaration SEMI
-    ;
 
 variableDeclaration: typeSpecifier identifier;
 
-variableInitialization: typeSpecifier identifier ASSIGN expression SEMI;
+variableDefinition: typeSpecifier identifier ASSIGN expression SEMI;
 
 functionDeclaration
-    : typeSpecifier? functionName LP functionArgs? RP SEMI
+    : typeSpecifier? identifier LP functionArgs? RP
     ;
 
 definitionList
     : functionDefinition
+    | variableDefinition
     ;
 functionDefinition
-    : typeSpecifier? functionName LP functionArgs? RP block
+    : typeSpecifier? identifier LP functionArgs? RP block
     ;
 
 functionReturn
     : RETURN expression? SEMI
     ;
-
-functionName: identifier;
 
 // will probably have to split functionArgs into
 // functionDeclarationArgs and functionDefinitionArgs
@@ -171,8 +163,7 @@ block
       | ifStatementStructure
       | whileStatement
       | doWhileStatement
-      | variableInitialization
-      | variableDeclaration
+      | variableDefinition
       | definitionList
       | declarationList
       | functionCall
