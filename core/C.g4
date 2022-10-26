@@ -6,6 +6,7 @@ compilationUnit
         | functionCall
         | declarationList
         | definitionList
+        | classDefinition
       )* EOF
     ;
 
@@ -59,8 +60,8 @@ statementList
     ;
 
 declarationList
-	: functionDeclaration SEMI
-	| variableDeclaration SEMI
+	: functionDeclaration
+	| variableDeclaration
 	| structDeclaration
 	;
 
@@ -70,12 +71,12 @@ definitionList
     | structDefinition
     ;
 
-variableDeclaration: typeSpecifier identifier;
+variableDeclaration: typeSpecifier identifier SEMI;
 
 variableDefinition: typeSpecifier identifier ASSIGN expression SEMI;
 
 functionDeclaration
-    : typeSpecifier? identifier LP functionArgs? RP
+    : typeSpecifier? identifier LP functionArgs? RP SEMI
     ;
 
 functionDefinition
@@ -172,7 +173,19 @@ condition
     : expression (COMMA expression)* COMMA?
     ;
 
-// I think block and functionBlock are the same?!!!
+// START OOP SECTION
+classDefinition
+    : CLASS identifier classBlock
+    ;
+classBlock
+    : LC (
+        variableDefinition
+      | variableDeclaration
+      | functionDefinition
+     )* RC
+   ;
+// END OOP SECTION
+
 block
     : LC (
         expression
@@ -202,6 +215,8 @@ FLOAT_CONSTANT
 EXPONENT: [eE] [+-]? [0-9]+;
 
 // https://learn.microsoft.com/en-us/cpp/c-language/c-type-specifiers?view=msvc-170
+
+CLASS: 'class';
 
 AUTO: 'auto';
 BREAK: 'break';

@@ -1,3 +1,11 @@
+class String {
+ 	int a;
+	int x = 10;
+	void __init__(String self) {
+ 
+	}
+}
+
 struct a;
 struct a {
 	int a;

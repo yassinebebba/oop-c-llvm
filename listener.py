@@ -197,6 +197,11 @@ class Listener(CListener):
                     value = self.enterAssignment(child)
                     self.write(value)
                     self.add_newline()
+                case CParser.ClassDefinitionContext:
+                    self.add_indentation()
+                    value = self.enterClassDefinition(child)
+                    self.write(value)
+                    self.add_newline()
 
     def enterTypeSpecifier(self, ctx: CParser.TypeSpecifierContext):
         return self.match_type_specifier(ctx)
@@ -231,7 +236,7 @@ class Listener(CListener):
         block: str = self.enterBlock(ctx.block())
         self.state.exit_block_scope()
 
-        return f'{rtype} {identifier}({args}) {"{"}\n {block}\n{"}"}'
+        return f'{rtype} {identifier}({args}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
     def enterFunctionArgs(self, ctx: CParser.FunctionArgsContext):
         if ctx is None:
@@ -522,3 +527,45 @@ class Listener(CListener):
 
     def exitBlock(self, ctx: CParser.BlockContext):
         self.state.exit_block_scope()
+
+    def enterClassDefinition(self, ctx: CParser.ClassDefinitionContext):
+        self.state.enter_block_scope()
+        identifier: str = ctx.identifier().getText()
+        class_block: str = self.enterClassBlock(ctx.classBlock())
+        self.state.exit_block_scope()
+        return f'class {identifier} {"{"}\n {class_block}\n{"}"}\n'
+
+    def enterClassBlock(self, ctx: CParser.ClassBlockContext):
+        result: str = ''
+        attribute_declarations: list[CParser.VariableDeclarationContext] = []
+        attribute_definitions: list[CParser.VariableDefinitionContext] = []
+        methods: list[CParser.FunctionDefinitionContext] = []
+
+        for child in ctx.getChildren():
+            match type(child):
+                case CParser.VariableDeclarationContext:
+                    attribute_declarations.append(child)
+                case CParser.VariableDefinitionContext:
+                    attribute_definitions.append(child)
+                case CParser.FunctionDefinitionContext:
+                    methods.append(child)
+
+        for attribute in attribute_declarations:
+            result += self.state.tabs
+            value = self.enterVariableDeclaration(attribute)
+            result += value
+            result += '\n'
+
+        for attribute in attribute_definitions:
+            result += self.state.tabs
+            value = self.enterVariableDefinition(attribute)
+            result += value
+            result += '\n'
+
+        for method in methods:
+            result += self.state.tabs
+            value = self.enterFunctionDefinition(method)
+            result += value
+            result += '\n'
+
+        return result[:-1]
