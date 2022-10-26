@@ -61,7 +61,14 @@ statementList
 declarationList
 	: functionDeclaration SEMI
 	| variableDeclaration SEMI
+	| structDeclaration
 	;
+
+definitionList
+    : functionDefinition
+    | variableDefinition
+    | structDefinition
+    ;
 
 variableDeclaration: typeSpecifier identifier;
 
@@ -71,10 +78,6 @@ functionDeclaration
     : typeSpecifier? identifier LP functionArgs? RP
     ;
 
-definitionList
-    : functionDefinition
-    | variableDefinition
-    ;
 functionDefinition
     : typeSpecifier? identifier LP functionArgs? RP block
     ;
@@ -96,6 +99,20 @@ functionArgs
     ;
 
 arg: typeSpecifier identifier?;
+
+structDeclaration: STRUCT identifier SEMI;
+
+structDefinition: STRUCT identifier structBlock SEMI;
+
+structBlock
+    : LC (
+        field
+      | bitField
+     )* RC
+   ;
+
+field: typeSpecifier identifier SEMI;
+bitField: typeSpecifier identifier COLON INTEGER_CONSTANT SEMI;
 
 assignment
     : identifier ASSIGN expression SEMI

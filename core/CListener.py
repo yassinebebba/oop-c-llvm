@@ -170,6 +170,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#definitionList.
+    def enterDefinitionList(self, ctx:CParser.DefinitionListContext):
+        pass
+
+    # Exit a parse tree produced by CParser#definitionList.
+    def exitDefinitionList(self, ctx:CParser.DefinitionListContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#variableDeclaration.
     def enterVariableDeclaration(self, ctx:CParser.VariableDeclarationContext):
         pass
@@ -194,15 +203,6 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#functionDeclaration.
     def exitFunctionDeclaration(self, ctx:CParser.FunctionDeclarationContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#definitionList.
-    def enterDefinitionList(self, ctx:CParser.DefinitionListContext):
-        pass
-
-    # Exit a parse tree produced by CParser#definitionList.
-    def exitDefinitionList(self, ctx:CParser.DefinitionListContext):
         pass
 
 
@@ -239,6 +239,51 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#arg.
     def exitArg(self, ctx:CParser.ArgContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#structDeclaration.
+    def enterStructDeclaration(self, ctx:CParser.StructDeclarationContext):
+        pass
+
+    # Exit a parse tree produced by CParser#structDeclaration.
+    def exitStructDeclaration(self, ctx:CParser.StructDeclarationContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#structDefinition.
+    def enterStructDefinition(self, ctx:CParser.StructDefinitionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#structDefinition.
+    def exitStructDefinition(self, ctx:CParser.StructDefinitionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#structBlock.
+    def enterStructBlock(self, ctx:CParser.StructBlockContext):
+        pass
+
+    # Exit a parse tree produced by CParser#structBlock.
+    def exitStructBlock(self, ctx:CParser.StructBlockContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#field.
+    def enterField(self, ctx:CParser.FieldContext):
+        pass
+
+    # Exit a parse tree produced by CParser#field.
+    def exitField(self, ctx:CParser.FieldContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#bitField.
+    def enterBitField(self, ctx:CParser.BitFieldContext):
+        pass
+
+    # Exit a parse tree produced by CParser#bitField.
+    def exitBitField(self, ctx:CParser.BitFieldContext):
         pass
 
 

@@ -160,6 +160,12 @@ class Listener(CListener):
                                     declaration)
                                 self.write(value)
                                 self.add_newline()
+                            case CParser.StructDeclarationContext:
+                                self.add_indentation()
+                                value = self.enterStructDeclaration(
+                                    declaration)
+                                self.write(value)
+                                self.add_newline()
                 case CParser.DefinitionListContext:
                     for definition in child.getChildren():
                         match type(definition):
@@ -172,6 +178,12 @@ class Listener(CListener):
                             case CParser.FunctionDefinitionContext:
                                 self.add_indentation()
                                 value = self.enterFunctionDefinition(
+                                    definition)
+                                self.write(value)
+                                self.add_newline()
+                            case CParser.StructDefinitionContext:
+                                self.add_indentation()
+                                value = self.enterStructDefinition(
                                     definition)
                                 self.write(value)
                                 self.add_newline()
@@ -237,6 +249,46 @@ class Listener(CListener):
             return f'{type_specifier} {ctx.identifier().getText()}'
         return type_specifier
 
+    def enterStructDeclaration(self, ctx: CParser.StructDeclarationContext):
+        return f'struct {ctx.identifier().getText()};'
+
+    def enterStructDefinition(self, ctx: CParser.StructDefinitionContext):
+        self.state.enter_block_scope()
+        struct_block: str = self.enterStructBlock(ctx.structBlock())
+        self.state.exit_block_scope()
+        return f'struct {ctx.identifier().getText()} {"{"}\n{struct_block}\n{self.state.tabs}{"}"};'
+
+    def enterStructBlock(self, ctx: CParser.StructBlockContext):
+        if ctx is None:
+            return ''
+
+        result: str = ''
+        for child in ctx.getChildren():
+            match type(child):
+                case CParser.FieldContext:
+                    result += self.state.tabs
+                    value = self.enterField(child)
+                    result += value
+                    result += '\n'
+                case CParser.BitFieldContext:
+                    result += self.state.tabs
+                    value = self.enterBitField(child)
+                    result += value
+                    result += '\n'
+
+        # [:-1] remove the last newline
+        return result[:-1]
+
+    def enterField(self, ctx: CParser.FieldContext):
+        type_specifier: str = self.match_type_specifier(ctx.typeSpecifier())
+        return f'{type_specifier} {ctx.identifier().getText()};'
+
+    def enterBitField(self, ctx: CParser.BitFieldContext):
+        type_specifier: str = self.match_type_specifier(ctx.typeSpecifier())
+        identifier: str = ctx.identifier().getText()
+        bit_count: str = ctx.INTEGER_CONSTANT()
+        return f'{type_specifier} {identifier}: {bit_count};'
+
     def enterAssignment(self, ctx: CParser.AssignmentContext):
         # identifier ASSIGN expression SEMI
         self.check_variable_assignment(ctx)
@@ -284,21 +336,20 @@ class Listener(CListener):
     def enterIfStatementStructure(self,
                                   ctx: CParser.IfStatementStructureContext):
         result: str = ''
-        tabs = '\t' * self.state.scope_level
         for child in ctx.getChildren():
             match type(child):
                 case CParser.IfStatementContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterIfStatement(child)
                     result += value
                     result += '\n'
                 case CParser.ElseIfStatementContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterElseIfStatement(child)
                     result += value
                     result += '\n'
                 case CParser.ElseStatementContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterElseStatement(child)
                     result += value
                     result += '\n'
@@ -393,15 +444,20 @@ class Listener(CListener):
            ;
         """
         result: str = ''
-        tabs = '\t' * self.state.scope_level
         for child in ctx.getChildren():
             match type(child):
                 case CParser.DeclarationListContext:
                     for declaration in child.getChildren():
                         match type(declaration):
                             case CParser.VariableDeclarationContext:
-                                result += tabs
+                                result += self.state.tabs
                                 value = self.enterVariableDeclaration(
+                                    declaration)
+                                result += value
+                                result += '\n'
+                            case CParser.StructDeclarationContext:
+                                result += self.state.tabs
+                                value = self.enterStructDeclaration(
                                     declaration)
                                 result += value
                                 result += '\n'
@@ -409,28 +465,34 @@ class Listener(CListener):
                     for definition in child.getChildren():
                         match type(definition):
                             case CParser.VariableDefinitionContext:
-                                result += tabs
+                                result += self.state.tabs
                                 value = self.enterVariableDefinition(
                                     definition)
                                 result += value
                                 result += '\n'
+                            case CParser.StructDefinitionContext:
+                                result += self.state.tabs
+                                value = self.enterStructDefinition(
+                                    definition)
+                                result += value
+                                result += '\n'
                 case CParser.FunctionCallContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterFunctionCall(child)
                     result += value
                     result += '\n'
                 case CParser.VariableDefinitionContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterVariableDefinition(child)
                     result += value
                     result += '\n'
                 case CParser.AssignmentContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterAssignment(child)
                     result += value
                     result += '\n'
                 case CParser.InplaceAssignmentContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterInplaceAssignment(child)
                     result += value
                     result += '\n'
@@ -439,17 +501,17 @@ class Listener(CListener):
                     result += value
                     result += '\n'
                 case CParser.WhileStatementContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterWhileStatement(child)
                     result += value
                     result += '\n'
                 case CParser.DoWhileStatementContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterDoWhileStatement(child)
                     result += value
                     result += '\n'
                 case CParser.FunctionReturnContext:
-                    result += tabs
+                    result += self.state.tabs
                     value = self.enterFunctionReturn(child)
                     result += value
                     result += '\n'

@@ -1,3 +1,8 @@
+struct a;
+struct a {
+	int a;
+	int a: 1;
+};
 int b;
 int c;
 int a;
@@ -10,7 +15,12 @@ Point b = 3 * 4 * 5 * 6 + 9 + 9 + 0;
 int c = 3 + 6 + -+-+-+- b * -+-+-+-+-7 + +-+-+-+- D + +-+-+ a(1+2,2);
 int asd;
 int test() {
- 	int abc;
+ 	struct a;
+	struct a {
+		int a;
+		int a: 1;
+	};
+	int abc;
 	int b = 3 * 4 * 5 * 6 + 9 + 9 + 0;
 	int c = 3 + 6 + b * 7 + D + a(1+2,2,D);
 	int d;
