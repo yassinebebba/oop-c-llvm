@@ -17,6 +17,7 @@ class Scope(Enum):
 
 class State:
     def __init__(self):
+        self.is_class = False
         self.global_scope = True
         self.block_scope = False
         self.scope_level = 0
@@ -35,6 +36,12 @@ class State:
         if self.scope_level == 0:
             self.global_scope = True
             self.block_scope = False
+
+    def enter_class(self):
+        self.is_class = True
+
+    def exit_class(self):
+        self.is_class = False
 
 
 def print_error(error: str):
@@ -296,8 +303,15 @@ class Listener(CListener):
 
     def enterAssignment(self, ctx: CParser.AssignmentContext):
         # identifier ASSIGN expression SEMI
-        self.check_variable_assignment(ctx)
-        identifier: str = ctx.identifier().getText()
+        # self.check_variable_assignment(ctx)
+        identifier: str = ''
+        try:
+            identifier = ctx.identifier().getText()
+        except AttributeError:
+            for child in ctx.getChildren():
+                if child.getText() == '=':
+                    break
+                identifier += child.getText()
         expression: CParser.ExpressionContext = ctx.expression()
         return f'{identifier} = {self.enterExpression(expression)};'
 
@@ -320,7 +334,7 @@ class Listener(CListener):
 
     def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
         args = self.enterFunctionCallArgs(ctx.functionCallArgs())
-        return f'{ctx.identifier().getText()}({args})'
+        return f'{ctx.identifier().getText()}({args});'
 
     def enterFunctionCallArgs(self, ctx: CParser.FunctionCallArgsContext):
         if ctx is None:
@@ -530,13 +544,14 @@ class Listener(CListener):
 
     def enterClassDefinition(self, ctx: CParser.ClassDefinitionContext):
         self.state.enter_block_scope()
+        self.state.enter_class()
         identifier: str = ctx.identifier().getText()
-        class_block: str = self.enterClassBlock(ctx.classBlock())
+        attributes, methods = self.enterClassBlock(ctx.classBlock())
+        self.state.exit_class()
         self.state.exit_block_scope()
-        return f'class {identifier} {"{"}\n {class_block}\n{"}"}\n'
+        return f'typedef struct {identifier} {"{"}\n {attributes}\n{"}"} {identifier};\n{methods}'
 
     def enterClassBlock(self, ctx: CParser.ClassBlockContext):
-        result: str = ''
         attribute_declarations: list[CParser.VariableDeclarationContext] = []
         attribute_definitions: list[CParser.VariableDefinitionContext] = []
         methods: list[CParser.FunctionDefinitionContext] = []
@@ -550,22 +565,38 @@ class Listener(CListener):
                 case CParser.FunctionDefinitionContext:
                     methods.append(child)
 
+        attributes: str = ''
+
         for attribute in attribute_declarations:
-            result += self.state.tabs
+            attributes += self.state.tabs
             value = self.enterVariableDeclaration(attribute)
-            result += value
-            result += '\n'
+            attributes += value
+            attributes += '\n'
 
+        # attribute definition is quite tricky to handle
+        # it has to be split into declaration and initialization
+        # in the class constructor
         for attribute in attribute_definitions:
-            result += self.state.tabs
+            attributes += self.state.tabs
             value = self.enterVariableDefinition(attribute)
-            result += value
-            result += '\n'
+            attributes += value
+            attributes += '\n'
 
+        parsed_methods: str = ''
+        has_constructor = False
         for method in methods:
-            result += self.state.tabs
+            if method.identifier().getText() == '__init__':
+                has_constructor = True
+            self.state.exit_block_scope()
             value = self.enterFunctionDefinition(method)
-            result += value
-            result += '\n'
+            self.state.enter_block_scope()
+            parsed_methods += value
+            parsed_methods += '\n'
+        class_name = ctx.parentCtx.identifier().getText()
+        if not has_constructor:
+            print_error(f'Class \'{class_name}\''
+                        ' must have a constructor '
+                        f'\'__init__({class_name} * self, ...)\'')
+            exit(-1)
 
-        return result[:-1]
+        return attributes[:-1], parsed_methods[:-1]

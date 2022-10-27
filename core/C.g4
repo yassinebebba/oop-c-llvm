@@ -19,6 +19,7 @@ expression
     | expression DIV expression               #divideExpression
     | expression PLUS expression              #addExpression
     | expression MINUS expression             #subtractExpression
+    | identifier ((DOT | ARROW) identifier)*  #chainedCall
     ;
 
 constant
@@ -76,11 +77,11 @@ variableDeclaration: typeSpecifier identifier SEMI;
 variableDefinition: typeSpecifier identifier ASSIGN expression SEMI;
 
 functionDeclaration
-    : typeSpecifier? identifier LP functionArgs? RP SEMI
+    : typeSpecifier identifier LP functionArgs? RP SEMI
     ;
 
 functionDefinition
-    : typeSpecifier? identifier LP functionArgs? RP block
+    : typeSpecifier identifier LP functionArgs? RP block
     ;
 
 functionReturn
@@ -116,8 +117,10 @@ field: typeSpecifier identifier SEMI;
 bitField: typeSpecifier identifier COLON INTEGER_CONSTANT SEMI;
 
 assignment
-    : identifier ASSIGN expression SEMI
+    : variableAssignment
+    | identifier ((DOT | ARROW) identifier)* ASSIGN expression SEMI
     ;
+variableAssignment: identifier ASSIGN expression SEMI;
 
 inplaceAssignment
     : identifier

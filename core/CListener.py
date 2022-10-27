@@ -53,6 +53,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#chainedCall.
+    def enterChainedCall(self, ctx:CParser.ChainedCallContext):
+        pass
+
+    # Exit a parse tree produced by CParser#chainedCall.
+    def exitChainedCall(self, ctx:CParser.ChainedCallContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#multiplyExpression.
     def enterMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
         pass
@@ -293,6 +302,15 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#assignment.
     def exitAssignment(self, ctx:CParser.AssignmentContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#variableAssignment.
+    def enterVariableAssignment(self, ctx:CParser.VariableAssignmentContext):
+        pass
+
+    # Exit a parse tree produced by CParser#variableAssignment.
+    def exitVariableAssignment(self, ctx:CParser.VariableAssignmentContext):
         pass
 
 
