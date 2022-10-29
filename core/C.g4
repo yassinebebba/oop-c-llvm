@@ -19,8 +19,9 @@ expression
     | expression DIV expression               #divideExpression
     | expression PLUS expression              #addExpression
     | expression MINUS expression             #subtractExpression
-    | identifier ((DOT | ARROW) identifier)*  #chainedCall
+    | chainedCall                             #chainedCallAlias
     ;
+chainedCall: identifier ((DOT | ARROW) (identifier | functionCallExpression))*;
 
 constant
     : unarySign? INTEGER_CONSTANT
@@ -187,6 +188,8 @@ classBlock
       | functionDefinition
      )* RC
    ;
+
+classInstantiation: typeSpecifier identifier ASSIGN NEW functionCall;
 // END OOP SECTION
 
 block
@@ -201,6 +204,7 @@ block
       | functionCall
       | assignment
       | inplaceAssignment
+      | classInstantiation
       | functionReturn
      )* RC
    ;
@@ -220,6 +224,7 @@ EXPONENT: [eE] [+-]? [0-9]+;
 // https://learn.microsoft.com/en-us/cpp/c-language/c-type-specifiers?view=msvc-170
 
 CLASS: 'class';
+NEW: 'new';
 
 AUTO: 'auto';
 BREAK: 'break';

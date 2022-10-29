@@ -1,5 +1,4 @@
 import os
-from enum import Enum
 from termcolor import colored
 from core.CParser import CParser
 from core.CListener import CListener
@@ -8,18 +7,9 @@ from antlr4.tree.Tree import TerminalNodeImpl
 from antlr4.tree.Tree import Token
 
 
-class Scope(Enum):
-    GLOBL = 0  # for globals
-    FUNC_LOCAL = 1
-    CLAZZ_LOCAL = 2
-    CLAZZ_METHOD_LOCAL = 3
-
-
 class State:
     def __init__(self):
         self.is_class = False
-        self.global_scope = True
-        self.block_scope = False
         self.scope_level = 0
 
     @property
@@ -28,14 +18,10 @@ class State:
 
     def enter_block_scope(self):
         self.scope_level += 1
-        self.global_scope = False
-        self.block_scope = True
 
     def exit_block_scope(self):
-        self.scope_level -= 1
-        if self.scope_level == 0:
-            self.global_scope = True
-            self.block_scope = False
+        if self.scope_level > 0:
+            self.scope_level -= 1
 
     def enter_class(self):
         self.is_class = True
@@ -58,16 +44,14 @@ class Listener(CListener):
             'functions': {},
             'clazzes': {}
         }
+        self.clazzes = {}
+        self.objs = {}
 
     def write(self, text: str):
         self.output.write(text)
 
     def add_newline(self) -> None:
         self.output.write('\n')
-
-    def add_indentation(self):
-        if self.state.block_scope:
-            self.output.write('\t' * self.state.scope_level)
 
     def ungetch(self):
         cur = self.output.tell()
@@ -156,20 +140,20 @@ class Listener(CListener):
                     for declaration in child.getChildren():
                         match type(declaration):
                             case CParser.VariableDeclarationContext:
-                                self.add_indentation()
-                                value = self.enterVariableDeclaration(
+                                value = self.state.tabs
+                                value += self.enterVariableDeclaration(
                                     declaration)
                                 self.write(value)
                                 self.add_newline()
                             case CParser.FunctionDeclarationContext:
-                                self.add_indentation()
-                                value = self.enterFunctionDeclaration(
+                                value = self.state.tabs
+                                value += self.enterFunctionDeclaration(
                                     declaration)
                                 self.write(value)
                                 self.add_newline()
                             case CParser.StructDeclarationContext:
-                                self.add_indentation()
-                                value = self.enterStructDeclaration(
+                                value = self.state.tabs
+                                value += self.enterStructDeclaration(
                                     declaration)
                                 self.write(value)
                                 self.add_newline()
@@ -177,36 +161,36 @@ class Listener(CListener):
                     for definition in child.getChildren():
                         match type(definition):
                             case CParser.VariableDefinitionContext:
-                                self.add_indentation()
-                                value = self.enterVariableDefinition(
+                                value = self.state.tabs
+                                value += self.enterVariableDefinition(
                                     definition)
                                 self.write(value)
                                 self.add_newline()
                             case CParser.FunctionDefinitionContext:
-                                self.add_indentation()
-                                value = self.enterFunctionDefinition(
+                                value = self.state.tabs
+                                value += self.enterFunctionDefinition(
                                     definition)
                                 self.write(value)
                                 self.add_newline()
                             case CParser.StructDefinitionContext:
-                                self.add_indentation()
-                                value = self.enterStructDefinition(
+                                value = self.state.tabs
+                                value += self.enterStructDefinition(
                                     definition)
                                 self.write(value)
                                 self.add_newline()
                 case CParser.FunctionCallContext:
-                    self.add_indentation()
-                    value = self.enterFunctionCall(child)
+                    value = self.state.tabs
+                    value += self.enterFunctionCall(child)
                     self.write(value)
                     self.add_newline()
                 case CParser.AssignmentContext:
-                    self.add_indentation()
-                    value = self.enterAssignment(child)
+                    value = self.state.tabs
+                    value += self.enterAssignment(child)
                     self.write(value)
                     self.add_newline()
                 case CParser.ClassDefinitionContext:
-                    self.add_indentation()
-                    value = self.enterClassDefinition(child)
+                    value = self.state.tabs
+                    value += self.enterClassDefinition(child)
                     self.write(value)
                     self.add_newline()
 
@@ -243,6 +227,17 @@ class Listener(CListener):
         block: str = self.enterBlock(ctx.block())
         self.state.exit_block_scope()
 
+        # i think this block should be somewhere else
+        original_identifier: str = identifier
+        if self.state.is_class:
+            # this is a class method
+            # class ctx -> class block ctx -> class method ctx
+            class_name = ctx.parentCtx.parentCtx.identifier().getText()
+            identifier = f'{class_name}_{identifier}'
+            self.clazzes[class_name][original_identifier] = {
+                'original_name': original_identifier,
+                'new_name': identifier,
+            }
         return f'{rtype} {identifier}({args}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
     def enterFunctionArgs(self, ctx: CParser.FunctionArgsContext):
@@ -442,6 +437,8 @@ class Listener(CListener):
                 values.append(child.getText())
             elif isinstance(child, TerminalNodeImpl):
                 values.append(child.getText())
+            elif isinstance(child, CParser.ChainedCallContext):
+                values.append(self.enterChainedCall(child))
         return ' '.join(values)
 
     def enterBlock(self, ctx: CParser.BlockContext):
@@ -534,6 +531,11 @@ class Listener(CListener):
                     value = self.enterFunctionReturn(child)
                     result += value
                     result += '\n'
+                case CParser.ClassInstantiationContext:
+                    result += self.state.tabs
+                    value = self.enterClassInstantiation(child)
+                    result += value
+                    result += '\n'
 
         # remove the last new line result[:-1]
         # self.ungetch()
@@ -546,12 +548,48 @@ class Listener(CListener):
         self.state.enter_block_scope()
         self.state.enter_class()
         identifier: str = ctx.identifier().getText()
+        self.clazzes[identifier] = {}
         attributes, methods = self.enterClassBlock(ctx.classBlock())
         self.state.exit_class()
         self.state.exit_block_scope()
         return f'typedef struct {identifier} {"{"}\n {attributes}\n{"}"} {identifier};\n{methods}'
 
+    def getFunctionPointer(self, class_name: str,
+                           function: CParser.FunctionDefinitionContext):
+        type_specifier: str = self.match_type_specifier(
+            function.typeSpecifier())
+        identifier: str = function.identifier().getText()
+        args: list[str] = []
+        for arg in function.functionArgs().getChildren():
+            args.append(self.match_type_specifier(arg.typeSpecifier()))
+        return f'{type_specifier} (*{class_name}_{identifier})(struct {", ".join(args)});'
+
+    def createClassConstructor(self,
+                               class_name: str,
+                               constructor: CParser.FunctionDefinitionContext | None,
+                               methods: list[
+                                   CParser.FunctionDefinitionContext]):
+        method_name: str = constructor.identifier().getText()
+        new_method_name: str = f'{class_name}_{method_name}'
+        args: str = self.enterFunctionArgs(constructor.functionArgs())
+        self.clazzes[class_name][method_name] = {
+            'original_name': method_name,
+            'new_name': new_method_name,
+        }
+        method_block: str = ''
+        for method in methods:
+            if method.identifier().getText() == '__init__':
+                continue
+            name: str = method.identifier().getText()
+            new_name: str = f'{class_name}_{name}'
+            method_block += f'{self.state.tabs}self->{new_name} = &{new_name};\n'
+        if constructor:
+            method_block += self.enterBlock(constructor.block())
+
+        return f'void {new_method_name}({args}) {"{"}\n{method_block}\n{"}"}'
+
     def enterClassBlock(self, ctx: CParser.ClassBlockContext):
+        class_name: str = ctx.parentCtx.identifier().getText()
         attribute_declarations: list[CParser.VariableDeclarationContext] = []
         attribute_definitions: list[CParser.VariableDefinitionContext] = []
         methods: list[CParser.FunctionDefinitionContext] = []
@@ -583,20 +621,57 @@ class Listener(CListener):
             attributes += '\n'
 
         parsed_methods: str = ''
-        has_constructor = False
+        constructor: CParser.FunctionDefinitionContext | None = None
         for method in methods:
             if method.identifier().getText() == '__init__':
-                has_constructor = True
+                constructor = method
+                continue
+            function_pointer = self.getFunctionPointer(class_name, method)
+            attributes += self.state.tabs
+            attributes += function_pointer
+            attributes += '\n'
+            self.state.exit_block_scope()
             self.state.exit_block_scope()
             value = self.enterFunctionDefinition(method)
             self.state.enter_block_scope()
             parsed_methods += value
             parsed_methods += '\n'
-        class_name = ctx.parentCtx.identifier().getText()
-        if not has_constructor:
-            print_error(f'Class \'{class_name}\''
-                        ' must have a constructor '
-                        f'\'__init__({class_name} * self, ...)\'')
-            exit(-1)
 
-        return attributes[:-1], parsed_methods[:-1]
+        parsed_constructor = self.createClassConstructor(class_name,
+                                                         constructor,
+                                                         methods)
+        parsed_methods += parsed_constructor
+        return attributes[:-1], parsed_methods
+
+    def enterClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
+        type_specifier: str = self.match_type_specifier(ctx.typeSpecifier())
+        class_name: str = type_specifier.split()[0]  # to remove the pointer
+        identifier: str = ctx.identifier().getText()
+        args: str = self.enterFunctionCallArgs(
+            ctx.functionCall().functionCallArgs())
+        self.objs[identifier] = {
+            'class_name': class_name
+        }
+        result: str = f'{type_specifier} {identifier} = malloc(sizeof({class_name}));\n'
+        result += f'{self.state.tabs}{class_name}___init__({identifier}, {args});'
+        return result
+
+    def enterChainedCall(self, ctx: CParser.ChainedCallContext):
+        obj_name: str = ctx.identifier(0).getText()
+        if obj_name not in self.objs:
+            return ''
+        result: str = ''
+        class_name = self.objs[obj_name]['class_name']
+        for child in ctx.getChildren():
+            if isinstance(child, CParser.FunctionCallExpressionContext):
+                method = self.clazzes[class_name][child.identifier().getText()]
+                args: str = self.enterFunctionCallArgs(
+                    child.functionCallArgs())
+                method_alias = method['new_name']
+                if args:
+                    result += f'{method_alias}({obj_name}, {args})'
+                else:
+                    result += f'{method_alias}({obj_name})'
+            else:
+                result += child.getText()
+        return result

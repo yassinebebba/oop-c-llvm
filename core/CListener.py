@@ -17,6 +17,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#chainedCallAlias.
+    def enterChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
+        pass
+
+    # Exit a parse tree produced by CParser#chainedCallAlias.
+    def exitChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#constantExpression.
     def enterConstantExpression(self, ctx:CParser.ConstantExpressionContext):
         pass
@@ -53,15 +62,6 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#chainedCall.
-    def enterChainedCall(self, ctx:CParser.ChainedCallContext):
-        pass
-
-    # Exit a parse tree produced by CParser#chainedCall.
-    def exitChainedCall(self, ctx:CParser.ChainedCallContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#multiplyExpression.
     def enterMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
         pass
@@ -95,6 +95,15 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#divideExpression.
     def exitDivideExpression(self, ctx:CParser.DivideExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#chainedCall.
+    def enterChainedCall(self, ctx:CParser.ChainedCallContext):
+        pass
+
+    # Exit a parse tree produced by CParser#chainedCall.
+    def exitChainedCall(self, ctx:CParser.ChainedCallContext):
         pass
 
 
@@ -410,6 +419,15 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#classBlock.
     def exitClassBlock(self, ctx:CParser.ClassBlockContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#classInstantiation.
+    def enterClassInstantiation(self, ctx:CParser.ClassInstantiationContext):
+        pass
+
+    # Exit a parse tree produced by CParser#classInstantiation.
+    def exitClassInstantiation(self, ctx:CParser.ClassInstantiationContext):
         pass
 
 
