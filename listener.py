@@ -536,6 +536,11 @@ class Listener(CListener):
                     value = self.enterClassInstantiation(child)
                     result += value
                     result += '\n'
+                case CParser.ChainedCallContext:
+                    result += self.state.tabs
+                    value = self.enterChainedCall(child)
+                    result += f'{value};'
+                    result += '\n'
 
         # remove the last new line result[:-1]
         # self.ungetch()
@@ -561,7 +566,11 @@ class Listener(CListener):
         identifier: str = function.identifier().getText()
         args: list[str] = []
         for arg in function.functionArgs().getChildren():
-            args.append(self.match_type_specifier(arg.typeSpecifier()))
+            try:
+                args.append(self.match_type_specifier(arg.typeSpecifier()))
+            except AttributeError:
+                # skip, it is not a func arg
+                continue
         return f'{type_specifier} (*{class_name}_{identifier})(struct {", ".join(args)});'
 
     def createClassConstructor(self,

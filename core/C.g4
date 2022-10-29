@@ -202,6 +202,7 @@ block
       | definitionList
       | declarationList
       | functionCall
+      | chainedCall SEMI
       | assignment
       | inplaceAssignment
       | classInstantiation

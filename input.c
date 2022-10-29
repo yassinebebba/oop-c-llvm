@@ -10,9 +10,13 @@ class String {
     int getAge(String *self) {
         return self->age;
     }
+    void set_age(String * self, int age) {
+        self->age = age;
+    }
 }
 int main() {
     String * string = new String("Malte", "Ressin", 41);
+    string->set_age(30);
     String *secondString = new String("Yassine", "Bebba", 23);
     printf("Hi my name is %s %s and I am %d years old.\n", string->first_name, string->last_name, string->getAge());
     printf("Hi my name is %s %s and I am %d years old.\n", secondString->first_name, secondString->last_name, secondString->age);
