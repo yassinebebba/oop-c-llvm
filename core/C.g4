@@ -54,7 +54,7 @@ functionCallExpression: identifier LP functionCallArgs? RP;
 functionCall: identifier LP functionCallArgs? RP SEMI;
 // this parser rule fixed the note above :)
 functionCallArgs
-    : expression (COMMA expression)* COMMA?
+    : expression (COMMA expression)*
     ;
 
 statementList
@@ -98,7 +98,7 @@ functionReturn
 // this next parser rule fixes the above note make sure you use it if
 // you encounter the same problem
 functionArgs
-    : arg (COMMA arg)* COMMA?
+    : arg (COMMA arg)*
     ;
 
 arg: typeSpecifier identifier?;
@@ -174,7 +174,7 @@ doWhileStatement
     ;
 
 condition
-    : expression (COMMA expression)* COMMA?
+    : expression (COMMA expression)*
     ;
 
 // START OOP SECTION
