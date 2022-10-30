@@ -11,7 +11,13 @@ int String_getAge(String * self) {
  	return self->age;
 }
 void String_set_age(String * self, int age) {
- 	self->age = age;
+ 	if (age < 2) {
+ 		printf("you must be older than 2");
+	}
+	else {
+ 		self->age = age;
+	}
+
 }
 void String___init__(String * self, char * first_name, char * last_name, int age) {
 	self->String_getAge = &String_getAge;

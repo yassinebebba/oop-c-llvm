@@ -14,7 +14,11 @@ class String {
         return self->age;
     }
     void set_age(String * self, int age) {
-        self->age = age;
+        if (age < 2) {
+            printf("you must be older than 2\n");
+        } else {
+            self->age = age;
+        }
     }
 }
 

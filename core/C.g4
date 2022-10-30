@@ -19,6 +19,11 @@ expression
     | expression DIV expression               #divideExpression
     | expression PLUS expression              #addExpression
     | expression MINUS expression             #subtractExpression
+    | expression EQ expression                #eqExpression
+    | expression LT expression                #ltExpression
+    | expression LTE expression               #lteExpression
+    | expression GT expression                #gtExpression
+    | expression GTE expression               #gteExpression
     | chainedCall                             #chainedCallAlias
     ;
 chainedCall: identifier ((DOT | ARROW) (identifier | functionCallExpression))*;

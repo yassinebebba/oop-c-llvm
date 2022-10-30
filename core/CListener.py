@@ -17,12 +17,21 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#chainedCallAlias.
-    def enterChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
+    # Enter a parse tree produced by CParser#ltExpression.
+    def enterLtExpression(self, ctx:CParser.LtExpressionContext):
         pass
 
-    # Exit a parse tree produced by CParser#chainedCallAlias.
-    def exitChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
+    # Exit a parse tree produced by CParser#ltExpression.
+    def exitLtExpression(self, ctx:CParser.LtExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#gtExpression.
+    def enterGtExpression(self, ctx:CParser.GtExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#gtExpression.
+    def exitGtExpression(self, ctx:CParser.GtExpressionContext):
         pass
 
 
@@ -32,6 +41,69 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#constantExpression.
     def exitConstantExpression(self, ctx:CParser.ConstantExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#multiplyExpression.
+    def enterMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#multiplyExpression.
+    def exitMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#sizeofExpression.
+    def enterSizeofExpression(self, ctx:CParser.SizeofExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#sizeofExpression.
+    def exitSizeofExpression(self, ctx:CParser.SizeofExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#gteExpression.
+    def enterGteExpression(self, ctx:CParser.GteExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#gteExpression.
+    def exitGteExpression(self, ctx:CParser.GteExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#funcCallExpression.
+    def enterFuncCallExpression(self, ctx:CParser.FuncCallExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#funcCallExpression.
+    def exitFuncCallExpression(self, ctx:CParser.FuncCallExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#divideExpression.
+    def enterDivideExpression(self, ctx:CParser.DivideExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#divideExpression.
+    def exitDivideExpression(self, ctx:CParser.DivideExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#chainedCallAlias.
+    def enterChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
+        pass
+
+    # Exit a parse tree produced by CParser#chainedCallAlias.
+    def exitChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#eqExpression.
+    def enterEqExpression(self, ctx:CParser.EqExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#eqExpression.
+    def exitEqExpression(self, ctx:CParser.EqExpressionContext):
         pass
 
 
@@ -62,39 +134,12 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#multiplyExpression.
-    def enterMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
+    # Enter a parse tree produced by CParser#lteExpression.
+    def enterLteExpression(self, ctx:CParser.LteExpressionContext):
         pass
 
-    # Exit a parse tree produced by CParser#multiplyExpression.
-    def exitMultiplyExpression(self, ctx:CParser.MultiplyExpressionContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#sizeofExpression.
-    def enterSizeofExpression(self, ctx:CParser.SizeofExpressionContext):
-        pass
-
-    # Exit a parse tree produced by CParser#sizeofExpression.
-    def exitSizeofExpression(self, ctx:CParser.SizeofExpressionContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#funcCallExpression.
-    def enterFuncCallExpression(self, ctx:CParser.FuncCallExpressionContext):
-        pass
-
-    # Exit a parse tree produced by CParser#funcCallExpression.
-    def exitFuncCallExpression(self, ctx:CParser.FuncCallExpressionContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#divideExpression.
-    def enterDivideExpression(self, ctx:CParser.DivideExpressionContext):
-        pass
-
-    # Exit a parse tree produced by CParser#divideExpression.
-    def exitDivideExpression(self, ctx:CParser.DivideExpressionContext):
+    # Exit a parse tree produced by CParser#lteExpression.
+    def exitLteExpression(self, ctx:CParser.LteExpressionContext):
         pass
 
 
