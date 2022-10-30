@@ -212,6 +212,12 @@ block
 
 identifier: IDENTIFIER;
 
+// must be handled separately by the pre processor
+INCLUDE_DIRECTIVE
+    :   '#' WS? 'include' WS? (('"' ~[\r\n]* '"') | ('<' ~[\r\n]* '>' )) WS? NEWLINE
+        -> channel(HIDDEN)
+    ;
+
 STRING_LITERAL: '"' ~('"')* '"';
 CHAR_CONSTANT: '\'' ~('\'')* '\'';
 INTEGER_CONSTANT: '0' | [1-9][0-9]*;
@@ -340,3 +346,4 @@ LINE_COMMENT
     :   '//' ~[\r\n]*
         -> skip
     ;
+ANY: .;

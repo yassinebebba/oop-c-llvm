@@ -12,7 +12,7 @@ def main(argv):
     parser = CParser(stream)
     tree = parser.compilationUnit()
     with open('output.c', 'w') as file:
-        listener = Listener(file)
+        listener = Listener(stream, file)
         walker = ParseTreeWalker()
         walker.walk(listener, tree)
 

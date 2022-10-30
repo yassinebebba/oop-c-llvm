@@ -35,7 +35,9 @@ def print_error(error: str):
 
 
 class Listener(CListener):
-    def __init__(self, output):
+    def __init__(self, stream, output):
+        # steam is CommonTokenStream to get hidden channel
+        self.stream = stream
         self.output: FileIO = output
         self.state = State()
         self.identifiers = {
@@ -134,6 +136,11 @@ class Listener(CListener):
         return ' '.join(chunks)
 
     def enterCompilationUnit(self, ctx: CParser.CompilationUnitContext):
+        for token in self.stream.tokens:
+            # access hidden channel
+            if token.channel == 1:
+                self.write(f'{token.text.strip()}\n')
+
         for child in ctx.getChildren():
             match type(child):
                 case CParser.DeclarationListContext:
