@@ -241,6 +241,10 @@ class Listener(CListener):
             # class ctx -> class block ctx -> class method ctx
             class_name = ctx.parentCtx.parentCtx.identifier().getText()
             identifier = f'{class_name}_{identifier}'
+            if args:
+                args = f'{class_name} * self, {args}'
+            else:
+                args = f'{class_name} * self'
             self.clazzes[class_name][original_identifier] = {
                 'original_name': original_identifier,
                 'new_name': identifier,
@@ -571,14 +575,17 @@ class Listener(CListener):
         type_specifier: str = self.match_type_specifier(
             function.typeSpecifier())
         identifier: str = function.identifier().getText()
-        args: list[str] = []
-        for arg in function.functionArgs().getChildren():
-            try:
-                args.append(self.match_type_specifier(arg.typeSpecifier()))
-            except AttributeError:
-                # skip, it is not a func arg
-                continue
-        return f'{type_specifier} (*{class_name}_{identifier})(struct {", ".join(args)});'
+
+        # struct {class_name} * self: is always the 1st arg
+        args: list[str] = [f'struct {class_name} * self']
+        if function.functionArgs():
+            for arg in function.functionArgs().getChildren():
+                try:
+                    args.append(self.match_type_specifier(arg.typeSpecifier()))
+                except AttributeError:
+                    # skip, it is not a func arg
+                    continue
+        return f'{type_specifier} (*{class_name}_{identifier})({", ".join(args)});'
 
     def createClassConstructor(self,
                                class_name: str,
@@ -588,6 +595,11 @@ class Listener(CListener):
         method_name: str = constructor.identifier().getText()
         new_method_name: str = f'{class_name}_{method_name}'
         args: str = self.enterFunctionArgs(constructor.functionArgs())
+        if args:
+            args = f'{class_name} * self, {args}'
+        else:
+            args = f'{class_name} * self'
+
         self.clazzes[class_name][method_name] = {
             'original_name': method_name,
             'new_name': new_method_name,

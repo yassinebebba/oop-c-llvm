@@ -5,15 +5,15 @@ class String {
     char * first_name;
     char * last_name;
     int age;
-    void __init__(String *self, char* first_name, char * last_name, int age) {
+    void __init__(char* first_name, char * last_name, int age) {
         self->first_name = first_name;
         self->last_name = last_name;
         self->age = age;
     }
-    int getAge(String *self) {
+    int getAge() {
         return self->age;
     }
-    void set_age(String * self, int age) {
+    void set_age(int age) {
         if (age < 2) {
             printf("you must be older than 2\n");
         } else {
@@ -24,17 +24,18 @@ class String {
 
 class Animal {
     char * name;
-    void __init__(Animal * self, char * name) {
+    void __init__(char * name) {
         self->name = name;
     }
+}
+
+int test(String *string) {
+//    return string->getAge();
 }
 
 int main() {
     String * string = new String("Malte", "Ressin", 41);
     string->set_age(1);
-    string->set_age(2);
-    string->set_age(3);
-    string->set_age(4);
     String *secondString = new String("Yassine", "Bebba", 23);
     printf("Hi my name is %s %s and I am %d years old.\n", string->first_name, string->last_name, string->getAge());
     printf("Hi my name is %s %s and I am %d years old.\n", secondString->first_name, secondString->last_name, secondString->age);
