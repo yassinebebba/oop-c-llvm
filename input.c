@@ -29,10 +29,6 @@ class Animal {
     }
 }
 
-int test(String *string) {
-//    return string->getAge();
-}
-
 int main() {
     String * string = new String("Malte", "Ressin", 41);
     string->set_age(1);

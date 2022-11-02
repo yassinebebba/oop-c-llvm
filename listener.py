@@ -260,6 +260,21 @@ class Listener(CListener):
             arg for arg in ctx.getChildren()
             if isinstance(arg, CParser.ArgContext)
         ]
+
+        # check for duplicate args
+        temp: dict = {}
+        for arg in args:
+            identifier = arg.identifier().getText()
+            if identifier == 'this':
+                print_error(
+                    'Error: can\' use`this` as an identifier, `this` is a reserved keyword')
+                exit(-1)
+            if identifier in temp:
+                print_error(
+                    f'Error: duplicate function argument `{identifier}`')
+                exit(-1)
+            else:
+                temp[identifier] = 1
         values = list(map(self.enterArg, args))
         return ', '.join(values)
 
