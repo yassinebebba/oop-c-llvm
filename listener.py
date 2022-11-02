@@ -1,10 +1,12 @@
 import os
-from termcolor import colored
-from core.CParser import CParser
-from core.CListener import CListener
 from io import FileIO
+
 from antlr4.tree.Tree import TerminalNodeImpl
 from antlr4.tree.Tree import Token
+from termcolor import colored
+
+from core.CListener import CListener
+from core.CParser import CParser
 
 
 class State:
@@ -240,7 +242,7 @@ class Listener(CListener):
             # this is a class method
             # class ctx -> class block ctx -> class method ctx
             class_name = ctx.parentCtx.parentCtx.identifier().getText()
-            identifier = f'{class_name}_{identifier}'
+            identifier = f'{class_name}{identifier}'
             if args:
                 args = f'{class_name} * this, {args}'
             else:
@@ -585,7 +587,7 @@ class Listener(CListener):
                 except AttributeError:
                     # skip, it is not a func arg
                     continue
-        return f'{type_specifier} (*{class_name}_{identifier})({", ".join(args)});'
+        return f'{type_specifier} (*{class_name}{identifier})({", ".join(args)});'
 
     def createClassConstructor(self,
                                class_name: str,
@@ -594,7 +596,7 @@ class Listener(CListener):
                                    CParser.FunctionDefinitionContext]):
         if constructor:
             method_name: str = constructor.identifier().getText()
-            new_method_name: str = f'{class_name}_{method_name}'
+            new_method_name: str = f'{class_name}{method_name}'
             args: str = self.enterFunctionArgs(constructor.functionArgs())
             if args:
                 args = f'{class_name} * this, {args}'
@@ -609,7 +611,7 @@ class Listener(CListener):
                 if method.identifier().getText() == class_name:
                     continue
                 name: str = method.identifier().getText()
-                new_name: str = f'{class_name}_{name}'
+                new_name: str = f'{class_name}{name}'
                 method_block += f'{self.state.tabs}this->{new_name} = &{new_name};\n'
             method_block += self.enterBlock(constructor.block())
             return f'void {new_method_name}({args}) {"{"}\n{method_block}\n{"}"}'

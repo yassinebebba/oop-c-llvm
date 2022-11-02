@@ -24,9 +24,9 @@ class String {
 
 class Animal {
     char * name;
-//    void Animal(char * name) {
-//        this->name = name;
-//    }
+    void Animal(char * name) {
+        this->name = name;
+    }
 }
 
 int test(String *string) {
