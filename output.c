@@ -4,32 +4,32 @@ typedef struct String {
  	char * first_name;
 	char * last_name;
 	int age;
-	int (*String_getAge)(struct String * self);
-	void (*String_set_age)(struct String * self, int);
+	int (*String_getAge)(struct String * this);
+	void (*String_set_age)(struct String * this, int);
 } String;
-int String_getAge(String * self) {
- 	return self->age;
+int String_getAge(String * this) {
+ 	return this->age;
 }
-void String_set_age(String * self, int age) {
+void String_set_age(String * this, int age) {
  	if (age < 2) {
  		printf("you must be older than 2\n");
 	}
 	else {
- 		self->age = age;
+ 		this->age = age;
 	}
 
 }
-void String_String(String * self, char * first_name, char * last_name, int age) {
-	self->String_getAge = &String_getAge;
-	self->String_set_age = &String_set_age;
-	self->first_name = first_name;
-	self->last_name = last_name;
-	self->age = age;
+void String_String(String * this, char * first_name, char * last_name, int age) {
+	this->String_getAge = &String_getAge;
+	this->String_set_age = &String_set_age;
+	this->first_name = first_name;
+	this->last_name = last_name;
+	this->age = age;
 }
 typedef struct Animal {
  	char * name;
 } Animal;
-void AnimalAnimal(Animal * self) {
+void AnimalAnimal(Animal * this) {
 // Not implemented
 }
 int test(String * string) {

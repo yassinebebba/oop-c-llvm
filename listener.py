@@ -242,9 +242,9 @@ class Listener(CListener):
             class_name = ctx.parentCtx.parentCtx.identifier().getText()
             identifier = f'{class_name}_{identifier}'
             if args:
-                args = f'{class_name} * self, {args}'
+                args = f'{class_name} * this, {args}'
             else:
-                args = f'{class_name} * self'
+                args = f'{class_name} * this'
             self.clazzes[class_name][original_identifier] = {
                 'original_name': original_identifier,
                 'new_name': identifier,
@@ -576,8 +576,8 @@ class Listener(CListener):
             function.typeSpecifier())
         identifier: str = function.identifier().getText()
 
-        # struct {class_name} * self: is always the 1st arg
-        args: list[str] = [f'struct {class_name} * self']
+        # struct {class_name} * this: is always the 1st arg
+        args: list[str] = [f'struct {class_name} * this']
         if function.functionArgs():
             for arg in function.functionArgs().getChildren():
                 try:
@@ -597,9 +597,9 @@ class Listener(CListener):
             new_method_name: str = f'{class_name}_{method_name}'
             args: str = self.enterFunctionArgs(constructor.functionArgs())
             if args:
-                args = f'{class_name} * self, {args}'
+                args = f'{class_name} * this, {args}'
             else:
-                args = f'{class_name} * self'
+                args = f'{class_name} * this'
             self.clazzes[class_name][method_name] = {
                 'original_name': method_name,
                 'new_name': new_method_name,
@@ -610,12 +610,12 @@ class Listener(CListener):
                     continue
                 name: str = method.identifier().getText()
                 new_name: str = f'{class_name}_{name}'
-                method_block += f'{self.state.tabs}self->{new_name} = &{new_name};\n'
+                method_block += f'{self.state.tabs}this->{new_name} = &{new_name};\n'
             method_block += self.enterBlock(constructor.block())
             return f'void {new_method_name}({args}) {"{"}\n{method_block}\n{"}"}'
 
         else:
-            return f'void {class_name}{class_name}({class_name} * self) {"{"}\n// Not implemented\n{"}"}'
+            return f'void {class_name}{class_name}({class_name} * this) {"{"}\n// Not implemented\n{"}"}'
 
     def enterClassBlock(self, ctx: CParser.ClassBlockContext):
         class_name: str = ctx.parentCtx.identifier().getText()

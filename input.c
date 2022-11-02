@@ -6,18 +6,18 @@ class String {
     char * last_name;
     int age;
     void String(char* first_name, char * last_name, int age) {
-        self->first_name = first_name;
-        self->last_name = last_name;
-        self->age = age;
+        this->first_name = first_name;
+        this->last_name = last_name;
+        this->age = age;
     }
     int getAge() {
-        return self->age;
+        return this->age;
     }
     void set_age(int age) {
         if (age < 2) {
             printf("you must be older than 2\n");
         } else {
-            self->age = age;
+            this->age = age;
         }
     }
 }
@@ -25,7 +25,7 @@ class String {
 class Animal {
     char * name;
 //    void Animal(char * name) {
-//        self->name = name;
+//        this->name = name;
 //    }
 }
 
