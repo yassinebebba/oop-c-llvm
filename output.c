@@ -4,15 +4,15 @@ typedef struct String {
  	char * first_name;
 	char * last_name;
 	int age;
-	int (*String_getAge)(struct String *);
-	void (*String_set_age)(struct String *, int);
+	int (*String_getAge)(struct String * self);
+	void (*String_set_age)(struct String * self, int);
 } String;
 int String_getAge(String * self) {
  	return self->age;
 }
 void String_set_age(String * self, int age) {
  	if (age < 2) {
- 		printf("you must be older than 2");
+ 		printf("you must be older than 2\n");
 	}
 	else {
  		self->age = age;
@@ -32,13 +32,13 @@ typedef struct Animal {
 void Animal___init__(Animal * self, char * name) {
 	self->name = name;
 }
+int test(String * string) {
+ 
+}
 int main() {
  	String * string = malloc(sizeof(String));
 	String___init__(string, "Malte", "Ressin", 41);
 	string->String_set_age(string, 1);
-	string->String_set_age(string, 2);
-	string->String_set_age(string, 3);
-	string->String_set_age(string, 4);
 	String * secondString = malloc(sizeof(String));
 	String___init__(secondString, "Yassine", "Bebba", 23);
 	printf("Hi my name is %s %s and I am %d years old.\n", string->first_name, string->last_name, string->String_getAge(string));
