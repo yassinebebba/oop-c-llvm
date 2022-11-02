@@ -592,29 +592,30 @@ class Listener(CListener):
                                constructor: CParser.FunctionDefinitionContext | None,
                                methods: list[
                                    CParser.FunctionDefinitionContext]):
-        method_name: str = constructor.identifier().getText()
-        new_method_name: str = f'{class_name}_{method_name}'
-        args: str = self.enterFunctionArgs(constructor.functionArgs())
-        if args:
-            args = f'{class_name} * self, {args}'
-        else:
-            args = f'{class_name} * self'
-
-        self.clazzes[class_name][method_name] = {
-            'original_name': method_name,
-            'new_name': new_method_name,
-        }
-        method_block: str = ''
-        for method in methods:
-            if method.identifier().getText() == '__init__':
-                continue
-            name: str = method.identifier().getText()
-            new_name: str = f'{class_name}_{name}'
-            method_block += f'{self.state.tabs}self->{new_name} = &{new_name};\n'
         if constructor:
+            method_name: str = constructor.identifier().getText()
+            new_method_name: str = f'{class_name}_{method_name}'
+            args: str = self.enterFunctionArgs(constructor.functionArgs())
+            if args:
+                args = f'{class_name} * self, {args}'
+            else:
+                args = f'{class_name} * self'
+            self.clazzes[class_name][method_name] = {
+                'original_name': method_name,
+                'new_name': new_method_name,
+            }
+            method_block: str = ''
+            for method in methods:
+                if method.identifier().getText() == class_name:
+                    continue
+                name: str = method.identifier().getText()
+                new_name: str = f'{class_name}_{name}'
+                method_block += f'{self.state.tabs}self->{new_name} = &{new_name};\n'
             method_block += self.enterBlock(constructor.block())
+            return f'void {new_method_name}({args}) {"{"}\n{method_block}\n{"}"}'
 
-        return f'void {new_method_name}({args}) {"{"}\n{method_block}\n{"}"}'
+        else:
+            return f'void {class_name}{class_name}({class_name} * self) {"{"}\n// Not implemented\n{"}"}'
 
     def enterClassBlock(self, ctx: CParser.ClassBlockContext):
         class_name: str = ctx.parentCtx.identifier().getText()
@@ -651,7 +652,7 @@ class Listener(CListener):
         parsed_methods: str = ''
         constructor: CParser.FunctionDefinitionContext | None = None
         for method in methods:
-            if method.identifier().getText() == '__init__':
+            if method.identifier().getText() == class_name:
                 constructor = method
                 continue
             function_pointer = self.getFunctionPointer(class_name, method)
@@ -681,7 +682,7 @@ class Listener(CListener):
             'class_name': class_name
         }
         result: str = f'{type_specifier} {identifier} = malloc(sizeof({class_name}));\n'
-        result += f'{self.state.tabs}{class_name}___init__({identifier}, {args});'
+        result += f'{self.state.tabs}{class_name}{class_name}({identifier}, {args});'
         return result
 
     def enterChainedCall(self, ctx: CParser.ChainedCallContext):

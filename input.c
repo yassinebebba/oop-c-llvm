@@ -5,7 +5,7 @@ class String {
     char * first_name;
     char * last_name;
     int age;
-    void __init__(char* first_name, char * last_name, int age) {
+    void String(char* first_name, char * last_name, int age) {
         self->first_name = first_name;
         self->last_name = last_name;
         self->age = age;
@@ -24,9 +24,9 @@ class String {
 
 class Animal {
     char * name;
-    void __init__(char * name) {
-        self->name = name;
-    }
+//    void Animal(char * name) {
+//        self->name = name;
+//    }
 }
 
 int test(String *string) {
