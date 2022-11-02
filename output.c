@@ -32,3 +32,25 @@ typedef struct Animal {
 void AnimalAnimal(Animal * this, char * name) {
 	this->name = name;
 }
+void test(String * a) {
+ 	String * string = malloc(sizeof(String));
+	StringString(string, "Malte", "Ressin", 41);
+	printf("Hi my name is %s %s and I am %d years old.\n", string->first_name, string->last_name, string->StringgetAge(string));
+	printf("Test Hi my name is %s %s and I am %d years old.\n", a->first_name, a->last_name, a->StringgetAge(a));
+}
+int main() {
+ 	String * string = malloc(sizeof(String));
+	StringString(string, "Malte", "Ressin", 41);
+	test(string);
+	string->Stringset_age(string, 1);
+	String * secondString = malloc(sizeof(String));
+	StringString(secondString, "Yassine", "Bebba", 23);
+	printf("Hi my name is %s %s and I am %d years old.\n", string->first_name, string->last_name, string->StringgetAge(string));
+	printf("Hi my name is %s %s and I am %d years old.\n", secondString->first_name, secondString->last_name, secondString->age);
+	Animal * animal = malloc(sizeof(Animal));
+	AnimalAnimal(animal, "Lion");
+	printf("My animal name is %s.\n", animal->name);
+	free(string);
+	free(secondString);
+	return 0;
+}

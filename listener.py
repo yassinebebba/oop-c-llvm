@@ -50,6 +50,7 @@ class Listener(CListener):
         }
         self.clazzes = {}
         self.objs = {}
+        self.current_function = {}
 
     def write(self, text: str):
         self.output.write(text)
@@ -233,9 +234,23 @@ class Listener(CListener):
         rtype: str = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
         args: str = self.enterFunctionArgs(ctx.functionArgs())
+        self.current_function = {'name': identifier, 'args': {}}
+        if ctx.functionArgs():
+            try:
+                for arg in ctx.functionArgs().getChildren():
+                    if isinstance(arg, CParser.ArgContext):
+                        arg_name = arg.identifier().getText()
+                        # possible class type
+                        t = self.match_type_specifier(arg.typeSpecifier())
+                        class_name = t.split()[0]
+                        # print(class_name)
+                        self.current_function['args'][arg_name] = class_name
+            except KeyError:
+                # no args
+                pass
+
         block: str = self.enterBlock(ctx.block())
         self.state.exit_block_scope()
-
         # i think this block should be somewhere else
         original_identifier: str = identifier
         if self.state.is_class:
@@ -251,6 +266,7 @@ class Listener(CListener):
                 'original_name': original_identifier,
                 'new_name': identifier,
             }
+        self.current_function = {}
         return f'{rtype} {identifier}({args}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
     def enterFunctionArgs(self, ctx: CParser.FunctionArgsContext):
@@ -704,20 +720,40 @@ class Listener(CListener):
 
     def enterChainedCall(self, ctx: CParser.ChainedCallContext):
         obj_name: str = ctx.identifier(0).getText()
-        if obj_name not in self.objs:
-            return ''
-        result: str = ''
-        class_name = self.objs[obj_name]['class_name']
-        for child in ctx.getChildren():
-            if isinstance(child, CParser.FunctionCallExpressionContext):
-                method = self.clazzes[class_name][child.identifier().getText()]
-                args: str = self.enterFunctionCallArgs(
-                    child.functionCallArgs())
-                method_alias = method['new_name']
-                if args:
-                    result += f'{method_alias}({obj_name}, {args})'
+        if obj_name in self.objs:
+            result: str = ''
+            class_name = self.objs[obj_name]['class_name']
+            for child in ctx.getChildren():
+                if isinstance(child, CParser.FunctionCallExpressionContext):
+                    method = self.clazzes[class_name][
+                        child.identifier().getText()]
+                    args: str = self.enterFunctionCallArgs(
+                        child.functionCallArgs())
+                    method_alias = method['new_name']
+                    if args:
+                        result += f'{method_alias}({obj_name}, {args})'
+                    else:
+                        result += f'{method_alias}({obj_name})'
                 else:
-                    result += f'{method_alias}({obj_name})'
-            else:
-                result += child.getText()
-        return result
+                    result += child.getText()
+            return result
+        elif self.current_function:
+            class_name = self.current_function['args'][obj_name]
+            result: str = ''
+            for child in ctx.getChildren():
+                if isinstance(child,
+                              CParser.FunctionCallExpressionContext):
+                    method = self.clazzes[class_name][
+                        child.identifier().getText()]
+                    args: str = self.enterFunctionCallArgs(
+                        child.functionCallArgs())
+                    method_alias = method['new_name']
+                    if args:
+                        result += f'{method_alias}({obj_name}, {args})'
+                    else:
+                        result += f'{method_alias}({obj_name})'
+                else:
+                    result += child.getText()
+            return result
+        else:
+            return ''

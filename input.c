@@ -29,8 +29,15 @@ class Animal {
     }
 }
 
+void test(String * a) {
+  String * string = new String("Malte", "Ressin", 41);
+  printf("Hi my name is %s %s and I am %d years old.\n", string->first_name, string->last_name, string->getAge());
+  printf("Test Hi my name is %s %s and I am %d years old.\n", a->first_name, a->last_name, a->getAge());
+}
+
 int main() {
     String * string = new String("Malte", "Ressin", 41);
+    test(string);
     string->set_age(1);
     String *secondString = new String("Yassine", "Bebba", 23);
     printf("Hi my name is %s %s and I am %d years old.\n", string->first_name, string->last_name, string->getAge());
