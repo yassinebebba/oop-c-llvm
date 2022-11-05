@@ -20,6 +20,16 @@ class String {
             this->age = age;
         }
     }
+
+    char * toString() {
+        char * str;
+        // this syntax should error
+        // asdad
+        sprintf(str, "<String object at %p>", this);
+//        printf("%s\n", str);
+        // return local variable will be garbage collected
+        return str;
+    }
 }
 
 class Animal {
@@ -38,6 +48,7 @@ void test(String * a) {
 int main() {
     String * string = new String("Malte", "Ressin", 41);
     test(string);
+    printf("%s\n", string->toString());
     string->set_age(1);
     String *secondString = new String("Yassine", "Bebba", 23);
     printf("Hi my name is %s %s and I am %d years old.\n", string->first_name, string->last_name, string->getAge());

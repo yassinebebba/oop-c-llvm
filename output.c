@@ -6,6 +6,7 @@ typedef struct String {
 	int age;
 	int (*StringgetAge)(struct String * this);
 	void (*Stringset_age)(struct String * this, int);
+	char * (*StringtoString)(struct String * this);
 } String;
 int StringgetAge(String * this) {
  	return this->age;
@@ -19,9 +20,15 @@ void Stringset_age(String * this, int age) {
 	}
 
 }
+char * StringtoString(String * this) {
+ 	char * str;
+	sprintf(str, "<String object at %p>", this);
+	return str;
+}
 void StringString(String * this, char * first_name, char * last_name, int age) {
 	this->StringgetAge = &StringgetAge;
 	this->Stringset_age = &Stringset_age;
+	this->StringtoString = &StringtoString;
 	this->first_name = first_name;
 	this->last_name = last_name;
 	this->age = age;
@@ -42,6 +49,7 @@ int main() {
  	String * string = malloc(sizeof(String));
 	StringString(string, "Malte", "Ressin", 41);
 	test(string);
+	printf("%s\n", string->StringtoString(string));
 	string->Stringset_age(string, 1);
 	String * secondString = malloc(sizeof(String));
 	StringString(secondString, "Yassine", "Bebba", 23);

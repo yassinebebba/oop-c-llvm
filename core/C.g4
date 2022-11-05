@@ -63,7 +63,7 @@ functionCallArgs
     ;
 
 statementList
-    :
+    : expression SEMI
     ;
 
 declarationList
@@ -78,9 +78,11 @@ definitionList
     | structDefinition
     ;
 
-variableDeclaration: typeSpecifier identifier SEMI;
+variableDeclaration: typeSpecifier identifier arrayCell* SEMI;
 
 variableDefinition: typeSpecifier identifier ASSIGN expression SEMI;
+
+arrayCell: LSQRB (INTEGER_CONSTANT | identifier) RSQRB;
 
 functionDeclaration
     : typeSpecifier identifier LP functionArgs? RP SEMI

@@ -219,7 +219,13 @@ class Listener(CListener):
         # self.check_variable_declaration(ctx)
         type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        return f'{type_specifier} {identifier};'
+
+        cells: str = ''
+        if ctx.arrayCell():
+            for cell in ctx.arrayCell():
+                cells += cell.getText()
+
+        return f'{type_specifier} {identifier}{cells};'
 
     def enterFunctionDeclaration(self,
                                  ctx: CParser.FunctionDeclarationContext):
@@ -534,6 +540,15 @@ class Listener(CListener):
                                 result += self.state.tabs
                                 value = self.enterStructDefinition(
                                     definition)
+                                result += value
+                                result += '\n'
+                case CParser.StatementListContext:
+                    for statement in child.getChildren():
+                        print(statement.getText(), type(statement))
+                        match type(statement):
+                            case CParser.ExpressionContext:
+                                result += self.state.tabs
+                                value = self.enterExpression(statement)
                                 result += value
                                 result += '\n'
                 case CParser.FunctionCallContext:

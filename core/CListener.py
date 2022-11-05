@@ -260,6 +260,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#arrayCell.
+    def enterArrayCell(self, ctx:CParser.ArrayCellContext):
+        pass
+
+    # Exit a parse tree produced by CParser#arrayCell.
+    def exitArrayCell(self, ctx:CParser.ArrayCellContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#functionDeclaration.
     def enterFunctionDeclaration(self, ctx:CParser.FunctionDeclarationContext):
         pass
