@@ -625,7 +625,7 @@ class Listener(CListener):
         identifier: str = function.identifier().getText()
 
         # struct {class_name} * this: is always the 1st arg
-        args: list[str] = [f'struct {class_name} * this']
+        args: list[str] = [f'struct {class_name} *']
         if function.functionArgs():
             for arg in function.functionArgs().getChildren():
                 try:

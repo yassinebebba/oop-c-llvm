@@ -4,9 +4,9 @@ typedef struct String {
  	char * first_name;
 	char * last_name;
 	int age;
-	int (*StringgetAge)(struct String * this);
-	void (*Stringset_age)(struct String * this, int);
-	char * (*StringtoString)(struct String * this);
+	int (*StringgetAge)(struct String *);
+	void (*Stringset_age)(struct String *, int);
+	char * (*StringtoString)(struct String *);
 } String;
 int StringgetAge(String * this) {
  	return this->age;
