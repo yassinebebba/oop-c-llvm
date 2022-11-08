@@ -24,7 +24,7 @@ expression
     | expression LTE expression               #lteExpression
     | expression GT expression                #gtExpression
     | expression GTE expression               #gteExpression
-    | chainedCall                             #chainedCallAlias
+    | unarySign? chainedCall                  #chainedCallAlias
     ;
 chainedCall: identifier ((DOT | ARROW) (identifier | functionCallExpression))*;
 
@@ -131,7 +131,7 @@ assignment
 variableAssignment: identifier ASSIGN expression SEMI;
 
 inplaceAssignment
-    : identifier
+    : (identifier | chainedCall)
         (
               STAR_ASSIGN
             | DIV_ASSIGN

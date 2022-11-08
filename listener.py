@@ -50,6 +50,7 @@ class Listener(CListener):
         }
         self.clazzes = {}
         self.objs = {}
+        self.current_class = None
         self.current_function = {}
 
     def write(self, text: str):
@@ -361,7 +362,6 @@ class Listener(CListener):
         return f'{identifier} = {self.enterExpression(expression)};'
 
     def enterInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
-        identifier: str = ctx.identifier().getText()
         operator: str = (ctx.STAR_ASSIGN()
                          or ctx.DIV_ASSIGN()
                          or ctx.MOD_ASSIGN()
@@ -375,7 +375,12 @@ class Listener(CListener):
 
         expression: str = self.enterExpression(ctx.expression())
 
-        return f'{identifier} {operator} {expression};'
+        try:
+            identifier: str = ctx.identifier().getText()
+            return f'{identifier} {operator} {expression};'
+        except AttributeError:
+            chained_Call: str = self.enterChainedCall(ctx.chainedCall())
+            return f'{chained_Call} {operator} {expression};'
 
     def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
         args = self.enterFunctionCallArgs(ctx.functionCallArgs())
@@ -492,23 +497,6 @@ class Listener(CListener):
         return ' '.join(values)
 
     def enterBlock(self, ctx: CParser.BlockContext):
-        """
-                block
-            : LC (
-                expression
-              | ifStatementStructure
-              | whileStatement
-              | doWhileStatement
-              | variableDefinition
-              | definitionList
-              | declarationList
-              | functionCall
-              | assignment
-              | inplaceAssignment
-              | functionReturn
-             )* RC
-           ;
-        """
         result: str = ''
         for child in ctx.getChildren():
             match type(child):
@@ -544,7 +532,6 @@ class Listener(CListener):
                                 result += '\n'
                 case CParser.StatementListContext:
                     for statement in child.getChildren():
-                        print(statement.getText(), type(statement))
                         match type(statement):
                             case CParser.ExpressionContext:
                                 result += self.state.tabs
@@ -612,10 +599,12 @@ class Listener(CListener):
         self.state.enter_block_scope()
         self.state.enter_class()
         identifier: str = ctx.identifier().getText()
+        self.current_class = identifier
         self.clazzes[identifier] = {}
         attributes, methods = self.enterClassBlock(ctx.classBlock())
         self.state.exit_class()
         self.state.exit_block_scope()
+        self.current_class = None
         return f'typedef struct {identifier} {"{"}\n {attributes}\n{"}"} {identifier};\n{methods}'
 
     def getFunctionPointer(self, class_name: str,
@@ -753,7 +742,10 @@ class Listener(CListener):
                     result += child.getText()
             return result
         elif self.current_function:
-            class_name = self.current_function['args'][obj_name]
+            if obj_name == 'this':
+                class_name = self.current_class
+            else:
+                class_name = self.current_function['args'][obj_name]
             result: str = ''
             for child in ctx.getChildren():
                 if isinstance(child,
