@@ -7,6 +7,11 @@ from termcolor import colored
 
 from core.CListener import CListener
 from core.CParser import CParser
+from manager import Manager
+from manager import Clazz
+from manager import Function
+from manager import Obj
+from manager import Arg
 
 
 class State:
@@ -42,16 +47,15 @@ class Listener(CListener):
         self.stream = stream
         self.output: FileIO = output
         self.state = State()
+        # to be changed
         self.identifiers = {
             'declared_variables': [],
             'initialized_variables': [],
             'functions': {},
             'clazzes': {}
         }
-        self.clazzes = {}
-        self.objs = {}
-        self.current_class = None
-        self.current_function = {}
+        # the new approach
+        self.manager = Manager()
 
     def write(self, text: str):
         self.output.write(text)
@@ -241,7 +245,8 @@ class Listener(CListener):
         rtype: str = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
         args: str = self.enterFunctionArgs(ctx.functionArgs())
-        self.current_function = {'name': identifier, 'args': {}}
+        func = Function(name=identifier, alias=None)
+        self.manager.current_function = func
         if ctx.functionArgs():
             try:
                 for arg in ctx.functionArgs().getChildren():
@@ -251,7 +256,8 @@ class Listener(CListener):
                         t = self.match_type_specifier(arg.typeSpecifier())
                         class_name = t.split()[0]
                         # print(class_name)
-                        self.current_function['args'][arg_name] = class_name
+                        arg = Arg(name=arg_name, clazz_name=class_name)
+                        self.manager.current_function.add_arg(arg)
             except KeyError:
                 # no args
                 pass
@@ -269,11 +275,11 @@ class Listener(CListener):
                 args = f'{class_name} * this, {args}'
             else:
                 args = f'{class_name} * this'
-            self.clazzes[class_name][original_identifier] = {
-                'original_name': original_identifier,
-                'new_name': identifier,
-            }
-        self.current_function = {}
+            method: Function = Function(name=original_identifier,
+                                        alias=identifier)
+            self.manager.current_clazz.add_method(method)
+
+        self.manager.current_function = None
         return f'{rtype} {identifier}({args}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
     def enterFunctionArgs(self, ctx: CParser.FunctionArgsContext):
@@ -599,12 +605,16 @@ class Listener(CListener):
         self.state.enter_block_scope()
         self.state.enter_class()
         identifier: str = ctx.identifier().getText()
-        self.current_class = identifier
-        self.clazzes[identifier] = {}
+        clazz: Clazz = Clazz(
+            name=identifier,
+            alias=None,
+        )
+        self.manager.current_clazz = clazz
+        self.manager.add_clazz(clazz)
         attributes, methods = self.enterClassBlock(ctx.classBlock())
         self.state.exit_class()
         self.state.exit_block_scope()
-        self.current_class = None
+        # self.manager.current_clazz = None
         return f'typedef struct {identifier} {"{"}\n {attributes}\n{"}"} {identifier};\n{methods}'
 
     def getFunctionPointer(self, class_name: str,
@@ -625,34 +635,34 @@ class Listener(CListener):
         return f'{type_specifier} (*{class_name}{identifier})({", ".join(args)});'
 
     def createClassConstructor(self,
-                               class_name: str,
                                constructor: CParser.FunctionDefinitionContext | None,
                                methods: list[
                                    CParser.FunctionDefinitionContext]):
+
+        clazz_name: str = self.manager.current_clazz.name
         if constructor:
             method_name: str = constructor.identifier().getText()
-            new_method_name: str = f'{class_name}{method_name}'
+            method_alias: str = f'{clazz_name}{method_name}'
             args: str = self.enterFunctionArgs(constructor.functionArgs())
             if args:
-                args = f'{class_name} * this, {args}'
+                args = f'{clazz_name} * this, {args}'
             else:
-                args = f'{class_name} * this'
-            self.clazzes[class_name][method_name] = {
-                'original_name': method_name,
-                'new_name': new_method_name,
-            }
+                args = f'{clazz_name} * this'
+            method: Function = Function(name=method_name, alias=method_alias)
+            self.manager.current_clazz.constructor = method
+            self.manager.current_clazz.add_method(method)
             method_block: str = ''
             for method in methods:
-                if method.identifier().getText() == class_name:
+                if method.identifier().getText() == clazz_name:
                     continue
                 name: str = method.identifier().getText()
-                new_name: str = f'{class_name}{name}'
+                new_name: str = f'{clazz_name}{name}'
                 method_block += f'{self.state.tabs}this->{new_name} = &{new_name};\n'
             method_block += self.enterBlock(constructor.block())
-            return f'void {new_method_name}({args}) {"{"}\n{method_block}\n{"}"}'
+            return f'void {method_alias}({args}) {"{"}\n{method_block}\n{"}"}'
 
         else:
-            return f'void {class_name}{class_name}({class_name} * this) {"{"}\n// Not implemented\n{"}"}'
+            return f'void {clazz_name}{clazz_name}({clazz_name} * this) {"{"}\n// Not implemented\n{"}"}'
 
     def enterClassBlock(self, ctx: CParser.ClassBlockContext):
         class_name: str = ctx.parentCtx.identifier().getText()
@@ -703,9 +713,7 @@ class Listener(CListener):
             parsed_methods += value
             parsed_methods += '\n'
 
-        parsed_constructor = self.createClassConstructor(class_name,
-                                                         constructor,
-                                                         methods)
+        parsed_constructor = self.createClassConstructor(constructor, methods)
         parsed_methods += parsed_constructor
         return attributes[:-1], parsed_methods
 
@@ -715,50 +723,49 @@ class Listener(CListener):
         identifier: str = ctx.identifier().getText()
         args: str = self.enterFunctionCallArgs(
             ctx.functionCall().functionCallArgs())
-        self.objs[identifier] = {
-            'class_name': class_name
-        }
+        obj: Obj = Obj(name=identifier, clazz_name=class_name)
+        self.manager.add_obj(obj)
         result: str = f'{type_specifier} {identifier} = malloc(sizeof({class_name}));\n'
         result += f'{self.state.tabs}{class_name}{class_name}({identifier}, {args});'
         return result
 
     def enterChainedCall(self, ctx: CParser.ChainedCallContext):
         obj_name: str = ctx.identifier(0).getText()
-        if obj_name in self.objs:
+        obj: Obj = self.manager.get_obj(obj_name)
+        if obj is not None:
             result: str = ''
-            class_name = self.objs[obj_name]['class_name']
+            clazz: Clazz = self.manager.get_clazz(obj.clazz_name)
             for child in ctx.getChildren():
                 if isinstance(child, CParser.FunctionCallExpressionContext):
-                    method = self.clazzes[class_name][
-                        child.identifier().getText()]
+                    method: Function = clazz.get_method(
+                        child.identifier().getText())
                     args: str = self.enterFunctionCallArgs(
                         child.functionCallArgs())
-                    method_alias = method['new_name']
                     if args:
-                        result += f'{method_alias}({obj_name}, {args})'
+                        result += f'{method.alias}({obj.name}, {args})'
                     else:
-                        result += f'{method_alias}({obj_name})'
+                        result += f'{method.alias}({obj.name})'
                 else:
                     result += child.getText()
             return result
-        elif self.current_function:
+        elif self.manager.current_function:
+            clazz: Clazz | None = None
             if obj_name == 'this':
-                class_name = self.current_class
+                clazz = self.manager.current_clazz
             else:
-                class_name = self.current_function['args'][obj_name]
+                clazz = self.manager.get_clazz(obj.clazz_name)
             result: str = ''
             for child in ctx.getChildren():
                 if isinstance(child,
                               CParser.FunctionCallExpressionContext):
-                    method = self.clazzes[class_name][
-                        child.identifier().getText()]
+                    method: Function = clazz.get_method(
+                        child.identifier().getText())
                     args: str = self.enterFunctionCallArgs(
                         child.functionCallArgs())
-                    method_alias = method['new_name']
                     if args:
-                        result += f'{method_alias}({obj_name}, {args})'
+                        result += f'{method.alias}({obj.name}, {args})'
                     else:
-                        result += f'{method_alias}({obj_name})'
+                        result += f'{method.alias}({obj.name})'
                 else:
                     result += child.getText()
             return result
