@@ -1,3 +1,3 @@
-python test_mc.py input.c
+python main.py input.c
 gcc output.c
 ./a.out

@@ -1,11 +1,11 @@
 import os
 from io import FileIO
-
+import antlr4.Lexer
 from antlr4.tree.Tree import TerminalNodeImpl
 from antlr4.tree.Tree import Token
 from termcolor import colored
 
-from core.CListener import CListener
+from core.CVisitor import CVisitor
 from core.CParser import CParser
 from manager import Manager
 from manager import Clazz
@@ -42,7 +42,7 @@ def print_error(error: str):
     print(colored(error, 'red'))
 
 
-class Listener(CListener):
+class Visitor(CVisitor):
     def __init__(self, stream, output):
         # steam is CommonTokenStream to get hidden channel
         self.stream = stream
@@ -144,7 +144,7 @@ class Listener(CListener):
 
         return ' '.join(chunks)
 
-    def enterCompilationUnit(self, ctx: CParser.CompilationUnitContext):
+    def visitCompilationUnit(self, ctx:CParser.CompilationUnitContext):
         for token in self.stream.tokens:
             # access hidden channel
             if token.channel == 1:
@@ -206,7 +206,7 @@ class Listener(CListener):
                     self.add_newline()
                 case CParser.ClassDefinitionContext:
                     value = self.state.tabs
-                    value += self.enterClassDefinition(child, auto=False)
+                    value += self.enterClassDefinition(child)
                     self.write(value)
                     self.add_newline()
 
@@ -607,8 +607,7 @@ class Listener(CListener):
     def exitBlock(self, ctx: CParser.BlockContext):
         self.state.exit_block_scope()
 
-    def enterClassDefinition(self, ctx: CParser.ClassDefinitionContext, auto=True):
-        if auto: return
+    def enterClassDefinition(self, ctx: CParser.ClassDefinitionContext):
         self.state.enter_block_scope()
         self.state.enter_class()
         identifier: str = ctx.identifier().getText()

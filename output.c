@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 typedef struct Player {
  	int x;
 	int y;
@@ -43,9 +41,7 @@ void PlayerPlayer(Player * this, int x, int y) {
 	this->y = y;
 }
 typedef struct Box {
- 	int w;
-	Player * a;
-	Player * player;
+ 	Player * player;
 	void (*Boxcheck_player)(struct Box *);
 } Box;
 void Boxcheck_player(Box * this) {
