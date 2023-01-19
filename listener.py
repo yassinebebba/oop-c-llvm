@@ -9,6 +9,7 @@ from core.CListener import CListener
 from core.CParser import CParser
 from manager import Manager
 from manager import Clazz
+from manager import Attribute
 from manager import Function
 from manager import Obj
 from manager import Arg
@@ -205,7 +206,7 @@ class Listener(CListener):
                     self.add_newline()
                 case CParser.ClassDefinitionContext:
                     value = self.state.tabs
-                    value += self.enterClassDefinition(child)
+                    value += self.enterClassDefinition(child, auto=False)
                     self.write(value)
                     self.add_newline()
 
@@ -219,7 +220,8 @@ class Listener(CListener):
         return f'{type_specifier} {identifier} = {expression};'
 
     def enterVariableDeclaration(self,
-                                 ctx: CParser.VariableDeclarationContext):
+                                 ctx: CParser.VariableDeclarationContext,
+                                 is_clazz_attribute: bool = False):
         ctx.scope_level = self.state.scope_level
         # self.check_variable_declaration(ctx)
         type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
@@ -229,7 +231,11 @@ class Listener(CListener):
         if ctx.arrayCell():
             for cell in ctx.arrayCell():
                 cells += cell.getText()
-
+        if is_clazz_attribute:
+            attribute = Attribute(name=identifier,
+                                  type_specifier=type_specifier)
+            print(ctx.getText())
+            self.manager.current_clazz.add_attribute(attribute)
         return f'{type_specifier} {identifier}{cells};'
 
     def enterFunctionDeclaration(self,
@@ -385,8 +391,8 @@ class Listener(CListener):
             identifier: str = ctx.identifier().getText()
             return f'{identifier} {operator} {expression};'
         except AttributeError:
-            chained_Call: str = self.enterChainedCall(ctx.chainedCall())
-            return f'{chained_Call} {operator} {expression};'
+            chained_call: str = self.enterChainedCall(ctx.chainedCall())
+            return f'{chained_call} {operator} {expression};'
 
     def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
         args = self.enterFunctionCallArgs(ctx.functionCallArgs())
@@ -601,7 +607,8 @@ class Listener(CListener):
     def exitBlock(self, ctx: CParser.BlockContext):
         self.state.exit_block_scope()
 
-    def enterClassDefinition(self, ctx: CParser.ClassDefinitionContext):
+    def enterClassDefinition(self, ctx: CParser.ClassDefinitionContext, auto=True):
+        if auto: return
         self.state.enter_block_scope()
         self.state.enter_class()
         identifier: str = ctx.identifier().getText()
@@ -683,7 +690,8 @@ class Listener(CListener):
 
         for attribute in attribute_declarations:
             attributes += self.state.tabs
-            value = self.enterVariableDeclaration(attribute)
+            value = self.enterVariableDeclaration(attribute,
+                                                  is_clazz_attribute=True)
             attributes += value
             attributes += '\n'
 
@@ -736,17 +744,21 @@ class Listener(CListener):
             result: str = ''
             clazz: Clazz = self.manager.get_clazz(obj.clazz_name)
             for child in ctx.getChildren():
-                if isinstance(child, CParser.FunctionCallExpressionContext):
-                    method: Function = clazz.get_method(
-                        child.identifier().getText())
-                    args: str = self.enterFunctionCallArgs(
-                        child.functionCallArgs())
-                    if args:
-                        result += f'{method.alias}({obj.name}, {args})'
-                    else:
-                        result += f'{method.alias}({obj.name})'
-                else:
-                    result += child.getText()
+                match type(child):
+                    case CParser.FunctionCallExpressionContext:
+                        # print(clazz.methods)
+                        method: Function = clazz.get_method(
+                            child.identifier().getText())
+                        args: str = self.enterFunctionCallArgs(
+                            child.functionCallArgs())
+                        if args:
+                            result += f'{method.alias}({obj.name}, {args})'
+                        else:
+                            result += f'{method.alias}({obj.name})'
+                    case CParser.IdentifierContext:
+                        result += child.getText()
+                    case _:
+                        result += child.getText()
             return result
         elif self.manager.current_function:
             clazz: Clazz | None = None

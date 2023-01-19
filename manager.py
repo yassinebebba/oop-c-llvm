@@ -1,3 +1,8 @@
+from termcolor import colored
+
+def print_error(error: str):
+    print(colored(error, 'red'))
+
 class Arg:
     def __init__(self, name, clazz_name):
         self.name = name
@@ -14,15 +19,30 @@ class Function:
         self.args.append(arg)
 
 
+class Attribute:
+    def __init__(self, name, type_specifier):
+        self.name: str = name
+        self.type_specifier: str = type_specifier
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+
 class Clazz:
     def __init__(self, name, alias):
         self.name: str = name
         self.alias: str = alias
         self.constructor: Function | None = None
         self.methods: list[Function] = []
+        self.attributes: list[Attribute] = []
 
     def add_method(self, method: Function):
         self.methods.append(method)
+
+    def add_attribute(self, attribute: Attribute):
+        if attribute in self.attributes:
+            print_error(f'error: duplicate member `{attribute.name}`')
+        self.attributes.append(attribute)
 
     def get_method(self, name) -> Function:
         for method in self.methods:

@@ -43,7 +43,9 @@ void PlayerPlayer(Player * this, int x, int y) {
 	this->y = y;
 }
 typedef struct Box {
- 	Player * player;
+ 	int w;
+	Player * a;
+	Player * player;
 	void (*Boxcheck_player)(struct Box *);
 } Box;
 void Boxcheck_player(Box * this) {

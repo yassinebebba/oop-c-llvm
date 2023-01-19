@@ -59,6 +59,7 @@ int main() {
     Player * player = new Player(0, 0);
     Box * box = new Box(player);
     player->up();
+//    box->player->up();
     box->check_player();
     player->up();
     box->check_player();
