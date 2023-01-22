@@ -3,6 +3,7 @@ grammar C;
 compilationUnit
     : (
           assignment
+        | includeDirective
         | functionCall
         | declarationList
         | definitionList
@@ -220,9 +221,10 @@ block
 identifier: IDENTIFIER;
 
 // must be handled separately by the pre processor
+includeDirective: INCLUDE_DIRECTIVE;
 INCLUDE_DIRECTIVE
     :   '#' WS? 'include' WS? (('"' ~[\r\n]* '"') | ('<' ~[\r\n]* '>' )) WS? NEWLINE
-        -> channel(HIDDEN)
+     //   -> channel(HIDDEN)
     ;
 
 STRING_LITERAL: '"' ~('"')* '"';

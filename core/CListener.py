@@ -503,5 +503,14 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#includeDirective.
+    def enterIncludeDirective(self, ctx:CParser.IncludeDirectiveContext):
+        pass
+
+    # Exit a parse tree produced by CParser#includeDirective.
+    def exitIncludeDirective(self, ctx:CParser.IncludeDirectiveContext):
+        pass
+
+
 
 del CParser

@@ -1,10 +1,9 @@
 import os
 from io import FileIO
-import antlr4.Lexer
 from antlr4.tree.Tree import TerminalNodeImpl
 from antlr4.tree.Tree import Token
 from termcolor import colored
-
+import antlr4
 from core.CVisitor import CVisitor
 from core.CParser import CParser
 from manager import Manager
@@ -144,14 +143,11 @@ class Visitor(CVisitor):
 
         return ' '.join(chunks)
 
-    def visitCompilationUnit(self, ctx:CParser.CompilationUnitContext):
-        for token in self.stream.tokens:
-            # access hidden channel
-            if token.channel == 1:
-                self.write(f'{token.text.strip()}\n')
-
+    def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         for child in ctx.getChildren():
             match type(child):
+                case CParser.IncludeDirectiveContext:
+                    self.write(child.getText())
                 case CParser.DeclarationListContext:
                     for declaration in child.getChildren():
                         match type(declaration):
@@ -234,7 +230,6 @@ class Visitor(CVisitor):
         if is_clazz_attribute:
             attribute = Attribute(name=identifier,
                                   type_specifier=type_specifier)
-            print(ctx.getText())
             self.manager.current_clazz.add_attribute(attribute)
         return f'{type_specifier} {identifier}{cells};'
 

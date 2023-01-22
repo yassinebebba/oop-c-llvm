@@ -284,5 +284,10 @@ class CVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by CParser#includeDirective.
+    def visitIncludeDirective(self, ctx:CParser.IncludeDirectiveContext):
+        return self.visitChildren(ctx)
+
+
 
 del CParser
