@@ -55,10 +55,17 @@ class Box {
     }
 }
 
+void x(Player * p) {
+    p->up();
+}
+
 int main() {
     Player * player = new Player(0, 0);
     Box * box = new Box(player);
     player->up();
+    // this should be fixed:
+    // this works x() without a semicolon, it needs to be x();
+    x(player);
 //    box->player->up();
     box->check_player();
     player->up();

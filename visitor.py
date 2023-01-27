@@ -1,15 +1,14 @@
 import os
 from io import FileIO
 from antlr4.tree.Tree import TerminalNodeImpl
-from antlr4.tree.Tree import Token
 from termcolor import colored
-import antlr4
 from core.CVisitor import CVisitor
 from core.CParser import CParser
 from manager import Manager
 from manager import Clazz
 from manager import Attribute
 from manager import Function
+from manager import Variable
 from manager import Obj
 from manager import Arg
 
@@ -47,14 +46,6 @@ class Visitor(CVisitor):
         self.stream = stream
         self.output: FileIO = output
         self.state = State()
-        # to be changed
-        self.identifiers = {
-            'declared_variables': [],
-            'initialized_variables': [],
-            'functions': {},
-            'clazzes': {}
-        }
-        # the new approach
         self.manager = Manager()
 
     def write(self, text: str):
@@ -67,51 +58,6 @@ class Visitor(CVisitor):
         cur = self.output.tell()
         self.output.seek(cur - 1, os.SEEK_SET)
         self.output.truncate()
-
-    def check_variable_declaration(self,
-                                   ctx: CParser.VariableDeclarationContext):
-        for var in self.identifiers['declared_variables']:
-            if var.identifier().getText() == ctx.identifier().getText() \
-                    and var.scope_level == ctx.scope_level:
-                prev_symbol: Token = var.identifier().getChild(0).symbol
-                symbol: Token = ctx.identifier().getChild(0).symbol
-                print(f'{ctx.getText()}')
-                print(' ' * symbol.column + '^')
-                print_error(
-                    f'Error <line {symbol.line}>: '
-                    f'Identifier \'{var.identifier().getText()}\' has already '
-                    f'been declared in the same scope. '
-                    f'Previous declaration at <line {prev_symbol.line}>')
-                exit(-1)
-        else:
-            self.identifiers['declared_variables'].append(ctx)
-
-    def check_variable_assignment(self,
-                                  ctx: CParser.InplaceAssignmentContext | CParser.AssignmentContext):
-        for var in self.identifiers['declared_variables']:
-            if var.identifier().getText() == ctx.identifier().getText():
-                # identifier was declared good
-                return
-        else:
-            symbol: Token = ctx.identifier().getChild(0).symbol
-            print(f'{ctx.getText()}')
-            print(' ' * symbol.column + '^')
-            print_error(
-                f'Error <line {symbol.line}>: use of undeclared identifier \'{ctx.identifier().getText()}\'.')
-            exit(-1)
-
-    def check_var_definition(self, ctx: CParser.VariableDefinitionContext):
-        for var in self.identifiers['declared_variables']:
-            if var.identifier().getText() == ctx.identifier().getText():
-                # identifier was declared good
-                return
-        else:
-            symbol: Token = ctx.identifier().getChild(0).symbol
-            print(f'{ctx.getText()}')
-            print(' ' * symbol.column + '^')
-            print_error(
-                f'Error <line {symbol.line}>: use of undeclared identifier \'{ctx.identifier().getText()}\'.')
-            exit(-1)
 
     def match_type_specifier(self, ctx: CParser.TypeSpecifierContext):
         # custom method to not repeat type matching
@@ -212,6 +158,8 @@ class Visitor(CVisitor):
     def enterVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
         type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
+        variable = Variable(name=identifier, type_specifier=type_specifier)
+        self.manager.add_variable(variable)
         expression = self.enterExpression(ctx.expression())
         return f'{type_specifier} {identifier} = {expression};'
 
@@ -222,7 +170,8 @@ class Visitor(CVisitor):
         # self.check_variable_declaration(ctx)
         type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-
+        variable = Variable(name=identifier, type_specifier=type_specifier)
+        self.manager.add_variable(variable)
         cells: str = ''
         if ctx.arrayCell():
             for cell in ctx.arrayCell():
@@ -755,25 +704,40 @@ class Visitor(CVisitor):
                         result += child.getText()
             return result
         elif self.manager.current_function:
-            clazz: Clazz | None = None
-            if obj_name == 'this':
-                clazz = self.manager.current_clazz
-            else:
-                clazz = self.manager.get_clazz(obj.clazz_name)
             result: str = ''
-            for child in ctx.getChildren():
-                if isinstance(child,
-                              CParser.FunctionCallExpressionContext):
-                    method: Function = clazz.get_method(
-                        child.identifier().getText())
-                    args: str = self.enterFunctionCallArgs(
-                        child.functionCallArgs())
-                    if args:
-                        result += f'{method.alias}({obj.name}, {args})'
+            if obj_name == 'this':
+                clazz: Clazz = self.manager.current_clazz
+                for child in ctx.getChildren():
+                    if isinstance(child,
+                                  CParser.FunctionCallExpressionContext):
+                        method: Function = clazz.get_method(
+                            child.identifier().getText())
+                        args: str = self.enterFunctionCallArgs(
+                            child.functionCallArgs())
+                        if args:
+                            result += f'{method.alias}({obj.name}, {args})'
+                        else:
+                            result += f'{method.alias}({obj.name})'
                     else:
-                        result += f'{method.alias}({obj.name})'
-                else:
-                    result += child.getText()
-            return result
+                        result += child.getText()
+                return result
+            else:
+                arg: Arg = self.manager.current_function.get_arg(obj_name)
+                clazz: Clazz = self.manager.get_clazz(arg.clazz_name)
+                for child in ctx.getChildren():
+                    if isinstance(child,
+                                  CParser.FunctionCallExpressionContext):
+                        method: Function = clazz.get_method(
+                            child.identifier().getText())
+                        args: str = self.enterFunctionCallArgs(
+                            child.functionCallArgs())
+                        if args:
+                            result += f'{method.alias}({obj_name}, {args})'
+                        else:
+                            result += f'{method.alias}({obj_name})'
+                    else:
+                        result += child.getText()
+                return result
+
         else:
             return ''

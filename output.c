@@ -60,12 +60,16 @@ void BoxBox(Box * this, Player * player) {
 	this->Boxcheck_player = &Boxcheck_player;
 	this->player = player;
 }
+void x(Player * p) {
+ 	p->Playerup(p);
+}
 int main() {
  	Player * player = malloc(sizeof(Player));
 	PlayerPlayer(player, 0, 0);
 	Box * box = malloc(sizeof(Box));
 	BoxBox(box, player);
 	player->Playerup(player);
+	x(player);
 	box->Boxcheck_player(box);
 	player->Playerup(player);
 	box->Boxcheck_player(box);
