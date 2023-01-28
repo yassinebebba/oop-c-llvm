@@ -8,8 +8,8 @@ typedef struct Player {
 	void (*Playerdown)(struct Player *);
 	void (*Playerright)(struct Player *);
 	void (*Playerleft)(struct Player *);
-	char * (*PlayertoString)(struct Player *);
 	char * (*Player__repr__)(struct Player *);
+	char * (*PlayertoString)(struct Player *);
 } Player;
 void Playerup(Player * this) {
  	this->y += 1;
@@ -23,14 +23,14 @@ void Playerright(Player * this) {
 void Playerleft(Player * this) {
  	this->x -= 1;
 }
-char * PlayertoString(Player * this) {
- 	char * str;
-	sprintf(str, "<Player object at %p>", this);
-	return str;
-}
 char * Player__repr__(Player * this) {
  	char * str;
 	sprintf(str, "Player(x=%d, y=%d)", this->x, this->y);
+	return str;
+}
+char * PlayertoString(Player * this) {
+	char * str;
+	sprintf(str, "<Player object at %p>", this);
 	return str;
 }
 void PlayerPlayer(Player * this, int x, int y) {
@@ -38,14 +38,15 @@ void PlayerPlayer(Player * this, int x, int y) {
 	this->Playerdown = &Playerdown;
 	this->Playerright = &Playerright;
 	this->Playerleft = &Playerleft;
-	this->PlayertoString = &PlayertoString;
 	this->Player__repr__ = &Player__repr__;
+	this->PlayertoString = &PlayertoString;
 	this->x = x;
 	this->y = y;
 }
 typedef struct Box {
  	Player * player;
 	void (*Boxcheck_player)(struct Box *);
+	char * (*BoxtoString)(struct Box *);
 } Box;
 void Boxcheck_player(Box * this) {
  	if (this->player->x > 1) {
@@ -56,12 +57,19 @@ void Boxcheck_player(Box * this) {
 	}
 
 }
+char * BoxtoString(Box * this) {
+	char * str;
+	sprintf(str, "<Box object at %p>", this);
+	return str;
+}
 void BoxBox(Box * this, Player * player) {
 	this->Boxcheck_player = &Boxcheck_player;
+	this->BoxtoString = &BoxtoString;
 	this->player = player;
 }
 void x(Player * p) {
  	p->Playerup(p);
+	printf("x=%d\n", p->y);
 }
 int main() {
  	Player * player = malloc(sizeof(Player));
@@ -77,6 +85,6 @@ int main() {
 	box->Boxcheck_player(box);
 	player->Playerright(player);
 	box->Boxcheck_player(box);
-	printf("%s\n", player->Player__repr__(player));
+	printf("%s\n", player->PlayertoString(player));
 	return 0;
 }

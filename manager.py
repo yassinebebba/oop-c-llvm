@@ -12,16 +12,22 @@ def print_error(error: str):
 
 
 class Arg:
-    def __init__(self, name, clazz_name):
+    def __init__(self, type_specifier: str, name: str | None,
+                 clazz: 'Clazz' or None):
+        self.type_specifier = type_specifier
         self.name = name
-        self.clazz_name = clazz_name
+        self.clazz: Clazz | None = clazz
+
+    def __repr__(self):
+        return f'{type(self).__name__}(type={self.type_specifier}, name={self.name})'
 
 
 class Function:
-    def __init__(self, name, alias):
+    def __init__(self, rtype, name, alias, args):
+        self.rtype = rtype
         self.name = name
         self.alias = alias
-        self.args: list[Arg] = []
+        self.args: list[Arg] = args
 
     def add_arg(self, arg: Arg):
         self.args.append(arg)
@@ -35,9 +41,10 @@ class Function:
 
 
 class Attribute:
-    def __init__(self, name, type_specifier):
-        self.name: str = name
+    def __init__(self, name, type_specifier, clazz: 'Clazz' or None):
         self.type_specifier: str = type_specifier
+        self.name: str = name
+        self.clazz: Clazz | None = clazz
 
     def __eq__(self, other):
         return self.name == other.name

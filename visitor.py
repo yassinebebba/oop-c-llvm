@@ -86,8 +86,10 @@ class Visitor(CVisitor):
                     chunks.append('*')
                 case _identifier:
                     chunks.append(_identifier)
-
-        return ' '.join(chunks)
+        try:
+            return self.manager.get_clazz(chunks[0]), ' '.join(chunks)
+        except:
+            return None, ' '.join(chunks)
 
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         for child in ctx.getChildren():
@@ -126,8 +128,9 @@ class Visitor(CVisitor):
                                 self.add_newline()
                             case CParser.FunctionDefinitionContext:
                                 value = self.state.tabs
-                                value += self.enterFunctionDefinition(
+                                _, func_string = self.enterFunctionDefinition(
                                     definition)
+                                value += func_string
                                 self.write(value)
                                 self.add_newline()
                             case CParser.StructDefinitionContext:
@@ -153,7 +156,8 @@ class Visitor(CVisitor):
                     self.add_newline()
 
     def enterTypeSpecifier(self, ctx: CParser.TypeSpecifierContext):
-        return self.match_type_specifier(ctx)
+        clazz, type_specifier = self.match_type_specifier(ctx)
+        return clazz, type_specifier
 
     def enterVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
         type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
@@ -168,7 +172,7 @@ class Visitor(CVisitor):
                                  is_clazz_attribute: bool = False):
         ctx.scope_level = self.state.scope_level
         # self.check_variable_declaration(ctx)
-        type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
+        clazz, type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         variable = Variable(name=identifier, type_specifier=type_specifier)
         self.manager.add_variable(variable)
@@ -177,25 +181,38 @@ class Visitor(CVisitor):
             for cell in ctx.arrayCell():
                 cells += cell.getText()
         if is_clazz_attribute:
-            attribute = Attribute(name=identifier,
-                                  type_specifier=type_specifier)
+            attribute = Attribute(
+                type_specifier=type_specifier, name=identifier, clazz=clazz
+            )
             self.manager.current_clazz.add_attribute(attribute)
         return f'{type_specifier} {identifier}{cells};'
 
-    def enterFunctionDeclaration(self,
-                                 ctx: CParser.FunctionDeclarationContext):
-        type_specifier = self.match_type_specifier(ctx.typeSpecifier())
+    def enterFunctionDeclaration(self, ctx:
+    CParser.FunctionDeclarationContext) -> tuple[Function, str]:
+        _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        args: str = self.enterFunctionArgs(ctx.functionArgs())
-        return f'{type_specifier} {identifier}({args});'
+        args, args_string = self.enterFunctionArgs(ctx.functionArgs())
+        func: Function = Function(
+            rtype=rtype,
+            name=identifier,
+            args=args,
+            alias=None
+        )
+        return func, f'{rtype} {identifier}({args});'
 
-    def enterFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
+    def enterFunctionDefinition(self, ctx:
+    CParser.FunctionDefinitionContext) -> tuple[Function, str]:
         # typeSpecifier? identifier LP functionArgs? RP block
         self.state.enter_block_scope()
-        rtype: str = self.match_type_specifier(ctx.typeSpecifier())
+        _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
-        args: str = self.enterFunctionArgs(ctx.functionArgs())
-        func = Function(name=identifier, alias=None)
+        args, args_string = self.enterFunctionArgs(ctx.functionArgs())
+        func = Function(
+            rtype=rtype,
+            name=identifier,
+            args=args,
+            alias=None
+        )
         self.manager.current_function = func
         if ctx.functionArgs():
             try:
@@ -203,10 +220,11 @@ class Visitor(CVisitor):
                     if isinstance(arg, CParser.ArgContext):
                         arg_name = arg.identifier().getText()
                         # possible class type
-                        t = self.match_type_specifier(arg.typeSpecifier())
-                        class_name = t.split()[0]
+                        clazz, _ = self.match_type_specifier(
+                            arg.typeSpecifier())
                         # print(class_name)
-                        arg = Arg(name=arg_name, clazz_name=class_name)
+                        arg = Arg(name=arg_name, clazz=clazz,
+                                  type_specifier=clazz.name)
                         self.manager.current_function.add_arg(arg)
             except KeyError:
                 # no args
@@ -221,20 +239,27 @@ class Visitor(CVisitor):
             # class ctx -> class block ctx -> class method ctx
             class_name = ctx.parentCtx.parentCtx.identifier().getText()
             identifier = f'{class_name}{identifier}'
-            if args:
-                args = f'{class_name} * this, {args}'
+
+            if args_string:
+                args_string = ', '.join([f'{class_name} * this', args_string])
             else:
-                args = f'{class_name} * this'
-            method: Function = Function(name=original_identifier,
-                                        alias=identifier)
+                args_string = f'{class_name} * this'
+            method: Function = Function(
+                rtype=rtype,
+                name=original_identifier,
+                args=args,
+                alias=identifier,
+            )
             self.manager.current_clazz.add_method(method)
 
         self.manager.current_function = None
-        return f'{rtype} {identifier}({args}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
+        return func, f'{rtype} {identifier}({args_string}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
-    def enterFunctionArgs(self, ctx: CParser.FunctionArgsContext):
+    def enterFunctionArgs(self, ctx: CParser.FunctionArgsContext) -> tuple[
+        list[Arg], str]:
         if ctx is None:
-            return ''
+            return [], ''
+
         args: list[CParser.ArgContext] = [
             arg for arg in ctx.getChildren()
             if isinstance(arg, CParser.ArgContext)
@@ -254,14 +279,23 @@ class Visitor(CVisitor):
                 exit(-1)
             else:
                 temp[identifier] = 1
-        values = list(map(self.enterArg, args))
-        return ', '.join(values)
 
-    def enterArg(self, ctx: CParser.ArgContext):
-        type_specifier: str = self.enterTypeSpecifier(ctx.typeSpecifier())
+        processed_arguments: list[Arg] = []
+        result: list[str] = []
+        for arg in args:
+            arg, string = self.enterArg(arg)
+            processed_arguments.append(arg)
+            result.append(string)
+        return processed_arguments, ', '.join(result)
+
+    def enterArg(self, ctx: CParser.ArgContext) -> tuple[Arg, str]:
+        clazz, type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
+        arg: Arg = Arg(type_specifier=type_specifier, name=None, clazz=clazz)
         if ctx.identifier():
-            return f'{type_specifier} {ctx.identifier().getText()}'
-        return type_specifier
+            identifier: str = ctx.identifier().getText()
+            arg.name = identifier
+            return arg, f'{type_specifier} {identifier}'
+        return arg, type_specifier
 
     def enterStructDeclaration(self, ctx: CParser.StructDeclarationContext):
         return f'struct {ctx.identifier().getText()};'
@@ -294,11 +328,11 @@ class Visitor(CVisitor):
         return result[:-1]
 
     def enterField(self, ctx: CParser.FieldContext):
-        type_specifier: str = self.match_type_specifier(ctx.typeSpecifier())
+        _, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
         return f'{type_specifier} {ctx.identifier().getText()};'
 
     def enterBitField(self, ctx: CParser.BitFieldContext):
-        type_specifier: str = self.match_type_specifier(ctx.typeSpecifier())
+        _, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
         bit_count: str = ctx.INTEGER_CONSTANT()
         return f'{type_specifier} {identifier}: {bit_count};'
@@ -569,7 +603,7 @@ class Visitor(CVisitor):
 
     def getFunctionPointer(self, class_name: str,
                            function: CParser.FunctionDefinitionContext):
-        type_specifier: str = self.match_type_specifier(
+        _, type_specifier = self.match_type_specifier(
             function.typeSpecifier())
         identifier: str = function.identifier().getText()
 
@@ -578,7 +612,9 @@ class Visitor(CVisitor):
         if function.functionArgs():
             for arg in function.functionArgs().getChildren():
                 try:
-                    args.append(self.match_type_specifier(arg.typeSpecifier()))
+                    clazz, type_specifier = self.match_type_specifier(
+                        arg.typeSpecifier())
+                    args.append(type_specifier)
                 except AttributeError:
                     # skip, it is not a func arg
                     continue
@@ -586,33 +622,44 @@ class Visitor(CVisitor):
 
     def createClassConstructor(self,
                                constructor: CParser.FunctionDefinitionContext | None,
-                               methods: list[
-                                   CParser.FunctionDefinitionContext]):
+                               methods: list[Function]):
 
         clazz_name: str = self.manager.current_clazz.name
         if constructor:
             method_name: str = constructor.identifier().getText()
             method_alias: str = f'{clazz_name}{method_name}'
-            args: str = self.enterFunctionArgs(constructor.functionArgs())
-            if args:
-                args = f'{clazz_name} * this, {args}'
-            else:
-                args = f'{clazz_name} * this'
-            method: Function = Function(name=method_name, alias=method_alias)
+            args, args_string = self.enterFunctionArgs(
+                constructor.functionArgs())
+            args_string = ', '.join([f'{clazz_name} * this', args_string])
+
+            method: Function = Function(
+                rtype='void',
+                name=method_name,
+                alias=method_alias,
+                args=args,
+            )
             self.manager.current_clazz.constructor = method
             self.manager.current_clazz.add_method(method)
             method_block: str = ''
             for method in methods:
-                if method.identifier().getText() == clazz_name:
+                if method.name == clazz_name:
                     continue
-                name: str = method.identifier().getText()
+                name: str = method.name
                 new_name: str = f'{clazz_name}{name}'
                 method_block += f'{self.state.tabs}this->{new_name} = &{new_name};\n'
             method_block += self.enterBlock(constructor.block())
-            return f'void {method_alias}({args}) {"{"}\n{method_block}\n{"}"}'
+            return f'void {method_alias}({args_string}) {"{"}\n{method_block}\n{"}"}'
 
         else:
             return f'void {clazz_name}{clazz_name}({clazz_name} * this) {"{"}\n// Not implemented\n{"}"}'
+
+    def createClassStringRepresentation(self, clazz_name):
+        result: str = f'char * {clazz_name}toString({clazz_name} * this) {"{"}\n' \
+                      f'\tchar * str;\n' \
+                      f'\tsprintf(str, "<{clazz_name} object at %p>", this);\n' \
+                      f'\treturn str;\n' \
+                      '}\n'
+        return result
 
     def enterClassBlock(self, ctx: CParser.ClassBlockContext):
         class_name: str = ctx.parentCtx.identifier().getText()
@@ -649,27 +696,66 @@ class Visitor(CVisitor):
 
         parsed_methods: str = ''
         constructor: CParser.FunctionDefinitionContext | None = None
+
+        overridden_magic_methods = {'toString': False}
+
+        clean_methods: list[Function] = []
+
         for method in methods:
-            if method.identifier().getText() == class_name:
+            # print(self.enterFunctionArgs(method.functionArgs()))
+            # print(method.getText())
+            method_name = method.identifier().getText()
+            if method_name == class_name:
                 constructor = method
                 continue
+            elif method_name == 'toString':
+                overridden_magic_methods['toString'] = True
+
             function_pointer = self.getFunctionPointer(class_name, method)
             attributes += self.state.tabs
             attributes += function_pointer
             attributes += '\n'
             self.state.exit_block_scope()
             self.state.exit_block_scope()
-            value = self.enterFunctionDefinition(method)
+            func, func_string = self.enterFunctionDefinition(method)
+            clean_methods.append(func)
+            # self.manager.current_clazz.add_method(func)
             self.state.enter_block_scope()
-            parsed_methods += value
+            parsed_methods += func_string
             parsed_methods += '\n'
 
-        parsed_constructor = self.createClassConstructor(constructor, methods)
+        # MAGIC METHODS GO HERE
+        for k, v in overridden_magic_methods.items():
+            match k, v:
+                case 'toString', False:
+                    # create string representation
+                    attributes += self.state.tabs
+                    # need function pointer
+                    attributes += f'char * (*{class_name}toString)(struct {class_name} *);'
+                    attributes += '\n'
+                    to_string = self.createClassStringRepresentation(
+                        class_name)
+                    parsed_methods += to_string
+                    method: Function = Function(
+                        rtype='char *',
+                        name='toString',
+                        args=Arg(
+                            type_specifier=f'{class_name} *',
+                            name='this',
+                            clazz=self.manager.get_clazz(class_name),
+                        ),
+                        alias=f'{class_name}toString')
+                    clean_methods.append(method)
+                    self.manager.current_clazz.add_method(method)
+
+        # TODO: urgent this has to be all Function instance in class constructor
+        parsed_constructor = self.createClassConstructor(constructor,
+                                                         clean_methods)
         parsed_methods += parsed_constructor
         return attributes[:-1], parsed_methods
 
     def enterClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
-        type_specifier: str = self.match_type_specifier(ctx.typeSpecifier())
+        clazz, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
         class_name: str = type_specifier.split()[0]  # to remove the pointer
         identifier: str = ctx.identifier().getText()
         args: str = self.enterFunctionCallArgs(
@@ -723,11 +809,10 @@ class Visitor(CVisitor):
                 return result
             else:
                 arg: Arg = self.manager.current_function.get_arg(obj_name)
-                clazz: Clazz = self.manager.get_clazz(arg.clazz_name)
                 for child in ctx.getChildren():
                     if isinstance(child,
                                   CParser.FunctionCallExpressionContext):
-                        method: Function = clazz.get_method(
+                        method: Function = arg.clazz.get_method(
                             child.identifier().getText())
                         args: str = self.enterFunctionCallArgs(
                             child.functionCallArgs())

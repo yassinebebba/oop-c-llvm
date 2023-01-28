@@ -21,15 +21,15 @@ class Player {
     void left() {
         this->x -= 1;
     }
-    char * toString() {
-        char * str;
-        // this syntax should error
-        // asdad
-        sprintf(str, "<Player object at %p>", this);
-        // printf("%s\n", str);
-        // return local variable will be garbage collected
-        return str;
-    }
+//    char * toString() {
+//        char * str;
+//        // this syntax should error
+//        // asdad
+//        sprintf(str, "<asasdad object at %p>", this);
+//        // printf("%s\n", str);
+//        // return local variable will be garbage collected
+//        return str;
+//    }
     char * __repr__() {
         char * str;
         // this syntax should error
@@ -57,6 +57,7 @@ class Box {
 
 void x(Player * p) {
     p->up();
+    printf("x=%d\n", p->y);
 }
 
 int main() {
@@ -75,6 +76,6 @@ int main() {
     player->right();
     box->check_player();
 
-    printf("%s\n", player->__repr__());
+    printf("%s\n", player->toString());
     return 0;
 }
