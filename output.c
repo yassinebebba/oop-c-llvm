@@ -8,7 +8,6 @@ typedef struct Player {
 	void (*Playerdown)(struct Player *);
 	void (*Playerright)(struct Player *);
 	void (*Playerleft)(struct Player *);
-	char * (*Player__repr__)(struct Player *);
 	char * (*PlayertoString)(struct Player *);
 } Player;
 void Playerup(Player * this) {
@@ -23,13 +22,8 @@ void Playerright(Player * this) {
 void Playerleft(Player * this) {
  	this->x -= 1;
 }
-char * Player__repr__(Player * this) {
- 	char * str;
-	sprintf(str, "Player(x=%d, y=%d)", this->x, this->y);
-	return str;
-}
 char * PlayertoString(Player * this) {
-	char * str;
+	char * str = malloc(sizeof(char *) * 28);
 	sprintf(str, "<Player object at %p>", this);
 	return str;
 }
@@ -38,7 +32,6 @@ void PlayerPlayer(Player * this, int x, int y) {
 	this->Playerdown = &Playerdown;
 	this->Playerright = &Playerright;
 	this->Playerleft = &Playerleft;
-	this->Player__repr__ = &Player__repr__;
 	this->PlayertoString = &PlayertoString;
 	this->x = x;
 	this->y = y;
@@ -58,7 +51,7 @@ void Boxcheck_player(Box * this) {
 
 }
 char * BoxtoString(Box * this) {
-	char * str;
+	char * str = malloc(sizeof(char *) * 25);
 	sprintf(str, "<Box object at %p>", this);
 	return str;
 }
@@ -74,6 +67,8 @@ void x(Player * p) {
 int main() {
  	Player * player = malloc(sizeof(Player));
 	PlayerPlayer(player, 0, 0);
+	Player * p = malloc(sizeof(Player));
+	PlayerPlayer(p, 0, 0);
 	Box * box = malloc(sizeof(Box));
 	BoxBox(box, player);
 	player->Playerup(player);
@@ -86,5 +81,7 @@ int main() {
 	player->Playerright(player);
 	box->Boxcheck_player(box);
 	printf("%s\n", player->PlayertoString(player));
+	printf("%s\n", p->PlayertoString(p));
+	printf("%s\n", box->BoxtoString(box));
 	return 0;
 }

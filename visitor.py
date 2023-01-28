@@ -160,7 +160,7 @@ class Visitor(CVisitor):
         return clazz, type_specifier
 
     def enterVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
-        type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
+        _, type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         variable = Variable(name=identifier, type_specifier=type_specifier)
         self.manager.add_variable(variable)
@@ -654,8 +654,9 @@ class Visitor(CVisitor):
             return f'void {clazz_name}{clazz_name}({clazz_name} * this) {"{"}\n// Not implemented\n{"}"}'
 
     def createClassStringRepresentation(self, clazz_name):
+        string = f'<{clazz_name} object at 0xFFFFFFF>'
         result: str = f'char * {clazz_name}toString({clazz_name} * this) {"{"}\n' \
-                      f'\tchar * str;\n' \
+                      f'\tchar * str = malloc(sizeof(char *) * {len(string)});\n' \
                       f'\tsprintf(str, "<{clazz_name} object at %p>", this);\n' \
                       f'\treturn str;\n' \
                       '}\n'

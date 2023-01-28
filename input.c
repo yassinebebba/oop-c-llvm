@@ -23,22 +23,9 @@ class Player {
     }
 //    char * toString() {
 //        char * str;
-//        // this syntax should error
-//        // asdad
-//        sprintf(str, "<asasdad object at %p>", this);
-//        // printf("%s\n", str);
-//        // return local variable will be garbage collected
+//        sprintf(str, "<Player object at %p>", this);
 //        return str;
 //    }
-    char * __repr__() {
-        char * str;
-        // this syntax should error
-        // asdad
-        sprintf(str, "Player(x=%d, y=%d)", this->x, this->y);
-        // printf("%s\n", str);
-        // return local variable will be garbage collected
-        return str;
-    }
 }
 
 class Box {
@@ -62,8 +49,9 @@ void x(Player * p) {
 
 int main() {
     Player * player = new Player(0, 0);
+    Player * p = new Player(0, 0);
     Box * box = new Box(player);
-    player->up();
+  player->up();
     // this should be fixed:
     // this works x() without a semicolon, it needs to be x();
     x(player);
@@ -75,7 +63,8 @@ int main() {
     box->check_player();
     player->right();
     box->check_player();
-
     printf("%s\n", player->toString());
+    printf("%s\n", p->toString());
+    printf("%s\n", box->toString());
     return 0;
 }
