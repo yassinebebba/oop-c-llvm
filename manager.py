@@ -37,7 +37,10 @@ class Function:
             if arg.name == obj_name:
                 return arg
         else:
-            raise Exception(f'ARG {obj_name} does not exist')
+            raise Exception(f'Arg {obj_name} does not exist')
+
+    def __repr__(self):
+        return f'{type(self).__name__}(rtype={self.rtype}, name={self.name}, alias={self.alias}, args={self.args})'
 
 
 class Attribute:
@@ -66,6 +69,12 @@ class Clazz:
             print_error(f'error: duplicate member `{attribute.name}`')
         self.attributes.append(attribute)
 
+    def get_attribute(self, name) -> Attribute:
+        for attribute in self.attributes:
+            if attribute.name == name:
+                return attribute
+        raise Exception(f'Attribute {name} does not exist!')
+
     def get_method(self, name) -> Function:
         for method in self.methods:
             if method.name == name:
@@ -74,10 +83,13 @@ class Clazz:
 
 
 class Obj:
-    def __init__(self, name, clazz_name):
+    def __init__(self, name, clazz: Clazz):
         self.name: str = name
         # should this be an instance of a class?
-        self.clazz_name: str = clazz_name
+        self.clazz: Clazz = clazz
+
+    def __repr__(self):
+        return f'{type(self).__name__}(name={self.name}, class={self.clazz})'
 
 
 class Variable:

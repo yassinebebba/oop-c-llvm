@@ -73,6 +73,7 @@ int main() {
 	BoxBox(box, player);
 	player->Playerup(player);
 	x(player);
+	box->player->Playerup(player);
 	box->Boxcheck_player(box);
 	player->Playerup(player);
 	box->Boxcheck_player(box);

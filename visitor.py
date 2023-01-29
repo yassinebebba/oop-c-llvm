@@ -761,7 +761,7 @@ class Visitor(CVisitor):
         identifier: str = ctx.identifier().getText()
         args: str = self.enterFunctionCallArgs(
             ctx.functionCall().functionCallArgs())
-        obj: Obj = Obj(name=identifier, clazz_name=class_name)
+        obj: Obj = Obj(name=identifier, clazz=clazz)
         self.manager.add_obj(obj)
         result: str = f'{type_specifier} {identifier} = malloc(sizeof({class_name}));\n'
         result += f'{self.state.tabs}{class_name}{class_name}({identifier}, {args});'
@@ -772,12 +772,10 @@ class Visitor(CVisitor):
         obj: Obj = self.manager.get_obj(obj_name)
         if obj is not None:
             result: str = ''
-            clazz: Clazz = self.manager.get_clazz(obj.clazz_name)
             for child in ctx.getChildren():
                 match type(child):
                     case CParser.FunctionCallExpressionContext:
-                        # print(clazz.methods)
-                        method: Function = clazz.get_method(
+                        method: Function = obj.clazz.get_method(
                             child.identifier().getText())
                         args: str = self.enterFunctionCallArgs(
                             child.functionCallArgs())
@@ -786,6 +784,14 @@ class Visitor(CVisitor):
                         else:
                             result += f'{method.alias}({obj.name})'
                     case CParser.IdentifierContext:
+                        try:
+                            attribute = obj.clazz.get_attribute(
+                                child.getText())
+                            if attribute.clazz:
+                                # this means it is an object attribute
+                                obj = attribute
+                        except:
+                            pass
                         result += child.getText()
                     case _:
                         result += child.getText()
@@ -795,18 +801,21 @@ class Visitor(CVisitor):
             if obj_name == 'this':
                 clazz: Clazz = self.manager.current_clazz
                 for child in ctx.getChildren():
-                    if isinstance(child,
-                                  CParser.FunctionCallExpressionContext):
-                        method: Function = clazz.get_method(
-                            child.identifier().getText())
-                        args: str = self.enterFunctionCallArgs(
-                            child.functionCallArgs())
-                        if args:
-                            result += f'{method.alias}({obj.name}, {args})'
-                        else:
-                            result += f'{method.alias}({obj.name})'
-                    else:
-                        result += child.getText()
+                    match type(child):
+                        case CParser.FunctionCallContext:
+                            method: Function = clazz.get_method(
+                                child.identifier().getText())
+                            args: str = self.enterFunctionCallArgs(
+                                child.functionCallArgs())
+                            if args:
+                                result += f'{method.alias}({obj.name}, {args})'
+                            else:
+                                result += f'{method.alias}({obj.name})'
+                        case CParser.IdentifierContext:
+                            # if not function call it must be an attribute
+                            result += child.getText()
+                        case _:
+                            result += child.getText()
                 return result
             else:
                 arg: Arg = self.manager.current_function.get_arg(obj_name)
@@ -824,6 +833,5 @@ class Visitor(CVisitor):
                     else:
                         result += child.getText()
                 return result
-
         else:
             return ''
