@@ -772,6 +772,13 @@ class Visitor(CVisitor):
         obj: Obj = self.manager.get_obj(obj_name)
         if obj is not None:
             result: str = ''
+            # this is to check if you are accessing nested attributes
+            # so it would reference it like this:
+            # Pizza * pizza = new Pizza()
+            # pizza->topping->get_name() should be pizza->topping.get_name(pizza->topping)
+            # instead of pizza->topping.get_name(topping) which might not exist outside the class
+            is_nested: bool = False
+            original_ref: str = obj_name
             for child in ctx.getChildren():
                 match type(child):
                     case CParser.FunctionCallExpressionContext:
@@ -780,9 +787,15 @@ class Visitor(CVisitor):
                         args: str = self.enterFunctionCallArgs(
                             child.functionCallArgs())
                         if args:
-                            result += f'{method.alias}({obj.name}, {args})'
+                            if is_nested:
+                                result += f'{method.alias}({original_ref}->{obj.name}, {args})'
+                            else:
+                                result += f'{method.alias}({obj.name}, {args})'
                         else:
-                            result += f'{method.alias}({obj.name})'
+                            if is_nested:
+                                result += f'{method.alias}({original_ref}->{obj.name})'
+                            else:
+                                result += f'{method.alias}({obj.name})'
                     case CParser.IdentifierContext:
                         try:
                             attribute = obj.clazz.get_attribute(
@@ -790,6 +803,7 @@ class Visitor(CVisitor):
                             if attribute.clazz:
                                 # this means it is an object attribute
                                 obj = attribute
+                                is_nested = True
                         except:
                             pass
                         result += child.getText()
