@@ -603,22 +603,34 @@ class Visitor(CVisitor):
 
     def getFunctionPointer(self, class_name: str,
                            function: CParser.FunctionDefinitionContext):
-        _, type_specifier = self.match_type_specifier(
+        clazz, rtype = self.match_type_specifier(
             function.typeSpecifier())
         identifier: str = function.identifier().getText()
 
         # struct {class_name} * this: is always the 1st arg
-        args: list[str] = [f'struct {class_name} *']
+        this = f'struct {class_name} *'
+
+        args: list[Arg] = [Arg(name=None, type_specifier=this, clazz=clazz)]
         if function.functionArgs():
             for arg in function.functionArgs().getChildren():
                 try:
                     clazz, type_specifier = self.match_type_specifier(
                         arg.typeSpecifier())
-                    args.append(type_specifier)
+                    if clazz:
+                        type_specifier = f'struct {type_specifier}'
+                        arg = Arg(name=None, type_specifier=type_specifier,
+                                  clazz=clazz)
+                    else:
+                        arg = Arg(name=None, type_specifier=type_specifier,
+                                  clazz=clazz)
+                    args.append(arg)
                 except AttributeError:
                     # skip, it is not a func arg
                     continue
-        return f'{type_specifier} (*{class_name}{identifier})({", ".join(args)});'
+        new_args: list[str] = []
+        for arg in args:
+            new_args.append(arg.type_specifier)
+        return f'{rtype} (*{class_name}{identifier})({", ".join(new_args)});'
 
     def createClassConstructor(self,
                                constructor: CParser.FunctionDefinitionContext | None,
@@ -654,10 +666,10 @@ class Visitor(CVisitor):
             return f'void {clazz_name}{clazz_name}({clazz_name} * this) {"{"}\n// Not implemented\n{"}"}'
 
     def createClassStringRepresentation(self, clazz_name):
-        string = f'<{clazz_name} object at 0xFFFFFFF>'
+        string = f'<{clazz_name} object at 0xFFFFFFF>\n'
         result: str = f'char * {clazz_name}toString({clazz_name} * this) {"{"}\n' \
                       f'\tchar * str = malloc(sizeof(char *) * {len(string)});\n' \
-                      f'\tsprintf(str, "<{clazz_name} object at %p>", this);\n' \
+                      f'\tsprintf(str, "<{clazz_name} object at %p>\\n", this);\n' \
                       f'\treturn str;\n' \
                       '}\n'
         return result

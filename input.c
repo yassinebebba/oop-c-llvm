@@ -1,5 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
+
+class String {
+    char * string;
+    void String(char * string) {
+        this->string = string;
+    }
+
+    char * toString() {
+        return this->string;
+    }
+}
 
 class Player {
     int x;
@@ -20,6 +33,12 @@ class Player {
     }
     void left() {
         this->x -= 1;
+    }
+    bool eq(Player * other) {
+        if (this->x == other->x) {
+            return true;
+        }
+        return false;
     }
 //    char * toString() {
 //        char * str;
@@ -44,12 +63,15 @@ class Box {
 
 void x(Player * p) {
     p->up();
-    printf("x=%d\n", p->y);
+    printf("\nx=%d\n", p->y);
 }
 
 int main() {
+    String * string = new String("Yassine");
+    printf("%s", string->toString());
     Player * player = new Player(0, 0);
     Player * p = new Player(0, 0);
+    Player * p2 = new Player(0, 0);
     Box * box = new Box(player);
     player->up();
     // this should be fixed:
@@ -63,8 +85,9 @@ int main() {
     box->check_player();
     player->right();
     box->check_player();
-    printf("%s\n", player->toString());
-    printf("%s\n", p->toString());
-    printf("%s\n", box->toString());
+    printf("%s", player->toString());
+    printf("%s", p->toString());
+    printf("%s", box->toString());
+    printf("%d\n", p2->eq(p));
     return 0;
 }

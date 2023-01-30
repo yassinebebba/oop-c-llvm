@@ -1,6 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
+
+typedef struct String {
+ 	char * string;
+	char * (*StringtoString)(struct String *);
+} String;
+char * StringtoString(String * this) {
+ 	return this->string;
+}
+void StringString(String * this, char * string) {
+	this->StringtoString = &StringtoString;
+	this->string = string;
+}
 typedef struct Player {
  	int x;
 	int y;
@@ -8,6 +21,7 @@ typedef struct Player {
 	void (*Playerdown)(struct Player *);
 	void (*Playerright)(struct Player *);
 	void (*Playerleft)(struct Player *);
+	bool (*Playereq)(struct Player *, struct Player *);
 	char * (*PlayertoString)(struct Player *);
 } Player;
 void Playerup(Player * this) {
@@ -22,9 +36,16 @@ void Playerright(Player * this) {
 void Playerleft(Player * this) {
  	this->x -= 1;
 }
+bool Playereq(Player * this, Player * other) {
+ 	if (this->x == other->x) {
+ 		return true;
+	}
+
+	return false;
+}
 char * PlayertoString(Player * this) {
-	char * str = malloc(sizeof(char *) * 28);
-	sprintf(str, "<Player object at %p>", this);
+	char * str = malloc(sizeof(char *) * 29);
+	sprintf(str, "<Player object at %p>\n", this);
 	return str;
 }
 void PlayerPlayer(Player * this, int x, int y) {
@@ -32,6 +53,7 @@ void PlayerPlayer(Player * this, int x, int y) {
 	this->Playerdown = &Playerdown;
 	this->Playerright = &Playerright;
 	this->Playerleft = &Playerleft;
+	this->Playereq = &Playereq;
 	this->PlayertoString = &PlayertoString;
 	this->x = x;
 	this->y = y;
@@ -51,8 +73,8 @@ void Boxcheck_player(Box * this) {
 
 }
 char * BoxtoString(Box * this) {
-	char * str = malloc(sizeof(char *) * 25);
-	sprintf(str, "<Box object at %p>", this);
+	char * str = malloc(sizeof(char *) * 26);
+	sprintf(str, "<Box object at %p>\n", this);
 	return str;
 }
 void BoxBox(Box * this, Player * player) {
@@ -62,13 +84,18 @@ void BoxBox(Box * this, Player * player) {
 }
 void x(Player * p) {
  	p->Playerup(p);
-	printf("x=%d\n", p->y);
+	printf("\nx=%d\n", p->y);
 }
 int main() {
- 	Player * player = malloc(sizeof(Player));
+ 	String * string = malloc(sizeof(String));
+	StringString(string, "Yassine");
+	printf("%s", string->StringtoString(string));
+	Player * player = malloc(sizeof(Player));
 	PlayerPlayer(player, 0, 0);
 	Player * p = malloc(sizeof(Player));
 	PlayerPlayer(p, 0, 0);
+	Player * p2 = malloc(sizeof(Player));
+	PlayerPlayer(p2, 0, 0);
 	Box * box = malloc(sizeof(Box));
 	BoxBox(box, player);
 	player->Playerup(player);
@@ -81,8 +108,9 @@ int main() {
 	box->Boxcheck_player(box);
 	player->Playerright(player);
 	box->Boxcheck_player(box);
-	printf("%s\n", player->PlayertoString(player));
-	printf("%s\n", p->PlayertoString(p));
-	printf("%s\n", box->BoxtoString(box));
+	printf("%s", player->PlayertoString(player));
+	printf("%s", p->PlayertoString(p));
+	printf("%s", box->BoxtoString(box));
+	printf("%d\n", p2->Playereq(p2, p));
 	return 0;
 }
