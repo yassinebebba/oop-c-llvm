@@ -460,12 +460,14 @@ class Visitor(CVisitor):
         return f'do {"{"}\n {block}\n{self.state.tabs}{"}"} while ({", ".join(values)});'
 
     def enterCondition(self, ctx: CParser.ConditionContext):
-        expressions: list[CParser.ExpressionContext] = [
-            expression for expression in ctx.getChildren()
-            if isinstance(expression, CParser.ExpressionContext)
-        ]
-        values = list(map(self.enterExpression, expressions))
-        return ', '.join(values)
+        result = ''
+        for child in ctx.getChildren():
+            match type(child):
+                case CParser.ExpressionContext:
+                    result += ' ' + self.enterExpression(child)
+                case _:
+                    result += ' ' + child.getText()
+        return result
 
     def enterExpression(self, ctx: CParser.ExpressionContext):
         values = []

@@ -37,7 +37,7 @@ void Playerleft(Player * this) {
  	this->x -= 1;
 }
 bool Playereq(Player * this, Player * other) {
- 	if (this->x == other->x) {
+ 	if ( this->x==other->x && ! this->y == ! other->y) {
  		return true;
 	}
 
@@ -64,7 +64,7 @@ typedef struct Box {
 	char * (*BoxtoString)(struct Box *);
 } Box;
 void Boxcheck_player(Box * this) {
- 	if (this->player->x > 1) {
+ 	if ( this->player->x>1) {
  		printf("outside the box\n");
 	}
 	else {

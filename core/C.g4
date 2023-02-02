@@ -182,7 +182,10 @@ doWhileStatement
     ;
 
 condition
-    : expression (COMMA expression)*
+    : NOT? expression (
+           (COMMA | AND_AND | EQ | NEQ | OR_OR | GT | GTE | LT | LTE)
+           NOT? expression
+          )*
     ;
 
 // START OOP SECTION

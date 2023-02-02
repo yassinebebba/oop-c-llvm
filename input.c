@@ -35,7 +35,7 @@ class Player {
         this->x -= 1;
     }
     bool eq(Player * other) {
-        if (this->x == other->x) {
+        if (this->x == other->x && !this->y == !other->y) {
             return true;
         }
         return false;
