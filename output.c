@@ -1,3 +1,9 @@
+/*
+############################################
+THIS FILE IS NOT MEANT TO BE EDITED BY HAND
+############################################
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

@@ -92,6 +92,11 @@ class Visitor(CVisitor):
             return None, ' '.join(chunks)
 
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
+        self.write('/*\n')
+        self.write('############################################\n')
+        self.write('THIS FILE IS NOT MEANT TO BE EDITED BY HAND\n')
+        self.write('############################################\n')
+        self.write('*/\n\n')
         for child in ctx.getChildren():
             match type(child):
                 case CParser.IncludeDirectiveContext:
@@ -716,6 +721,7 @@ class Visitor(CVisitor):
 
         clean_methods: list[Function] = []
 
+        method: CParser.FunctionDefinitionContext
         for method in methods:
             # print(self.enterFunctionArgs(method.functionArgs()))
             # print(method.getText())
