@@ -483,6 +483,14 @@ class Visitor(CVisitor):
                 return self.visitChainedCallExpression(ctx)
             case CParser.EqExpressionContext:
                 return self.visitEqExpression(ctx)
+            case CParser.GtExpressionContext:
+                return self.visitGtExpression(ctx)
+            case CParser.GteExpressionContext:
+                return self.visitGteExpression(ctx)
+            case CParser.LtExpressionContext:
+                return self.visitLtExpression(ctx)
+            case CParser.LteExpressionContext:
+                return self.visitLteExpression(ctx)
             case _:
                 raise Exception('Expression was not recognised!')
 
@@ -504,6 +512,38 @@ class Visitor(CVisitor):
         obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
         if obj1 and obj2:
             overridden_method = obj1.clazz.get_method('eq').alias
+            return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
+        return ctx.getText()
+
+    def visitGtExpression(self, ctx: CParser.GtExpressionContext):
+        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
+        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        if obj1 and obj2:
+            overridden_method = obj1.clazz.get_method('gt').alias
+            return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
+        return ctx.getText()
+
+    def visitGteExpression(self, ctx: CParser.GteExpressionContext):
+        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
+        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        if obj1 and obj2:
+            overridden_method = obj1.clazz.get_method('gte').alias
+            return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
+        return ctx.getText()
+
+    def visitLtExpression(self, ctx: CParser.LtExpressionContext):
+        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
+        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        if obj1 and obj2:
+            overridden_method = obj1.clazz.get_method('lt').alias
+            return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
+        return ctx.getText()
+
+    def visitLteExpression(self, ctx: CParser.LteExpressionContext):
+        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
+        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        if obj1 and obj2:
+            overridden_method = obj1.clazz.get_method('lte').alias
             return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
         return ctx.getText()
 

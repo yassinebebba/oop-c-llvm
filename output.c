@@ -9,6 +9,44 @@ THIS FILE IS NOT MEANT TO BE EDITED BY HAND
 #include <stdbool.h>
 
 
+typedef struct Integer {
+ 	int n;
+	bool (*Integereq)(struct Integer *, struct Integer *);
+	bool (*Integergt)(struct Integer *, struct Integer *);
+	bool (*Integergte)(struct Integer *, struct Integer *);
+	bool (*Integerlt)(struct Integer *, struct Integer *);
+	bool (*Integerlte)(struct Integer *, struct Integer *);
+	char * (*IntegertoString)(struct Integer *);
+} Integer;
+bool Integereq(Integer * this, Integer * other) {
+ 	return this->n==other->n;
+}
+bool Integergt(Integer * this, Integer * other) {
+ 	return this->n>other->n;
+}
+bool Integergte(Integer * this, Integer * other) {
+ 	return this->n>=other->n;
+}
+bool Integerlt(Integer * this, Integer * other) {
+ 	return this->n<other->n;
+}
+bool Integerlte(Integer * this, Integer * other) {
+ 	return this->n<=other->n;
+}
+char * IntegertoString(Integer * this) {
+	char * str = malloc(sizeof(char *) * 30);
+	sprintf(str, "<Integer object at %p>\n", this);
+	return str;
+}
+void IntegerInteger(Integer * this, int n) {
+	this->Integereq = &Integereq;
+	this->Integergt = &Integergt;
+	this->Integergte = &Integergte;
+	this->Integerlt = &Integerlt;
+	this->Integerlte = &Integerlte;
+	this->IntegertoString = &IntegertoString;
+	this->n = n;
+}
 typedef struct String {
  	char * string;
 	char * (*StringtoString)(struct String *);
@@ -93,30 +131,14 @@ void x(Player * p) {
 	printf("\nx=%d\n", p->y);
 }
 int main() {
- 	String * string = malloc(sizeof(String));
-	StringString(string, "Yassine");
-	printf("%s", string->StringtoString(string));
-	Player * player = malloc(sizeof(Player));
-	PlayerPlayer(player, 0, 0);
-	Player * p = malloc(sizeof(Player));
-	PlayerPlayer(p, 0, 0);
-	Player * p2 = malloc(sizeof(Player));
-	PlayerPlayer(p2, 0, 0);
-	Box * box = malloc(sizeof(Box));
-	BoxBox(box, player);
-	player->Playerup(player);
-	x(player);
-	box->player->Playerup(box->player);
-	box->Boxcheck_player(box);
-	player->Playerup(player);
-	box->Boxcheck_player(box);
-	player->Playerright(player);
-	box->Boxcheck_player(box);
-	player->Playerright(player);
-	box->Boxcheck_player(box);
-	printf("%s", player->PlayertoString(player));
-	printf("%s", p->PlayertoString(p));
-	printf("%s", box->BoxtoString(box));
-	printf("%d\n", p2->Playereq(p2, p));
+ 	Integer * n1 = malloc(sizeof(Integer));
+	IntegerInteger(n1, 1);
+	Integer * n2 = malloc(sizeof(Integer));
+	IntegerInteger(n2, 1);
+	printf("%d\n", n1->Integereq(n1, n2));
+	printf("%d\n", n1->Integergt(n1, n2));
+	printf("%d\n", n1->Integergte(n1, n2));
+	printf("%d\n", n1->Integerlt(n1, n2));
+	printf("%d\n", n1->Integerlte(n1, n2));
 	return 0;
 }
