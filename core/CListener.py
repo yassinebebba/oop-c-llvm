@@ -17,6 +17,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#chainedCallExpression.
+    def enterChainedCallExpression(self, ctx:CParser.ChainedCallExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#chainedCallExpression.
+    def exitChainedCallExpression(self, ctx:CParser.ChainedCallExpressionContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#ltExpression.
     def enterLtExpression(self, ctx:CParser.LtExpressionContext):
         pass
@@ -41,6 +50,15 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#constantExpression.
     def exitConstantExpression(self, ctx:CParser.ConstantExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#identifierExpression.
+    def enterIdentifierExpression(self, ctx:CParser.IdentifierExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#identifierExpression.
+    def exitIdentifierExpression(self, ctx:CParser.IdentifierExpressionContext):
         pass
 
 
@@ -89,15 +107,6 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#chainedCallAlias.
-    def enterChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
-        pass
-
-    # Exit a parse tree produced by CParser#chainedCallAlias.
-    def exitChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#eqExpression.
     def enterEqExpression(self, ctx:CParser.EqExpressionContext):
         pass
@@ -122,15 +131,6 @@ class CListener(ParseTreeListener):
 
     # Exit a parse tree produced by CParser#subtractExpression.
     def exitSubtractExpression(self, ctx:CParser.SubtractExpressionContext):
-        pass
-
-
-    # Enter a parse tree produced by CParser#identiferExpression.
-    def enterIdentiferExpression(self, ctx:CParser.IdentiferExpressionContext):
-        pass
-
-    # Exit a parse tree produced by CParser#identiferExpression.
-    def exitIdentiferExpression(self, ctx:CParser.IdentiferExpressionContext):
         pass
 
 

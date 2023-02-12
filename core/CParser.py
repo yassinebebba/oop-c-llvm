@@ -552,6 +552,34 @@ class CParser ( Parser ):
             super().copyFrom(ctx)
 
 
+    class ChainedCallExpressionContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a CParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def chainedCall(self):
+            return self.getTypedRuleContext(CParser.ChainedCallContext,0)
+
+        def unarySign(self):
+            return self.getTypedRuleContext(CParser.UnarySignContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterChainedCallExpression" ):
+                listener.enterChainedCallExpression(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitChainedCallExpression" ):
+                listener.exitChainedCallExpression(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitChainedCallExpression" ):
+                return visitor.visitChainedCallExpression(self)
+            else:
+                return visitor.visitChildren(self)
+
+
     class LtExpressionContext(ExpressionContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a CParser.ExpressionContext
@@ -633,6 +661,34 @@ class CParser ( Parser ):
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitConstantExpression" ):
                 return visitor.visitConstantExpression(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+    class IdentifierExpressionContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a CParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def identifier(self):
+            return self.getTypedRuleContext(CParser.IdentifierContext,0)
+
+        def unarySign(self):
+            return self.getTypedRuleContext(CParser.UnarySignContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterIdentifierExpression" ):
+                listener.enterIdentifierExpression(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitIdentifierExpression" ):
+                listener.exitIdentifierExpression(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitIdentifierExpression" ):
+                return visitor.visitIdentifierExpression(self)
             else:
                 return visitor.visitChildren(self)
 
@@ -786,34 +842,6 @@ class CParser ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class ChainedCallAliasContext(ExpressionContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a CParser.ExpressionContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def chainedCall(self):
-            return self.getTypedRuleContext(CParser.ChainedCallContext,0)
-
-        def unarySign(self):
-            return self.getTypedRuleContext(CParser.UnarySignContext,0)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterChainedCallAlias" ):
-                listener.enterChainedCallAlias(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitChainedCallAlias" ):
-                listener.exitChainedCallAlias(self)
-
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitChainedCallAlias" ):
-                return visitor.visitChainedCallAlias(self)
-            else:
-                return visitor.visitChildren(self)
-
-
     class EqExpressionContext(ExpressionContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a CParser.ExpressionContext
@@ -904,34 +932,6 @@ class CParser ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class IdentiferExpressionContext(ExpressionContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a CParser.ExpressionContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def identifier(self):
-            return self.getTypedRuleContext(CParser.IdentifierContext,0)
-
-        def unarySign(self):
-            return self.getTypedRuleContext(CParser.UnarySignContext,0)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterIdentiferExpression" ):
-                listener.enterIdentiferExpression(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitIdentiferExpression" ):
-                listener.exitIdentiferExpression(self)
-
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitIdentiferExpression" ):
-                return visitor.visitIdentiferExpression(self)
-            else:
-                return visitor.visitChildren(self)
-
-
     class LteExpressionContext(ExpressionContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a CParser.ExpressionContext
@@ -1002,7 +1002,7 @@ class CParser ( Parser ):
                 pass
 
             elif la_ == 3:
-                localctx = CParser.IdentiferExpressionContext(self, localctx)
+                localctx = CParser.IdentifierExpressionContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 106
@@ -1044,7 +1044,7 @@ class CParser ( Parser ):
                 pass
 
             elif la_ == 5:
-                localctx = CParser.ChainedCallAliasContext(self, localctx)
+                localctx = CParser.ChainedCallExpressionContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 118

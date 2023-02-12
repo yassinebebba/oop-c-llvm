@@ -14,6 +14,11 @@ class CVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by CParser#chainedCallExpression.
+    def visitChainedCallExpression(self, ctx:CParser.ChainedCallExpressionContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by CParser#ltExpression.
     def visitLtExpression(self, ctx:CParser.LtExpressionContext):
         return self.visitChildren(ctx)
@@ -26,6 +31,11 @@ class CVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CParser#constantExpression.
     def visitConstantExpression(self, ctx:CParser.ConstantExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CParser#identifierExpression.
+    def visitIdentifierExpression(self, ctx:CParser.IdentifierExpressionContext):
         return self.visitChildren(ctx)
 
 
@@ -54,11 +64,6 @@ class CVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CParser#chainedCallAlias.
-    def visitChainedCallAlias(self, ctx:CParser.ChainedCallAliasContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by CParser#eqExpression.
     def visitEqExpression(self, ctx:CParser.EqExpressionContext):
         return self.visitChildren(ctx)
@@ -71,11 +76,6 @@ class CVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by CParser#subtractExpression.
     def visitSubtractExpression(self, ctx:CParser.SubtractExpressionContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by CParser#identiferExpression.
-    def visitIdentiferExpression(self, ctx:CParser.IdentiferExpressionContext):
         return self.visitChildren(ctx)
 
 

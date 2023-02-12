@@ -475,26 +475,30 @@ class Visitor(CVisitor):
         return result
 
     def enterExpression(self, ctx: CParser.ExpressionContext):
-        values = []
         match type(ctx):
+            case CParser.ConstantExpressionContext:
+                return self.visitConstantExpression(ctx)
+            case CParser.IdentifierExpressionContext:
+                return self.visitIdentifierExpression(ctx)
+            case CParser.ChainedCallExpressionContext:
+                return self.visitChainedCallExpression(ctx)
             case CParser.EqExpressionContext:
                 return self.visitEqExpression(ctx)
-        for child in ctx.getChildren():
-            if isinstance(child, CParser.ExpressionContext):
-                values.append(self.enterExpression(child))
-            elif isinstance(child, CParser.UnarySignContext):
-                values.append(child.getText())
-            elif isinstance(child, CParser.ConstantContext):
-                values.append(child.getText())
-            elif isinstance(child, CParser.FunctionCallExpressionContext):
-                values.append(child.getText())
-            elif isinstance(child, CParser.IdentifierContext):
-                values.append(child.getText())
-            elif isinstance(child, TerminalNodeImpl):
-                values.append(child.getText())
-            elif isinstance(child, CParser.ChainedCallContext):
-                values.append(self.enterChainedCall(child))
-        return ' '.join(values)
+            case _:
+                raise Exception('Expression was not recognised!')
+
+    def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
+        return ctx.getText()
+
+    def visitIdentifierExpression(self,
+                                  ctx: CParser.IdentifierExpressionContext):
+        return ctx.getText()
+
+    def visitChainedCallExpression(self,
+                                   ctx: CParser.ChainedCallExpressionContext):
+        if ctx.unarySign():
+            return f'{ctx.unarySign().getText()}{self.enterChainedCall(ctx.chainedCall())}'
+        return self.enterChainedCall(ctx.chainedCall())
 
     def visitEqExpression(self, ctx: CParser.EqExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()

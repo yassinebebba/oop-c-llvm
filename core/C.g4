@@ -14,7 +14,7 @@ compilationUnit
 expression
     : constant                                #constantExpression
     | unarySign? functionCallExpression       #funcCallExpression
-    | unarySign? identifier                   #identiferExpression
+    | unarySign? identifier                   #identifierExpression
     | SIZEOF (expression | LP expression RP)  #sizeofExpression
     | expression STAR expression              #multiplyExpression
     | expression DIV expression               #divideExpression
@@ -25,7 +25,7 @@ expression
     | expression LTE expression               #lteExpression
     | expression GT expression                #gtExpression
     | expression GTE expression               #gteExpression
-    | unarySign? chainedCall                  #chainedCallAlias
+    | unarySign? chainedCall                  #chainedCallExpression
     ;
 chainedCall: identifier ((DOT | ARROW) (identifier | functionCallExpression))*;
 
