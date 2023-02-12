@@ -1,6 +1,5 @@
 import os
 from io import FileIO
-from antlr4.tree.Tree import TerminalNodeImpl
 from termcolor import colored
 from core.CVisitor import CVisitor
 from core.CParser import CParser
@@ -22,14 +21,14 @@ class State:
     def tabs(self):
         return '\t' * self.scope_level
 
-    def enter_block_scope(self):
+    def visit_block_scope(self):
         self.scope_level += 1
 
     def exit_block_scope(self):
         if self.scope_level > 0:
             self.scope_level -= 1
 
-    def enter_class(self):
+    def visit_class(self):
         self.is_class = True
 
     def exit_class(self):
@@ -106,19 +105,19 @@ class Visitor(CVisitor):
                         match type(declaration):
                             case CParser.VariableDeclarationContext:
                                 value = self.state.tabs
-                                value += self.enterVariableDeclaration(
+                                value += self.visitVariableDeclaration(
                                     declaration)
                                 self.write(value)
                                 self.add_newline()
                             case CParser.FunctionDeclarationContext:
                                 value = self.state.tabs
-                                value += self.enterFunctionDeclaration(
+                                value += self.visitFunctionDeclaration(
                                     declaration)
                                 self.write(value)
                                 self.add_newline()
                             case CParser.StructDeclarationContext:
                                 value = self.state.tabs
-                                value += self.enterStructDeclaration(
+                                value += self.visitStructDeclaration(
                                     declaration)
                                 self.write(value)
                                 self.add_newline()
@@ -127,57 +126,57 @@ class Visitor(CVisitor):
                         match type(definition):
                             case CParser.VariableDefinitionContext:
                                 value = self.state.tabs
-                                value += self.enterVariableDefinition(
+                                value += self.visitVariableDefinition(
                                     definition)
                                 self.write(value)
                                 self.add_newline()
                             case CParser.FunctionDefinitionContext:
                                 value = self.state.tabs
-                                _, func_string = self.enterFunctionDefinition(
+                                _, func_string = self.visitFunctionDefinition(
                                     definition)
                                 value += func_string
                                 self.write(value)
                                 self.add_newline()
                             case CParser.StructDefinitionContext:
                                 value = self.state.tabs
-                                value += self.enterStructDefinition(
+                                value += self.visitStructDefinition(
                                     definition)
                                 self.write(value)
                                 self.add_newline()
                 case CParser.FunctionCallContext:
                     value = self.state.tabs
-                    value += self.enterFunctionCall(child)
+                    value += self.visitFunctionCall(child)
                     self.write(value)
                     self.add_newline()
                 case CParser.AssignmentContext:
                     value = self.state.tabs
-                    value += self.enterAssignment(child)
+                    value += self.visitAssignment(child)
                     self.write(value)
                     self.add_newline()
                 case CParser.ClassDefinitionContext:
                     value = self.state.tabs
-                    value += self.enterClassDefinition(child)
+                    value += self.visitClassDefinition(child)
                     self.write(value)
                     self.add_newline()
 
-    def enterTypeSpecifier(self, ctx: CParser.TypeSpecifierContext):
+    def visitTypeSpecifier(self, ctx: CParser.TypeSpecifierContext):
         clazz, type_specifier = self.match_type_specifier(ctx)
         return clazz, type_specifier
 
-    def enterVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
-        _, type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
+    def visitVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
+        _, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         variable = Variable(name=identifier, type_specifier=type_specifier)
         self.manager.add_variable(variable)
-        expression = self.enterExpression(ctx.expression())
+        expression = self.visitExpression(ctx.expression())
         return f'{type_specifier} {identifier} = {expression};'
 
-    def enterVariableDeclaration(self,
+    def visitVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext,
                                  is_clazz_attribute: bool = False):
         ctx.scope_level = self.state.scope_level
         # self.check_variable_declaration(ctx)
-        clazz, type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
+        clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         variable = Variable(name=identifier, type_specifier=type_specifier)
         self.manager.add_variable(variable)
@@ -192,11 +191,11 @@ class Visitor(CVisitor):
             self.manager.current_clazz.add_attribute(attribute)
         return f'{type_specifier} {identifier}{cells};'
 
-    def enterFunctionDeclaration(self, ctx:
+    def visitFunctionDeclaration(self, ctx:
     CParser.FunctionDeclarationContext) -> tuple[Function, str]:
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        args, args_string = self.enterFunctionArgs(ctx.functionArgs())
+        args, args_string = self.visitFunctionArgs(ctx.functionArgs())
         func: Function = Function(
             rtype=rtype,
             name=identifier,
@@ -205,13 +204,13 @@ class Visitor(CVisitor):
         )
         return func, f'{rtype} {identifier}({args});'
 
-    def enterFunctionDefinition(self, ctx:
+    def visitFunctionDefinition(self, ctx:
     CParser.FunctionDefinitionContext) -> tuple[Function, str]:
         # typeSpecifier? identifier LP functionArgs? RP block
-        self.state.enter_block_scope()
+        self.state.visit_block_scope()
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
-        args, args_string = self.enterFunctionArgs(ctx.functionArgs())
+        args, args_string = self.visitFunctionArgs(ctx.functionArgs())
         func = Function(
             rtype=rtype,
             name=identifier,
@@ -235,7 +234,7 @@ class Visitor(CVisitor):
                 # no args
                 pass
 
-        block: str = self.enterBlock(ctx.block())
+        block: str = self.visitBlock(ctx.block())
         self.state.exit_block_scope()
         # i think this block should be somewhere else
         original_identifier: str = identifier
@@ -260,7 +259,7 @@ class Visitor(CVisitor):
         self.manager.current_function = None
         return func, f'{rtype} {identifier}({args_string}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
-    def enterFunctionArgs(self, ctx: CParser.FunctionArgsContext) -> tuple[
+    def visitFunctionArgs(self, ctx: CParser.FunctionArgsContext) -> tuple[
         list[Arg], str]:
         if ctx is None:
             return [], ''
@@ -288,13 +287,13 @@ class Visitor(CVisitor):
         processed_arguments: list[Arg] = []
         result: list[str] = []
         for arg in args:
-            arg, string = self.enterArg(arg)
+            arg, string = self.visitArg(arg)
             processed_arguments.append(arg)
             result.append(string)
         return processed_arguments, ', '.join(result)
 
-    def enterArg(self, ctx: CParser.ArgContext) -> tuple[Arg, str]:
-        clazz, type_specifier = self.enterTypeSpecifier(ctx.typeSpecifier())
+    def visitArg(self, ctx: CParser.ArgContext) -> tuple[Arg, str]:
+        clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         arg: Arg = Arg(type_specifier=type_specifier, name=None, clazz=clazz)
         if ctx.identifier():
             identifier: str = ctx.identifier().getText()
@@ -302,16 +301,16 @@ class Visitor(CVisitor):
             return arg, f'{type_specifier} {identifier}'
         return arg, type_specifier
 
-    def enterStructDeclaration(self, ctx: CParser.StructDeclarationContext):
+    def visitStructDeclaration(self, ctx: CParser.StructDeclarationContext):
         return f'struct {ctx.identifier().getText()};'
 
-    def enterStructDefinition(self, ctx: CParser.StructDefinitionContext):
-        self.state.enter_block_scope()
-        struct_block: str = self.enterStructBlock(ctx.structBlock())
+    def visitStructDefinition(self, ctx: CParser.StructDefinitionContext):
+        self.state.visit_block_scope()
+        struct_block: str = self.visitStructBlock(ctx.structBlock())
         self.state.exit_block_scope()
         return f'struct {ctx.identifier().getText()} {"{"}\n{struct_block}\n{self.state.tabs}{"}"};'
 
-    def enterStructBlock(self, ctx: CParser.StructBlockContext):
+    def visitStructBlock(self, ctx: CParser.StructBlockContext):
         if ctx is None:
             return ''
 
@@ -320,29 +319,29 @@ class Visitor(CVisitor):
             match type(child):
                 case CParser.FieldContext:
                     result += self.state.tabs
-                    value = self.enterField(child)
+                    value = self.visitField(child)
                     result += value
                     result += '\n'
                 case CParser.BitFieldContext:
                     result += self.state.tabs
-                    value = self.enterBitField(child)
+                    value = self.visitBitField(child)
                     result += value
                     result += '\n'
 
         # [:-1] remove the last newline
         return result[:-1]
 
-    def enterField(self, ctx: CParser.FieldContext):
+    def visitField(self, ctx: CParser.FieldContext):
         _, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
         return f'{type_specifier} {ctx.identifier().getText()};'
 
-    def enterBitField(self, ctx: CParser.BitFieldContext):
+    def visitBitField(self, ctx: CParser.BitFieldContext):
         _, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
         bit_count: str = ctx.INTEGER_CONSTANT()
         return f'{type_specifier} {identifier}: {bit_count};'
 
-    def enterAssignment(self, ctx: CParser.AssignmentContext):
+    def visitAssignment(self, ctx: CParser.AssignmentContext):
         # identifier ASSIGN expression SEMI
         # self.check_variable_assignment(ctx)
         identifier: str = ''
@@ -354,9 +353,9 @@ class Visitor(CVisitor):
                     break
                 identifier += child.getText()
         expression: CParser.ExpressionContext = ctx.expression()
-        return f'{identifier} = {self.enterExpression(expression)};'
+        return f'{identifier} = {self.visitExpression(expression)};'
 
-    def enterInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
+    def visitInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
         operator: str = (ctx.STAR_ASSIGN()
                          or ctx.DIV_ASSIGN()
                          or ctx.MOD_ASSIGN()
@@ -368,113 +367,113 @@ class Visitor(CVisitor):
                          or ctx.BITWISE_OR_ASSIGN()
                          or ctx.BITWISE_XOR_ASSIGN()).getText()
 
-        expression: str = self.enterExpression(ctx.expression())
+        expression: str = self.visitExpression(ctx.expression())
 
         try:
             identifier: str = ctx.identifier().getText()
             return f'{identifier} {operator} {expression};'
         except AttributeError:
-            chained_call: str = self.enterChainedCall(ctx.chainedCall())
+            chained_call: str = self.visitChainedCall(ctx.chainedCall())
             return f'{chained_call} {operator} {expression};'
 
-    def enterFunctionCall(self, ctx: CParser.FunctionCallContext):
-        args = self.enterFunctionCallArgs(ctx.functionCallArgs())
+    def visitFunctionCall(self, ctx: CParser.FunctionCallContext):
+        args = self.visitFunctionCallArgs(ctx.functionCallArgs())
         return f'{ctx.identifier().getText()}({args});'
 
-    def enterFunctionCallArgs(self, ctx: CParser.FunctionCallArgsContext):
+    def visitFunctionCallArgs(self, ctx: CParser.FunctionCallArgsContext):
         if ctx is None:
             return ''
         expressions: list[CParser.ExpressionContext] = [
             arg for arg in ctx.getChildren()
             if isinstance(arg, CParser.ExpressionContext)
         ]
-        values: list[str] = list(map(self.enterExpression, expressions))
+        values: list[str] = list(map(self.visitExpression, expressions))
         return ', '.join(values)
 
-    def enterFunctionReturn(self, ctx: CParser.FunctionReturnContext):
+    def visitFunctionReturn(self, ctx: CParser.FunctionReturnContext):
         if ctx.expression():
             return f'return {ctx.expression().getText()};'
         else:
             return 'return;'
 
-    def enterIfStatementStructure(self,
+    def visitIfStatementStructure(self,
                                   ctx: CParser.IfStatementStructureContext):
         result: str = ''
         for child in ctx.getChildren():
             match type(child):
                 case CParser.IfStatementContext:
                     result += self.state.tabs
-                    value = self.enterIfStatement(child)
+                    value = self.visitIfStatement(child)
                     result += value
                     result += '\n'
                 case CParser.ElseIfStatementContext:
                     result += self.state.tabs
-                    value = self.enterElseIfStatement(child)
+                    value = self.visitElseIfStatement(child)
                     result += value
                     result += '\n'
                 case CParser.ElseStatementContext:
                     result += self.state.tabs
-                    value = self.enterElseStatement(child)
+                    value = self.visitElseStatement(child)
                     result += value
                     result += '\n'
         return result
 
-    def enterIfStatement(self, ctx: CParser.IfStatementContext):
-        self.state.enter_block_scope()
+    def visitIfStatement(self, ctx: CParser.IfStatementContext):
+        self.state.visit_block_scope()
         conditions: list[CParser.ConditionContext] = [
             condition for condition in ctx.getChildren()
             if isinstance(condition, CParser.ConditionContext)
         ]
-        values: list[str] = list(map(self.enterCondition, conditions))
-        block: str = self.enterBlock(ctx.block())
+        values: list[str] = list(map(self.visitCondition, conditions))
+        block: str = self.visitBlock(ctx.block())
         self.state.exit_block_scope()
         return f'if ({", ".join(values)}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
-    def enterElseIfStatement(self, ctx: CParser.ElseIfStatementContext):
-        if_statement: str = self.enterIfStatement(ctx.ifStatement())
+    def visitElseIfStatement(self, ctx: CParser.ElseIfStatementContext):
+        if_statement: str = self.visitIfStatement(ctx.ifStatement())
         return f'else {if_statement}'
 
-    def enterElseStatement(self, ctx: CParser.ElseStatementContext):
-        self.state.enter_block_scope()
-        block: str = self.enterBlock(ctx.block())
+    def visitElseStatement(self, ctx: CParser.ElseStatementContext):
+        self.state.visit_block_scope()
+        block: str = self.visitBlock(ctx.block())
         self.state.exit_block_scope()
         return f'else {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
-    def enterWhileStatement(self, ctx: CParser.WhileStatementContext):
-        self.state.enter_block_scope()
+    def visitWhileStatement(self, ctx: CParser.WhileStatementContext):
+        self.state.visit_block_scope()
         conditions: list[CParser.ConditionContext] = [
             condition for condition in ctx.getChildren()
             if isinstance(condition, CParser.ConditionContext)
         ]
-        values = list(map(self.enterCondition, conditions))
-        block: str = self.enterBlock(ctx.block())
+        values = list(map(self.visitCondition, conditions))
+        block: str = self.visitBlock(ctx.block())
         self.state.exit_block_scope()
 
         return f'while ({", ".join(values)}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
-    def enterDoWhileStatement(self, ctx: CParser.DoWhileStatementContext):
-        self.state.enter_block_scope()
+    def visitDoWhileStatement(self, ctx: CParser.DoWhileStatementContext):
+        self.state.visit_block_scope()
         conditions: list[CParser.ConditionContext] = [
             condition for condition in ctx.getChildren()
             if isinstance(condition, CParser.ConditionContext)
         ]
-        values = list(map(self.enterCondition, conditions))
-        block: str = self.enterBlock(ctx.block())
+        values = list(map(self.visitCondition, conditions))
+        block: str = self.visitBlock(ctx.block())
         self.state.exit_block_scope()
 
         return f'do {"{"}\n {block}\n{self.state.tabs}{"}"} while ({", ".join(values)});'
 
-    def enterCondition(self, ctx: CParser.ConditionContext):
+    def visitCondition(self, ctx: CParser.ConditionContext):
         result = ''
         for child in ctx.getChildren():
             match type(child):
                 case CParser.ExpressionContext:
-                    result += ' ' + self.enterExpression(child)
+                    result += ' ' + self.visitExpression(child)
                 case _:
                     result += ' ' + child.getText()
         return result
 
-    def enterExpression(self, ctx: CParser.ExpressionContext):
+    def visitExpression(self, ctx: CParser.ExpressionContext):
         match type(ctx):
             case CParser.ConstantExpressionContext:
                 return self.visitConstantExpression(ctx)
@@ -497,8 +496,8 @@ class Visitor(CVisitor):
     def visitChainedCallExpression(self,
                                    ctx: CParser.ChainedCallExpressionContext):
         if ctx.unarySign():
-            return f'{ctx.unarySign().getText()}{self.enterChainedCall(ctx.chainedCall())}'
-        return self.enterChainedCall(ctx.chainedCall())
+            return f'{ctx.unarySign().getText()}{self.visitChainedCall(ctx.chainedCall())}'
+        return self.visitChainedCall(ctx.chainedCall())
 
     def visitEqExpression(self, ctx: CParser.EqExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
@@ -508,7 +507,7 @@ class Visitor(CVisitor):
             return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
         return ctx.getText()
 
-    def enterBlock(self, ctx: CParser.BlockContext):
+    def visitBlock(self, ctx: CParser.BlockContext):
         result: str = ''
         for child in ctx.getChildren():
             match type(child):
@@ -517,13 +516,13 @@ class Visitor(CVisitor):
                         match type(declaration):
                             case CParser.VariableDeclarationContext:
                                 result += self.state.tabs
-                                value = self.enterVariableDeclaration(
+                                value = self.visitVariableDeclaration(
                                     declaration)
                                 result += value
                                 result += '\n'
                             case CParser.StructDeclarationContext:
                                 result += self.state.tabs
-                                value = self.enterStructDeclaration(
+                                value = self.visitStructDeclaration(
                                     declaration)
                                 result += value
                                 result += '\n'
@@ -532,13 +531,13 @@ class Visitor(CVisitor):
                         match type(definition):
                             case CParser.VariableDefinitionContext:
                                 result += self.state.tabs
-                                value = self.enterVariableDefinition(
+                                value = self.visitVariableDefinition(
                                     definition)
                                 result += value
                                 result += '\n'
                             case CParser.StructDefinitionContext:
                                 result += self.state.tabs
-                                value = self.enterStructDefinition(
+                                value = self.visitStructDefinition(
                                     definition)
                                 result += value
                                 result += '\n'
@@ -547,56 +546,56 @@ class Visitor(CVisitor):
                         match type(statement):
                             case CParser.ExpressionContext:
                                 result += self.state.tabs
-                                value = self.enterExpression(statement)
+                                value = self.visitExpression(statement)
                                 result += value
                                 result += '\n'
                 case CParser.FunctionCallContext:
                     result += self.state.tabs
-                    value = self.enterFunctionCall(child)
+                    value = self.visitFunctionCall(child)
                     result += value
                     result += '\n'
                 case CParser.VariableDefinitionContext:
                     result += self.state.tabs
-                    value = self.enterVariableDefinition(child)
+                    value = self.visitVariableDefinition(child)
                     result += value
                     result += '\n'
                 case CParser.AssignmentContext:
                     result += self.state.tabs
-                    value = self.enterAssignment(child)
+                    value = self.visitAssignment(child)
                     result += value
                     result += '\n'
                 case CParser.InplaceAssignmentContext:
                     result += self.state.tabs
-                    value = self.enterInplaceAssignment(child)
+                    value = self.visitInplaceAssignment(child)
                     result += value
                     result += '\n'
                 case CParser.IfStatementStructureContext:
-                    value = self.enterIfStatementStructure(child)
+                    value = self.visitIfStatementStructure(child)
                     result += value
                     result += '\n'
                 case CParser.WhileStatementContext:
                     result += self.state.tabs
-                    value = self.enterWhileStatement(child)
+                    value = self.visitWhileStatement(child)
                     result += value
                     result += '\n'
                 case CParser.DoWhileStatementContext:
                     result += self.state.tabs
-                    value = self.enterDoWhileStatement(child)
+                    value = self.visitDoWhileStatement(child)
                     result += value
                     result += '\n'
                 case CParser.FunctionReturnContext:
                     result += self.state.tabs
-                    value = self.enterFunctionReturn(child)
+                    value = self.visitFunctionReturn(child)
                     result += value
                     result += '\n'
                 case CParser.ClassInstantiationContext:
                     result += self.state.tabs
-                    value = self.enterClassInstantiation(child)
+                    value = self.visitClassInstantiation(child)
                     result += value
                     result += '\n'
                 case CParser.ChainedCallContext:
                     result += self.state.tabs
-                    value = self.enterChainedCall(child)
+                    value = self.visitChainedCall(child)
                     result += f'{value};'
                     result += '\n'
 
@@ -607,9 +606,9 @@ class Visitor(CVisitor):
     def exitBlock(self, ctx: CParser.BlockContext):
         self.state.exit_block_scope()
 
-    def enterClassDefinition(self, ctx: CParser.ClassDefinitionContext):
-        self.state.enter_block_scope()
-        self.state.enter_class()
+    def visitClassDefinition(self, ctx: CParser.ClassDefinitionContext):
+        self.state.visit_block_scope()
+        self.state.visit_class()
         identifier: str = ctx.identifier().getText()
         clazz: Clazz = Clazz(
             name=identifier,
@@ -617,7 +616,7 @@ class Visitor(CVisitor):
         )
         self.manager.current_clazz = clazz
         self.manager.add_clazz(clazz)
-        attributes, methods = self.enterClassBlock(ctx.classBlock())
+        attributes, methods = self.visitClassBlock(ctx.classBlock())
         self.state.exit_class()
         self.state.exit_block_scope()
         # self.manager.current_clazz = None
@@ -662,7 +661,7 @@ class Visitor(CVisitor):
         if constructor:
             method_name: str = constructor.identifier().getText()
             method_alias: str = f'{clazz_name}{method_name}'
-            args, args_string = self.enterFunctionArgs(
+            args, args_string = self.visitFunctionArgs(
                 constructor.functionArgs())
             args_string = ', '.join([f'{clazz_name} * this', args_string])
 
@@ -681,7 +680,7 @@ class Visitor(CVisitor):
                 name: str = method.name
                 new_name: str = f'{clazz_name}{name}'
                 method_block += f'{self.state.tabs}this->{new_name} = &{new_name};\n'
-            method_block += self.enterBlock(constructor.block())
+            method_block += self.visitBlock(constructor.block())
             return f'void {method_alias}({args_string}) {"{"}\n{method_block}\n{"}"}'
 
         else:
@@ -696,7 +695,7 @@ class Visitor(CVisitor):
                       '}\n'
         return result
 
-    def enterClassBlock(self, ctx: CParser.ClassBlockContext):
+    def visitClassBlock(self, ctx: CParser.ClassBlockContext):
         class_name: str = ctx.parentCtx.identifier().getText()
         attribute_declarations: list[CParser.VariableDeclarationContext] = []
         attribute_definitions: list[CParser.VariableDefinitionContext] = []
@@ -715,7 +714,7 @@ class Visitor(CVisitor):
 
         for attribute in attribute_declarations:
             attributes += self.state.tabs
-            value = self.enterVariableDeclaration(attribute,
+            value = self.visitVariableDeclaration(attribute,
                                                   is_clazz_attribute=True)
             attributes += value
             attributes += '\n'
@@ -725,7 +724,7 @@ class Visitor(CVisitor):
         # in the class constructor
         for attribute in attribute_definitions:
             attributes += self.state.tabs
-            value = self.enterVariableDefinition(attribute)
+            value = self.visitVariableDefinition(attribute)
             attributes += value
             attributes += '\n'
 
@@ -738,7 +737,7 @@ class Visitor(CVisitor):
 
         method: CParser.FunctionDefinitionContext
         for method in methods:
-            # print(self.enterFunctionArgs(method.functionArgs()))
+            # print(self.visitFunctionArgs(method.functionArgs()))
             # print(method.getText())
             method_name = method.identifier().getText()
             if method_name == class_name:
@@ -753,10 +752,10 @@ class Visitor(CVisitor):
             attributes += '\n'
             self.state.exit_block_scope()
             self.state.exit_block_scope()
-            func, func_string = self.enterFunctionDefinition(method)
+            func, func_string = self.visitFunctionDefinition(method)
             clean_methods.append(func)
             # self.manager.current_clazz.add_method(func)
-            self.state.enter_block_scope()
+            self.state.visit_block_scope()
             parsed_methods += func_string
             parsed_methods += '\n'
 
@@ -790,11 +789,11 @@ class Visitor(CVisitor):
         parsed_methods += parsed_constructor
         return attributes[:-1], parsed_methods
 
-    def enterClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
+    def visitClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
         clazz, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
         class_name: str = type_specifier.split()[0]  # to remove the pointer
         identifier: str = ctx.identifier().getText()
-        args: str = self.enterFunctionCallArgs(
+        args: str = self.visitFunctionCallArgs(
             ctx.functionCall().functionCallArgs())
         obj: Obj = Obj(name=identifier, clazz=clazz)
         self.manager.add_obj(obj)
@@ -802,7 +801,7 @@ class Visitor(CVisitor):
         result += f'{self.state.tabs}{class_name}{class_name}({identifier}, {args});'
         return result
 
-    def enterChainedCall(self, ctx: CParser.ChainedCallContext):
+    def visitChainedCall(self, ctx: CParser.ChainedCallContext):
         obj_name: str = ctx.identifier(0).getText()
         obj: Obj = self.manager.get_obj(obj_name)
         if obj is not None:
@@ -819,7 +818,7 @@ class Visitor(CVisitor):
                     case CParser.FunctionCallExpressionContext:
                         method: Function = obj.clazz.get_method(
                             child.identifier().getText())
-                        args: str = self.enterFunctionCallArgs(
+                        args: str = self.visitFunctionCallArgs(
                             child.functionCallArgs())
                         if args:
                             if is_nested:
@@ -854,7 +853,7 @@ class Visitor(CVisitor):
                         case CParser.FunctionCallContext:
                             method: Function = clazz.get_method(
                                 child.identifier().getText())
-                            args: str = self.enterFunctionCallArgs(
+                            args: str = self.visitFunctionCallArgs(
                                 child.functionCallArgs())
                             if args:
                                 result += f'{method.alias}({obj.name}, {args})'
@@ -873,7 +872,7 @@ class Visitor(CVisitor):
                                   CParser.FunctionCallExpressionContext):
                         method: Function = arg.clazz.get_method(
                             child.identifier().getText())
-                        args: str = self.enterFunctionCallArgs(
+                        args: str = self.visitFunctionCallArgs(
                             child.functionCallArgs())
                         if args:
                             result += f'{method.alias}({obj_name}, {args})'
