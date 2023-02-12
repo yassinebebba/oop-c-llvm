@@ -476,6 +476,9 @@ class Visitor(CVisitor):
 
     def enterExpression(self, ctx: CParser.ExpressionContext):
         values = []
+        match type(ctx):
+            case CParser.EqExpressionContext:
+                return self.visitEqExpression(ctx)
         for child in ctx.getChildren():
             if isinstance(child, CParser.ExpressionContext):
                 values.append(self.enterExpression(child))
@@ -492,6 +495,14 @@ class Visitor(CVisitor):
             elif isinstance(child, CParser.ChainedCallContext):
                 values.append(self.enterChainedCall(child))
         return ' '.join(values)
+
+    def visitEqExpression(self, ctx: CParser.EqExpressionContext):
+        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
+        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        if obj1 and obj2:
+            overridden_method = obj1.clazz.get_method('eq').alias
+            return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
+        return ctx.getText()
 
     def enterBlock(self, ctx: CParser.BlockContext):
         result: str = ''

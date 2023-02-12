@@ -88,6 +88,6 @@ int main() {
     printf("%s", player->toString());
     printf("%s", p->toString());
     printf("%s", box->toString());
-    printf("%d\n", p2->eq(p));
+    printf("%d\n", p2 == p);
     return 0;
 }
