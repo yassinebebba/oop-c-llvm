@@ -126,10 +126,8 @@ field: typeSpecifier identifier SEMI;
 bitField: typeSpecifier identifier COLON INTEGER_CONSTANT SEMI;
 
 assignment
-    : variableAssignment
-    | identifier ((DOT | ARROW) identifier)* ASSIGN expression SEMI
+    : (identifier | chainedCall) ASSIGN expression SEMI
     ;
-variableAssignment: identifier ASSIGN expression SEMI;
 
 inplaceAssignment
     : (identifier | chainedCall)

@@ -209,11 +209,6 @@ class CVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CParser#variableAssignment.
-    def visitVariableAssignment(self, ctx:CParser.VariableAssignmentContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by CParser#inplaceAssignment.
     def visitInplaceAssignment(self, ctx:CParser.InplaceAssignmentContext):
         return self.visitChildren(ctx)

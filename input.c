@@ -30,6 +30,10 @@ class Integer {
         return this->n <= other->n;
     }
 
+    void free() {
+        this = NULL;
+        free(this);
+    }
 }
 
 
@@ -102,6 +106,7 @@ int main() {
 //    printf("%s", player->toString());
 //    printf("%s", p->toString());
 //    printf("%s", box->toString());
+    n1->free();
     printf("%d\n", n1 == n2);
     printf("%d\n", n1 > n2);
     printf("%d\n", n1 >= n2);

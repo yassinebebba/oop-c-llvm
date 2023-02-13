@@ -368,15 +368,6 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#variableAssignment.
-    def enterVariableAssignment(self, ctx:CParser.VariableAssignmentContext):
-        pass
-
-    # Exit a parse tree produced by CParser#variableAssignment.
-    def exitVariableAssignment(self, ctx:CParser.VariableAssignmentContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#inplaceAssignment.
     def enterInplaceAssignment(self, ctx:CParser.InplaceAssignmentContext):
         pass

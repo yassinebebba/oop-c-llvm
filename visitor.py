@@ -342,16 +342,8 @@ class Visitor(CVisitor):
         return f'{type_specifier} {identifier}: {bit_count};'
 
     def visitAssignment(self, ctx: CParser.AssignmentContext):
-        # identifier ASSIGN expression SEMI
         # self.check_variable_assignment(ctx)
-        identifier: str = ''
-        try:
-            identifier = ctx.identifier().getText()
-        except AttributeError:
-            for child in ctx.getChildren():
-                if child.getText() == '=':
-                    break
-                identifier += child.getText()
+        identifier: str = (ctx.identifier() or ctx.chainedCall()).getText()
         expression: CParser.ExpressionContext = ctx.expression()
         return f'{identifier} = {self.visitExpression(expression)};'
 

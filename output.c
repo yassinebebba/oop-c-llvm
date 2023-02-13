@@ -16,6 +16,7 @@ typedef struct Integer {
 	bool (*Integergte)(struct Integer *, struct Integer *);
 	bool (*Integerlt)(struct Integer *, struct Integer *);
 	bool (*Integerlte)(struct Integer *, struct Integer *);
+	void (*Integerfree)(struct Integer *);
 	char * (*IntegertoString)(struct Integer *);
 } Integer;
 bool Integereq(Integer * this, Integer * other) {
@@ -33,6 +34,10 @@ bool Integerlt(Integer * this, Integer * other) {
 bool Integerlte(Integer * this, Integer * other) {
  	return this->n<=other->n;
 }
+void Integerfree(Integer * this) {
+ 	this = NULL;
+	free(this);
+}
 char * IntegertoString(Integer * this) {
 	char * str = malloc(sizeof(char *) * 30);
 	sprintf(str, "<Integer object at %p>\n", this);
@@ -44,6 +49,7 @@ void IntegerInteger(Integer * this, int n) {
 	this->Integergte = &Integergte;
 	this->Integerlt = &Integerlt;
 	this->Integerlte = &Integerlte;
+	this->Integerfree = &Integerfree;
 	this->IntegertoString = &IntegertoString;
 	this->n = n;
 }
@@ -135,6 +141,7 @@ int main() {
 	IntegerInteger(n1, 1);
 	Integer * n2 = malloc(sizeof(Integer));
 	IntegerInteger(n2, 1);
+	n1->Integerfree(n1);
 	printf("%d\n", n1->Integereq(n1, n2));
 	printf("%d\n", n1->Integergt(n1, n2));
 	printf("%d\n", n1->Integergte(n1, n2));
