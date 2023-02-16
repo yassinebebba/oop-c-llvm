@@ -15,7 +15,7 @@ expression
     : constant                                #constantExpression
     | unarySign? functionCallExpression       #funcCallExpression
     | unarySign? identifier                   #identifierExpression
-    | SIZEOF (expression | LP expression RP)  #sizeofExpression
+    | SIZEOF (expression | LP (expression| CHAR) RP)  #sizeofExpression
     | expression STAR expression              #multiplyExpression
     | expression DIV expression               #divideExpression
     | expression PLUS expression              #addExpression
@@ -83,7 +83,7 @@ variableDeclaration: typeSpecifier identifier arrayCell* SEMI;
 
 variableDefinition: typeSpecifier identifier ASSIGN expression SEMI;
 
-arrayCell: LSQRB (INTEGER_CONSTANT | identifier) RSQRB;
+arrayCell: LSQRB (INTEGER_CONSTANT | identifier)? RSQRB;
 
 functionDeclaration
     : typeSpecifier identifier LP functionArgs? RP SEMI

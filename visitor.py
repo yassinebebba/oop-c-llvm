@@ -368,6 +368,12 @@ class Visitor(CVisitor):
             chained_call: str = self.visitChainedCall(ctx.chainedCall())
             return f'{chained_call} {operator} {expression};'
 
+    def visitFuncCallExpression(self, ctx: CParser.FuncCallExpressionContext):
+        unary = ''
+        if ctx.unarySign():
+            unary += ctx.unarySign().getText()
+        return f'{unary}{self.visitFunctionCall(ctx.functionCallExpression())}'
+
     def visitFunctionCall(self, ctx: CParser.FunctionCallContext):
         args = self.visitFunctionCallArgs(ctx.functionCallArgs())
         return f'{ctx.identifier().getText()}({args});'
@@ -467,6 +473,10 @@ class Visitor(CVisitor):
 
     def visitExpression(self, ctx: CParser.ExpressionContext):
         match type(ctx):
+            case CParser.FuncCallExpressionContext:
+                return self.visitFuncCallExpression(ctx)
+            case CParser.SubtractExpressionContext:
+                return self.visitSubtractExpression(ctx)
             case CParser.ConstantExpressionContext:
                 return self.visitConstantExpression(ctx)
             case CParser.IdentifierExpressionContext:
@@ -485,6 +495,9 @@ class Visitor(CVisitor):
                 return self.visitLteExpression(ctx)
             case _:
                 raise Exception('Expression was not recognised!')
+
+    def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
+        return ctx.getText()
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         return ctx.getText()
@@ -914,4 +927,4 @@ class Visitor(CVisitor):
                         result += child.getText()
                 return result
         else:
-            return ''
+            return ctx.getText()
