@@ -194,9 +194,11 @@ classBlock
     : LC (
         variableDefinition
       | variableDeclaration
-      | functionDefinition
+      | classMethod
      )* RC
    ;
+
+classMethod: typeSpecifier identifier LP functionArgs? RP block;
 
 classInstantiation: typeSpecifier identifier ASSIGN NEW functionCall;
 // END OOP SECTION

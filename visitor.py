@@ -236,26 +236,6 @@ class Visitor(CVisitor):
 
         block: str = self.visitBlock(ctx.block())
         self.state.exit_block_scope()
-        # i think this block should be somewhere else
-        original_identifier: str = identifier
-        if self.state.is_class:
-            # this is a class method
-            # class ctx -> class block ctx -> class method ctx
-            class_name = ctx.parentCtx.parentCtx.identifier().getText()
-            identifier = f'{class_name}{identifier}'
-
-            if args_string:
-                args_string = ', '.join([f'{class_name} * this', args_string])
-            else:
-                args_string = f'{class_name} * this'
-            method: Function = Function(
-                rtype=rtype,
-                name=original_identifier,
-                args=args,
-                alias=identifier,
-            )
-            self.manager.current_clazz.add_method(method)
-
         self.manager.current_function = None
         return func, f'{rtype} {identifier}({args_string}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
@@ -475,6 +455,8 @@ class Visitor(CVisitor):
         match type(ctx):
             case CParser.FuncCallExpressionContext:
                 return self.visitFuncCallExpression(ctx)
+            case CParser.AddExpressionContext:
+                return self.visitAddExpression(ctx)
             case CParser.SubtractExpressionContext:
                 return self.visitSubtractExpression(ctx)
             case CParser.ConstantExpressionContext:
@@ -495,6 +477,14 @@ class Visitor(CVisitor):
                 return self.visitLteExpression(ctx)
             case _:
                 raise Exception('Expression was not recognised!')
+
+    def visitAddExpression(self, ctx: CParser.AddExpressionContext):
+        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
+        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        if obj1 and obj2:
+            overridden_method = obj1.clazz.get_method('add').alias
+            return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
+        return ctx.getText()
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
         return ctx.getText()
@@ -668,9 +658,12 @@ class Visitor(CVisitor):
         return f'typedef struct {identifier} {"{"}\n {attributes}\n{"}"} {identifier};\n{methods}'
 
     def getFunctionPointer(self, class_name: str,
-                           function: CParser.FunctionDefinitionContext):
+                           function: CParser.ClassMethodContext):
         clazz, rtype = self.match_type_specifier(
             function.typeSpecifier())
+        if clazz:
+            rtype = f'struct {rtype}'
+
         identifier: str = function.identifier().getText()
 
         # struct {class_name} * this: is always the 1st arg
@@ -744,7 +737,7 @@ class Visitor(CVisitor):
         class_name: str = ctx.parentCtx.identifier().getText()
         attribute_declarations: list[CParser.VariableDeclarationContext] = []
         attribute_definitions: list[CParser.VariableDefinitionContext] = []
-        methods: list[CParser.FunctionDefinitionContext] = []
+        methods: list[CParser.ClassMethodContext] = []
 
         for child in ctx.getChildren():
             match type(child):
@@ -752,7 +745,7 @@ class Visitor(CVisitor):
                     attribute_declarations.append(child)
                 case CParser.VariableDefinitionContext:
                     attribute_definitions.append(child)
-                case CParser.FunctionDefinitionContext:
+                case CParser.ClassMethodContext:
                     methods.append(child)
 
         attributes: str = ''
@@ -780,7 +773,7 @@ class Visitor(CVisitor):
 
         clean_methods: list[Function] = []
 
-        method: CParser.FunctionDefinitionContext
+        method: CParser.ClassMethodContext
         for method in methods:
             # print(self.visitFunctionArgs(method.functionArgs()))
             # print(method.getText())
@@ -797,7 +790,7 @@ class Visitor(CVisitor):
             attributes += '\n'
             self.state.exit_block_scope()
             self.state.exit_block_scope()
-            func, func_string = self.visitFunctionDefinition(method)
+            func, func_string = self.visitClassMethod(method)
             clean_methods.append(func)
             # self.manager.current_clazz.add_method(func)
             self.state.visit_block_scope()
@@ -833,6 +826,35 @@ class Visitor(CVisitor):
                                                          clean_methods)
         parsed_methods += parsed_constructor
         return attributes[:-1], parsed_methods
+
+    def visitClassMethod(self, ctx: CParser.ClassMethodContext):
+        original_identifier: str = ctx.identifier().getText()
+        # class ctx -> class block ctx -> class method ctx
+        clazz_name = ctx.parentCtx.parentCtx.identifier().getText()
+        alias = f'{clazz_name}{original_identifier}'
+        args, args_string = self.visitFunctionArgs(ctx.functionArgs())
+
+        if args_string:
+            args_string = ', '.join([f'{clazz_name} * this', args_string])
+        else:
+            args_string = f'{clazz_name} * this'
+
+        obj_ref_arg = Arg(
+            type_specifier=f'{clazz_name} *',
+            name='this',
+            clazz=self.manager.get_clazz(clazz_name)
+        )
+        args.insert(0, obj_ref_arg)
+        rtype = ctx.typeSpecifier().getText()
+        method: Function = Function(
+            rtype=rtype,
+            name=original_identifier,
+            args=args,
+            alias=alias,
+        )
+        block = self.visitBlock(ctx.block())
+        self.manager.current_clazz.add_method(method)
+        return method, f'{rtype} {alias}({args_string}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
     def visitClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
         clazz, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
