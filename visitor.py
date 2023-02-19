@@ -692,7 +692,7 @@ class Visitor(CVisitor):
         return f'{rtype} (*{class_name}{identifier})({", ".join(new_args)});'
 
     def createClassConstructor(self,
-                               constructor: CParser.FunctionDefinitionContext | None,
+                               constructor: CParser.ClassMethodContext | None,
                                methods: list[Function]):
 
         clazz_name: str = self.manager.current_clazz.name
@@ -712,6 +712,7 @@ class Visitor(CVisitor):
             self.manager.current_clazz.constructor = method
             self.manager.current_clazz.add_method(method)
             method_block: str = ''
+            method_block += f'{self.state.tabs}this->{clazz_name*2} = &{clazz_name*2};\n'
             for method in methods:
                 if method.name == clazz_name:
                     continue
@@ -767,7 +768,7 @@ class Visitor(CVisitor):
             attributes += '\n'
 
         parsed_methods: str = ''
-        constructor: CParser.FunctionDefinitionContext | None = None
+        constructor: CParser.ClassMethodContext | None = None
 
         overridden_magic_methods = {'toString': False}
 
@@ -780,6 +781,7 @@ class Visitor(CVisitor):
             method_name = method.identifier().getText()
             if method_name == class_name:
                 constructor = method
+                attributes += self.getFunctionPointer(class_name, constructor)
                 continue
             elif method_name == 'toString':
                 overridden_magic_methods['toString'] = True
@@ -852,7 +854,9 @@ class Visitor(CVisitor):
             args=args,
             alias=alias,
         )
+        self.state.visit_block_scope()
         block = self.visitBlock(ctx.block())
+        self.state.exit_block_scope()
         self.manager.current_clazz.add_method(method)
         return method, f'{rtype} {alias}({args_string}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
 
