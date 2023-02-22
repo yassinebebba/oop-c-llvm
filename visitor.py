@@ -455,8 +455,11 @@ class Visitor(CVisitor):
         match type(ctx):
             case CParser.FuncCallExpressionContext:
                 return self.visitFuncCallExpression(ctx)
+            case CParser.MultiplyExpressionContext:
+                return self.visitMultiplyExpression(ctx)
             case CParser.AddExpressionContext:
-                return self.visitAddExpression(ctx)
+                result, _ = self.visitAddExpression(ctx)
+                return result
             case CParser.SubtractExpressionContext:
                 return self.visitSubtractExpression(ctx)
             case CParser.ConstantExpressionContext:
@@ -478,13 +481,40 @@ class Visitor(CVisitor):
             case _:
                 raise Exception('Expression was not recognised!')
 
-    def visitAddExpression(self, ctx: CParser.AddExpressionContext):
-        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
+    def visitMultiplyExpression(self, ctx: CParser.MultiplyExpressionContext):
+        exp1, exp2 = ctx.expression(0), ctx.expression(1)
+
+        exp1 = exp1.getText()
+        exp2 = exp2.getText()
+
         obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
         if obj1 and obj2:
-            overridden_method = obj1.clazz.get_method('add').alias
+            overridden_method = obj1.clazz.get_method('mult').alias
             return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
         return ctx.getText()
+
+    def visitAddExpression(self, ctx: CParser.AddExpressionContext):
+        result: str = ''
+        expr1, expr2 = ctx.expression(0), ctx.expression(1)
+        _exp1: str = ''
+        _exp2: str = ''
+        # parsing expr should return info about the operands
+        # result: str, expr1: class?, expr2: class? probably expr2 is not needed
+        if isinstance(expr1, CParser.AddExpressionContext):
+            _result, _obj1 = self.visitAddExpression(expr1)
+            if _obj1:
+                if isinstance(expr2, CParser.IdentifierExpressionContext):
+                    obj2 = self.manager.get_obj(expr2.getText())
+                    overridden_method = obj2.clazz.get_method('add').alias
+                    result: str = f'{_result}->{overridden_method}({_obj1.name}, {obj2.name})'
+                    return result, _obj1
+        obj1 = self.manager.get_obj(expr1.getText())
+        obj2 = self.manager.get_obj(expr2.getText())
+        if obj1 and obj2:
+            overridden_method = obj1.clazz.get_method('add').alias
+            result: str = f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
+            return result, obj1
+        return ctx.getText(), None
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
         return ctx.getText()
@@ -712,7 +742,7 @@ class Visitor(CVisitor):
             self.manager.current_clazz.constructor = method
             self.manager.current_clazz.add_method(method)
             method_block: str = ''
-            method_block += f'{self.state.tabs}this->{clazz_name*2} = &{clazz_name*2};\n'
+            method_block += f'{self.state.tabs}this->{clazz_name * 2} = &{clazz_name * 2};\n'
             for method in methods:
                 if method.name == clazz_name:
                     continue
