@@ -26,6 +26,18 @@ struct String * Stringmult(struct String *, struct String *);
 struct String * Stringadd(struct String *, struct String *);
 char * StringtoString(struct String *);
 
+String* StringString(char * str) {
+	String* this = malloc(sizeof(String));
+	this->StringString = &StringString;
+	this->Stringeq = &Stringeq;
+	this->Stringmult = &Stringmult;
+	this->Stringadd = &Stringadd;
+	this->StringtoString = &StringtoString;
+	this->content = malloc(sizeof(char)+strlen(str)-1);;
+	strcpy(this->content, str);
+	this->length = strlen(str);;
+	return this;
+}
 int Stringeq(String * this, String * other) {
  	return strcmp(this->content,other->content);
 }
@@ -42,18 +54,7 @@ String* Stringadd(String * this, String * other) {
 char* StringtoString(String * this) {
  	return this->content;
 }
-String* StringString(char * str) {
-	String* this = malloc(sizeof(String));
-	this->StringString = &StringString;
-	this->Stringeq = &Stringeq;
-	this->Stringmult = &Stringmult;
-	this->Stringadd = &Stringadd;
-	this->StringtoString = &StringtoString;
-	this->content = malloc(sizeof(char)+strlen(str)-1);;
-	strcpy(this->content, str);
-	this->length = strlen(str);;
-	return this;
-}
+
 int main() {
  	String * s1 = StringString("HeyHi");
 	String * s2 = StringString("");

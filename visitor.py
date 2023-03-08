@@ -886,7 +886,7 @@ class Visitor(CVisitor):
         # TODO: urgent this has to be all Function instance in class constructor
         parsed_constructor = self.createClassConstructor(constructor,
                                                          clean_methods)
-        parsed_methods += parsed_constructor
+        parsed_methods = parsed_constructor + '\n' + parsed_methods
 
         # so other methods can have access to each other
         method_declarations: str = ''
