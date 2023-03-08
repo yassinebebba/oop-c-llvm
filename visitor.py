@@ -478,8 +478,13 @@ class Visitor(CVisitor):
                 return self.visitLtExpression(ctx)
             case CParser.LteExpressionContext:
                 return self.visitLteExpression(ctx)
+            case CParser.SizeofExpressionContext:
+                return self.visitSizeofExpression(ctx)
             case _:
                 raise Exception('Expression was not recognised!')
+
+    def visitSizeofExpression(self, ctx: CParser.SizeofExpressionContext):
+        return ctx.getText()
 
     def visitMultiplyExpression(self, ctx: CParser.MultiplyExpressionContext):
         exp1, exp2 = ctx.expression(0), ctx.expression(1)
@@ -697,9 +702,12 @@ class Visitor(CVisitor):
         identifier: str = function.identifier().getText()
 
         # struct {class_name} * this: is always the 1st arg
-        this = f'struct {class_name} *'
-
-        args: list[Arg] = [Arg(name=None, type_specifier=this, clazz=clazz)]
+        # except for the constructor bc it creates the object reference
+        if function.identifier().getText() == class_name:
+            args: list[Arg] = []
+        else:
+            this = f'struct {class_name} *'
+            args: list[Arg] = [Arg(name=None, type_specifier=this, clazz=clazz)]
         if function.functionArgs():
             for arg in function.functionArgs().getChildren():
                 try:
@@ -731,7 +739,7 @@ class Visitor(CVisitor):
             method_alias: str = f'{clazz_name}{method_name}'
             args, args_string = self.visitFunctionArgs(
                 constructor.functionArgs())
-            args_string = ', '.join([f'{clazz_name} * this', args_string])
+            # args_string = ', '.join([f'{clazz_name} * this', args_string])
 
             method: Function = Function(
                 rtype='void',
@@ -742,6 +750,8 @@ class Visitor(CVisitor):
             self.manager.current_clazz.constructor = method
             self.manager.current_clazz.add_method(method)
             method_block: str = ''
+            # `this` malloc is implicit bc it has to be hmmm
+            method_block += f'{self.state.tabs}{clazz_name}* this = malloc(sizeof({clazz_name}));\n'
             method_block += f'{self.state.tabs}this->{clazz_name * 2} = &{clazz_name * 2};\n'
             for method in methods:
                 if method.name == clazz_name:
@@ -750,10 +760,11 @@ class Visitor(CVisitor):
                 new_name: str = f'{clazz_name}{name}'
                 method_block += f'{self.state.tabs}this->{new_name} = &{new_name};\n'
             method_block += self.visitBlock(constructor.block())
-            return f'void {method_alias}({args_string}) {"{"}\n{method_block}\n{"}"}'
+            return f'{clazz_name}* {method_alias}({args_string}) {"{"}\n{method_block}\n{"}"}'
 
         else:
-            return f'void {clazz_name}{clazz_name}({clazz_name} * this) {"{"}\n// Not implemented\n{"}"}'
+            # return f'void {clazz_name}{clazz_name}({clazz_name} * this) {"{"}\n// Not implemented\n{"}"}'
+            return f'{clazz_name}* {clazz_name}{clazz_name}() {"{"}\n// Not implemented\n{"}"}'
 
     def createClassStringRepresentation(self, clazz_name):
         string = f'<{clazz_name} object at 0xFFFFFFF>\n'
@@ -811,7 +822,9 @@ class Visitor(CVisitor):
             method_name = method.identifier().getText()
             if method_name == class_name:
                 constructor = method
+                attributes += self.state.tabs
                 attributes += self.getFunctionPointer(class_name, constructor)
+                attributes += '\n'
                 continue
             elif method_name == 'toString':
                 overridden_magic_methods['toString'] = True
@@ -898,8 +911,9 @@ class Visitor(CVisitor):
             ctx.functionCall().functionCallArgs())
         obj: Obj = Obj(name=identifier, clazz=clazz)
         self.manager.add_obj(obj)
-        result: str = f'{type_specifier} {identifier} = malloc(sizeof({class_name}));\n'
-        result += f'{self.state.tabs}{class_name}{class_name}({identifier}, {args});'
+        # result: str = f'{type_specifier} {identifier} = malloc(sizeof({class_name}));\n'
+        # result += f'{self.state.tabs}{class_name}{class_name}({identifier}, {args});'
+        result: str = f'{type_specifier} {identifier} = {class_name}{class_name}({args});'
         return result
 
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
