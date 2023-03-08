@@ -65,6 +65,14 @@ functionCallArgs
 
 statementList
     : expression SEMI
+    | ifStatementStructure
+    | whileStatement
+    | doWhileStatement
+    | functionCall
+    | assignment
+    | inplaceAssignment
+    | variableDefinition
+    | functionReturn
     ;
 
 declarationList
@@ -205,19 +213,10 @@ classInstantiation: typeSpecifier identifier ASSIGN NEW functionCall;
 
 block
     : LC (
-        expression
-      | ifStatementStructure
-      | whileStatement
-      | doWhileStatement
-      | variableDefinition
+        statementList
       | definitionList
       | declarationList
-      | functionCall
-      | chainedCall SEMI
-      | assignment
-      | inplaceAssignment
       | classInstantiation
-      | functionReturn
      )* RC
    ;
 

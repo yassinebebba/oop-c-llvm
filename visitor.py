@@ -1,5 +1,6 @@
 import os
 import re
+import antlr4.tree.Tree
 from io import FileIO
 from termcolor import colored
 from core.CVisitor import CVisitor
@@ -626,58 +627,46 @@ class Visitor(CVisitor):
                             case CParser.ExpressionContext:
                                 result += self.state.tabs
                                 value = self.visitExpression(statement)
+                                result += f'{value}\n'
+                            case CParser.FuncCallExpressionContext:
+                                result += self.state.tabs
+                                value = self.visitFuncCallExpression(statement)
+                                result += f'{value}\n'
+                            case CParser.ChainedCallExpressionContext:
+                                result += self.state.tabs
+                                value = self.visitChainedCallExpression(statement)
+                                result += f'{value};\n'
+                            case CParser.IfStatementStructureContext:
+                                value = self.visitIfStatementStructure(statement)
+                                result += f'{value}\n'
+                            case CParser.AssignmentContext:
+                                result += self.state.tabs
+                                value = self.visitAssignment(statement)
+                                result += f'{value}\n'
+                            case CParser.InplaceAssignmentContext:
+                                result += self.state.tabs
+                                value = self.visitInplaceAssignment(statement)
+                                result += f'{value}\n'
+                            case CParser.VariableDefinitionContext:
+                                result += self.state.tabs
+                                value = self.visitVariableDefinition(statement)
                                 result += value
                                 result += '\n'
-                case CParser.FunctionCallContext:
-                    result += self.state.tabs
-                    value = self.visitFunctionCall(child)
-                    result += value
-                    result += '\n'
-                case CParser.VariableDefinitionContext:
-                    result += self.state.tabs
-                    value = self.visitVariableDefinition(child)
-                    result += value
-                    result += '\n'
-                case CParser.AssignmentContext:
-                    result += self.state.tabs
-                    value = self.visitAssignment(child)
-                    result += value
-                    result += '\n'
-                case CParser.InplaceAssignmentContext:
-                    result += self.state.tabs
-                    value = self.visitInplaceAssignment(child)
-                    result += value
-                    result += '\n'
-                case CParser.IfStatementStructureContext:
-                    value = self.visitIfStatementStructure(child)
-                    result += value
-                    result += '\n'
-                case CParser.WhileStatementContext:
-                    result += self.state.tabs
-                    value = self.visitWhileStatement(child)
-                    result += value
-                    result += '\n'
-                case CParser.DoWhileStatementContext:
-                    result += self.state.tabs
-                    value = self.visitDoWhileStatement(child)
-                    result += value
-                    result += '\n'
-                case CParser.FunctionReturnContext:
-                    result += self.state.tabs
-                    value = self.visitFunctionReturn(child)
-                    result += value
-                    result += '\n'
+                            case CParser.FunctionReturnContext:
+                                result += self.state.tabs
+                                value = self.visitFunctionReturn(statement)
+                                result += f'{value}\n'
+                            case antlr4.tree.Tree.TerminalNodeImpl:
+                                # this is the `;`
+                                pass
+                            case _:
+                                print(type(statement))
+                                raise Exception('Statement was not recognized!')
                 case CParser.ClassInstantiationContext:
                     result += self.state.tabs
                     value = self.visitClassInstantiation(child)
                     result += value
                     result += '\n'
-                case CParser.ChainedCallContext:
-                    result += self.state.tabs
-                    value = self.visitChainedCall(child)
-                    result += f'{value};'
-                    result += '\n'
-
         # remove the last new line result[:-1]
         # self.ungetch()
         return result[:-1]

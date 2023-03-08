@@ -59,6 +59,7 @@ int main() {
  	String * s1 = StringString("HeyHi");
 	String * s2 = StringString("");
 	String * s3 = StringString("");
+	s1->Stringadd(s1, s1, s1->Stringadd(s1, s1, s2));
 	String * s4 = s1->Stringadd(s1, s2)->Stringadd(s1, s3)->Stringadd(s1, s1);
 	printf("%s\n", s4->StringtoString(s4));
 	printf("%s\n", s2->StringtoString(s2));
