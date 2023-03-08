@@ -134,6 +134,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#leftShiftExpression.
+    def enterLeftShiftExpression(self, ctx:CParser.LeftShiftExpressionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#leftShiftExpression.
+    def exitLeftShiftExpression(self, ctx:CParser.LeftShiftExpressionContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#lteExpression.
     def enterLteExpression(self, ctx:CParser.LteExpressionContext):
         pass

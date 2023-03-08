@@ -25,6 +25,7 @@ expression
     | expression LTE expression               #lteExpression
     | expression GT expression                #gtExpression
     | expression GTE expression               #gteExpression
+    | expression LEFT_SHIFT expression        #leftShiftExpression
     | unarySign? chainedCall                  #chainedCallExpression
     ;
 chainedCall: identifier ((DOT | ARROW) (identifier | functionCallExpression))*;

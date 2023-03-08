@@ -79,6 +79,11 @@ class CVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by CParser#leftShiftExpression.
+    def visitLeftShiftExpression(self, ctx:CParser.LeftShiftExpressionContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by CParser#lteExpression.
     def visitLteExpression(self, ctx:CParser.LteExpressionContext):
         return self.visitChildren(ctx)

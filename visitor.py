@@ -587,6 +587,29 @@ class Visitor(CVisitor):
             return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
         return ctx.getText()
 
+    def visitLeftShiftExpression(self, ctx: CParser.LeftShiftExpressionContext):
+        result: str = ''
+        expr1, expr2 = ctx.expression(0), ctx.expression(1)
+        _exp1: str = ''
+        _exp2: str = ''
+        # parsing expr should return info about the operands
+        # result: str, expr1: class?, expr2: class? probably expr2 is not needed
+        if isinstance(expr1, CParser.LeftShiftExpressionContext):
+            _result, _obj1 = self.visitLeftShiftExpression(expr1)
+            if _obj1:
+                if isinstance(expr2, CParser.IdentifierExpressionContext):
+                    obj2 = self.manager.get_obj(expr2.getText())
+                    overridden_method = obj2.clazz.get_method('lshift').alias
+                    result: str = f'{_result}->{overridden_method}({_obj1.name}, {obj2.name})'
+                    return result, _obj1
+        obj1 = self.manager.get_obj(expr1.getText())
+        obj2 = self.manager.get_obj(expr2.getText())
+        if obj1 and obj2:
+            overridden_method = obj1.clazz.get_method('lshift').alias
+            result: str = f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
+            return result, obj1
+        return ctx.getText(), None
+
     def visitBlock(self, ctx: CParser.BlockContext):
         result: str = ''
         for child in ctx.getChildren():
@@ -656,6 +679,10 @@ class Visitor(CVisitor):
                                 result += self.state.tabs
                                 value = self.visitFunctionReturn(statement)
                                 result += f'{value}\n'
+                            case CParser.LeftShiftExpressionContext:
+                                result += self.state.tabs
+                                value, _ = self.visitLeftShiftExpression(statement)
+                                result += f'{value};\n'
                             case antlr4.tree.Tree.TerminalNodeImpl:
                                 # this is the `;`
                                 pass
