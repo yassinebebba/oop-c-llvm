@@ -59,7 +59,7 @@ int main() {
 	String * s2 = StringString("");
 	String * s3 = StringString("");
 	String * s4 = s1->Stringadd(s1, s2)->Stringadd(s1, s3)->Stringadd(s1, s1);
-	printf("%s\n", s1->StringtoString(s1));
+	printf("%s\n", s4->StringtoString(s4));
 	printf("%s\n", s2->StringtoString(s2));
 	int r = s1->Stringeq(s1, s2);
 	if ( r==0) {

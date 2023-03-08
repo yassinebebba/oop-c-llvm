@@ -167,6 +167,14 @@ class Visitor(CVisitor):
     def visitVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
         _, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
+        # check if this is a class object variable definition
+        clazz_name, *_ = type_specifier.split()
+        try:
+            clazz = self.manager.get_clazz(clazz_name)
+            obj: Obj = Obj(name=identifier, clazz=clazz)
+            self.manager.add_obj(obj)
+        except:
+            pass
         variable = Variable(name=identifier, type_specifier=type_specifier)
         self.manager.add_variable(variable)
         expression = self.visitExpression(ctx.expression())
