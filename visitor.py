@@ -1,4 +1,5 @@
 import os
+import re
 from io import FileIO
 from termcolor import colored
 from core.CVisitor import CVisitor
@@ -686,11 +687,11 @@ class Visitor(CVisitor):
         )
         self.manager.current_clazz = clazz
         self.manager.add_clazz(clazz)
-        attributes, methods = self.visitClassBlock(ctx.classBlock())
+        attributes, methods, method_declarations = self.visitClassBlock(ctx.classBlock())
         self.state.exit_class()
         self.state.exit_block_scope()
         # self.manager.current_clazz = None
-        return f'typedef struct {identifier} {"{"}\n {attributes}\n{"}"} {identifier};\n{methods}'
+        return f'typedef struct {identifier} {"{"}\n {attributes}\n{"}"} {identifier};\n\n{method_declarations}\n{methods}'
 
     def getFunctionPointer(self, class_name: str,
                            function: CParser.ClassMethodContext):
@@ -774,6 +775,14 @@ class Visitor(CVisitor):
                       f'\treturn str;\n' \
                       '}\n'
         return result
+
+    def methodDefinitionToMethodDeclaretion(self, class_name: str, method: CParser.ClassMethodContext):
+        ptr = self.getFunctionPointer(class_name, method)
+        matches = re.match('(?P<rtype>.*?)\(\*(?P<alias>.*)\)(?P<args>\(.*\))', ptr)
+        rtype = matches.group('rtype')
+        alias = matches.group('alias')
+        args = matches.group('args')
+        return f'{rtype}{alias}{args};'
 
     def visitClassBlock(self, ctx: CParser.ClassBlockContext):
         class_name: str = ctx.parentCtx.identifier().getText()
@@ -870,7 +879,14 @@ class Visitor(CVisitor):
         parsed_constructor = self.createClassConstructor(constructor,
                                                          clean_methods)
         parsed_methods += parsed_constructor
-        return attributes[:-1], parsed_methods
+
+        # so other methods can have access to each other
+        method_declarations: str = ''
+        for method in methods:
+            method_declaration = self.methodDefinitionToMethodDeclaretion(class_name, method)
+            method_declarations += method_declaration
+            method_declarations += '\n'
+        return attributes[:-1], parsed_methods, method_declarations
 
     def visitClassMethod(self, ctx: CParser.ClassMethodContext):
         original_identifier: str = ctx.identifier().getText()

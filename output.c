@@ -15,22 +15,29 @@ typedef struct String {
 	char * content;
 	struct String * (*StringString)(char *);
 	int (*Stringeq)(struct String *, struct String *);
-	struct String * (*Stringadd)(struct String *, struct String *);
 	struct String * (*Stringmult)(struct String *, struct String *);
+	struct String * (*Stringadd)(struct String *, struct String *);
 	char * (*StringtoString)(struct String *);
 } String;
+
+struct String * StringString(char *);
+int Stringeq(struct String *, struct String *);
+struct String * Stringmult(struct String *, struct String *);
+struct String * Stringadd(struct String *, struct String *);
+char * StringtoString(struct String *);
+
 int Stringeq(String * this, String * other) {
  	return strcmp(this->content,other->content);
 }
-String* Stringadd(String * this, String * other) {
- 	unsigned long len = strlen(other->content);;
-	this->content = realloc(this->content, sizeof(other->content)+this->length+len-1);;
-	strcpy(this->content+this->length, other->content);
-	this->length += len;
-	return this;
-}
 String* Stringmult(String * this, String * other) {
  
+}
+String* Stringadd(String * this, String * other) {
+ 	char * temp = malloc(this->length+other->length+1);;
+	strcpy(temp, this->content);
+	strcpy(temp+this->length, other->content);
+	String * str = StringString(temp);
+	return str;
 }
 char* StringtoString(String * this) {
  	return this->content;
@@ -39,8 +46,8 @@ String* StringString(char * str) {
 	String* this = malloc(sizeof(String));
 	this->StringString = &StringString;
 	this->Stringeq = &Stringeq;
-	this->Stringadd = &Stringadd;
 	this->Stringmult = &Stringmult;
+	this->Stringadd = &Stringadd;
 	this->StringtoString = &StringtoString;
 	this->content = malloc(sizeof(char)+strlen(str)-1);;
 	strcpy(this->content, str);
