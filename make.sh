@@ -1,3 +1,4 @@
 python main.py input.c
-gcc output.c
-./a.out
+llc -filetype=obj output.ll -o output.o
+gcc output.o -o output
+./output

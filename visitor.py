@@ -12,6 +12,11 @@ from manager import Function
 from manager import Variable
 from manager import Obj
 from manager import Arg
+import llvmlite.ir as ir
+
+# Create a module
+module = ir.Module(name="example")
+module.triple = "x86_64-redhat-linux-gnu"
 
 
 class State:
@@ -93,73 +98,36 @@ class Visitor(CVisitor):
             return None, ' '.join(chunks)
 
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
-        self.write('/*\n')
-        self.write('############################################\n')
-        self.write('THIS FILE IS NOT MEANT TO BE EDITED BY HAND\n')
-        self.write('############################################\n')
-        self.write('*/\n\n')
         for child in ctx.getChildren():
             match type(child):
                 case CParser.IncludeDirectiveContext:
-                    self.write(child.getText())
+                    # self.write(child.getText())
+                    pass
                 case CParser.DeclarationListContext:
                     for declaration in child.getChildren():
                         match type(declaration):
                             case CParser.VariableDeclarationContext:
-                                value = self.state.tabs
-                                value += self.visitVariableDeclaration(
-                                    declaration)
-                                self.write(value)
-                                self.add_newline()
+                                self.visitVariableDeclaration(declaration)
                             case CParser.FunctionDeclarationContext:
-                                value = self.state.tabs
-                                value += self.visitFunctionDeclaration(
-                                    declaration)
-                                self.write(value)
-                                self.add_newline()
+                                self.visitFunctionDeclaration(declaration)
                             case CParser.StructDeclarationContext:
-                                value = self.state.tabs
-                                value += self.visitStructDeclaration(
-                                    declaration)
-                                self.write(value)
-                                self.add_newline()
+                                self.visitStructDeclaration(declaration)
                 case CParser.DefinitionListContext:
                     for definition in child.getChildren():
                         match type(definition):
                             case CParser.VariableDefinitionContext:
-                                value = self.state.tabs
-                                value += self.visitVariableDefinition(
-                                    definition)
-                                self.write(value)
-                                self.add_newline()
+                                self.visitVariableDefinition(definition)
                             case CParser.FunctionDefinitionContext:
-                                value = self.state.tabs
-                                _, func_string = self.visitFunctionDefinition(
-                                    definition)
-                                value += func_string
-                                self.write(value)
-                                self.add_newline()
+                                self.visitFunctionDefinition(definition)
                             case CParser.StructDefinitionContext:
-                                value = self.state.tabs
-                                value += self.visitStructDefinition(
-                                    definition)
-                                self.write(value)
-                                self.add_newline()
+                                self.visitStructDefinition(definition)
                 case CParser.FunctionCallContext:
-                    value = self.state.tabs
-                    value += self.visitFunctionCall(child)
-                    self.write(value)
-                    self.add_newline()
+                    self.visitFunctionCall(child)
                 case CParser.AssignmentContext:
-                    value = self.state.tabs
-                    value += self.visitAssignment(child)
-                    self.write(value)
-                    self.add_newline()
+                    self.visitAssignment(child)
                 case CParser.ClassDefinitionContext:
-                    value = self.state.tabs
-                    value += self.visitClassDefinition(child)
-                    self.write(value)
-                    self.add_newline()
+                    self.visitClassDefinition(child)
+        self.write(str(module))
 
     def visitTypeSpecifier(self, ctx: CParser.TypeSpecifierContext):
         clazz, type_specifier = self.match_type_specifier(ctx)
@@ -179,7 +147,11 @@ class Visitor(CVisitor):
         variable = Variable(name=identifier, type_specifier=type_specifier)
         self.manager.add_variable(variable)
         expression = self.visitExpression(ctx.expression())
-        return f'{type_specifier} {identifier} = {expression};'
+        builder = self.manager.builder
+        type_specifier = self.type_specifier_to_ir_type(type_specifier)
+        variable = builder.alloca(type_specifier, name=identifier)
+        builder.store(expression, variable)
+        return Variable(name=identifier, type_specifier=type_specifier)
 
     def visitVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext,
@@ -201,26 +173,57 @@ class Visitor(CVisitor):
             self.manager.current_clazz.add_attribute(attribute)
         return f'{type_specifier} {identifier}{cells};'
 
+    def type_specifier_to_ir_type(self, type_specifier: str):
+        result = None
+        if 'char' in type_specifier:
+            result = ir.IntType(8)
+        elif 'int' in type_specifier:
+            result = ir.IntType(32)
+
+        if '*' in type_specifier:
+            count = type_specifier.count('*')
+            result = ir.PointerType(result)
+            for i in range(count - 1):
+                result = result.as_pointer()
+            return result
+        return result
+
     def visitFunctionDeclaration(self, ctx:
-    CParser.FunctionDeclarationContext) -> tuple[Function, str]:
+    CParser.FunctionDeclarationContext) -> Function:
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         args, args_string = self.visitFunctionArgs(ctx.functionArgs())
+        ir_args = []
+        for arg in args:
+            ir_args.append(self.type_specifier_to_ir_type(arg.type_specifier))
+        rtype = self.type_specifier_to_ir_type(rtype)
+        func_type = ir.FunctionType(rtype, ir_args)
+        ir.Function(module, func_type, name=identifier)
         func: Function = Function(
             rtype=rtype,
             name=identifier,
             args=args,
             alias=None
         )
-        return func, f'{rtype} {identifier}({args});'
+        return func
 
-    def visitFunctionDefinition(self, ctx:
-    CParser.FunctionDefinitionContext) -> tuple[Function, str]:
+    def visitFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext) -> Function:
         # typeSpecifier? identifier LP functionArgs? RP block
         self.state.visit_block_scope()
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
         args, args_string = self.visitFunctionArgs(ctx.functionArgs())
+        ir_args = []
+        for arg in args:
+            ir_args.append(self.type_specifier_to_ir_type(arg.type_specifier))
+        rtype = self.type_specifier_to_ir_type(rtype)
+        func_type = ir.FunctionType(rtype, ir_args)
+        fn = ir.Function(module, func_type, name=identifier)
+        block = fn.append_basic_block(name='entry')
+        builder = ir.IRBuilder(block)
+        self.manager.builder = builder
+        self.visitBlock(ctx.block())
+
         func = Function(
             rtype=rtype,
             name=identifier,
@@ -244,10 +247,8 @@ class Visitor(CVisitor):
                 # no args
                 pass
 
-        block: str = self.visitBlock(ctx.block())
-        self.state.exit_block_scope()
         self.manager.current_function = None
-        return func, f'{rtype} {identifier}({args_string}) {"{"}\n {block}\n{self.state.tabs}{"}"}'
+        return func
 
     def visitFunctionArgs(self, ctx: CParser.FunctionArgsContext) -> tuple[
         list[Arg], str]:
@@ -379,10 +380,8 @@ class Visitor(CVisitor):
         return ', '.join(values)
 
     def visitFunctionReturn(self, ctx: CParser.FunctionReturnContext):
-        if ctx.expression():
-            return f'return {ctx.expression().getText()};'
-        else:
-            return 'return;'
+        expression = self.visitExpression(ctx.expression())
+        self.manager.builder.ret(expression)
 
     def visitIfStatementStructure(self,
                                   ctx: CParser.IfStatementStructureContext):
@@ -468,8 +467,7 @@ class Visitor(CVisitor):
             case CParser.MultiplyExpressionContext:
                 return self.visitMultiplyExpression(ctx)
             case CParser.AddExpressionContext:
-                result, _ = self.visitAddExpression(ctx)
-                return result
+                return self.visitAddExpression(ctx)
             case CParser.SubtractExpressionContext:
                 return self.visitSubtractExpression(ctx)
             case CParser.ConstantExpressionContext:
@@ -509,33 +507,27 @@ class Visitor(CVisitor):
         return ctx.getText()
 
     def visitAddExpression(self, ctx: CParser.AddExpressionContext):
-        result: str = ''
         expr1, expr2 = ctx.expression(0), ctx.expression(1)
-        _exp1: str = ''
-        _exp2: str = ''
-        # parsing expr should return info about the operands
-        # result: str, expr1: class?, expr2: class? probably expr2 is not needed
-        if isinstance(expr1, CParser.AddExpressionContext):
-            _result, _obj1 = self.visitAddExpression(expr1)
-            if _obj1:
-                if isinstance(expr2, CParser.IdentifierExpressionContext):
-                    obj2 = self.manager.get_obj(expr2.getText())
-                    overridden_method = obj2.clazz.get_method('add').alias
-                    result: str = f'{_result}->{overridden_method}({_obj1.name}, {obj2.name})'
-                    return result, _obj1
-        obj1 = self.manager.get_obj(expr1.getText())
-        obj2 = self.manager.get_obj(expr2.getText())
-        if obj1 and obj2:
-            overridden_method = obj1.clazz.get_method('add').alias
-            result: str = f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
-            return result, obj1
-        return ctx.getText(), None
+        expr1_ir = None
+        if isinstance(expr1, CParser.ConstantExpressionContext):
+            constant: CParser.ConstantContext = expr1.constant()
+            if x := constant.INTEGER_CONSTANT():
+                expr1_ir = ir.Constant(ir.IntType(32), x)
+
+        expr2_ir = None
+        if isinstance(expr2, CParser.ConstantExpressionContext):
+            constant: CParser.ConstantContext = expr1.constant()
+            if x := constant.INTEGER_CONSTANT():
+                expr2_ir = ir.Constant(ir.IntType(32), x)
+        return self.manager.builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
         return ctx.getText()
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
-        return ctx.getText()
+        constant: CParser.ConstantContext = ctx.constant()
+        if constant.INTEGER_CONSTANT():
+            return ir.Constant(ir.IntType(32), ctx.getText())
 
     def visitIdentifierExpression(self,
                                   ctx: CParser.IdentifierExpressionContext):
@@ -611,78 +603,43 @@ class Visitor(CVisitor):
         return ctx.getText(), None
 
     def visitBlock(self, ctx: CParser.BlockContext):
-        result: str = ''
         for child in ctx.getChildren():
             match type(child):
                 case CParser.DeclarationListContext:
                     for declaration in child.getChildren():
                         match type(declaration):
                             case CParser.VariableDeclarationContext:
-                                result += self.state.tabs
-                                value = self.visitVariableDeclaration(
-                                    declaration)
-                                result += value
-                                result += '\n'
+                                self.visitVariableDeclaration(declaration)
                             case CParser.StructDeclarationContext:
-                                result += self.state.tabs
-                                value = self.visitStructDeclaration(
-                                    declaration)
-                                result += value
-                                result += '\n'
+                                self.visitStructDeclaration(declaration)
                 case CParser.DefinitionListContext:
                     for definition in child.getChildren():
                         match type(definition):
                             case CParser.VariableDefinitionContext:
-                                result += self.state.tabs
-                                value = self.visitVariableDefinition(
-                                    definition)
-                                result += value
-                                result += '\n'
+                                self.visitVariableDefinition(definition)
                             case CParser.StructDefinitionContext:
-                                result += self.state.tabs
-                                value = self.visitStructDefinition(
-                                    definition)
-                                result += value
-                                result += '\n'
+                                self.visitStructDefinition(definition)
                 case CParser.StatementListContext:
                     for statement in child.getChildren():
                         match type(statement):
                             case CParser.ExpressionContext:
-                                result += self.state.tabs
-                                value = self.visitExpression(statement)
-                                result += f'{value}\n'
+                                self.visitExpression(statement)
                             case CParser.FuncCallExpressionContext:
-                                result += self.state.tabs
-                                value = self.visitFuncCallExpression(statement)
-                                result += f'{value}\n'
+                                self.visitFuncCallExpression(statement)
                             case CParser.ChainedCallExpressionContext:
-                                result += self.state.tabs
-                                value = self.visitChainedCallExpression(statement)
-                                result += f'{value};\n'
+                                self.visitChainedCallExpression(statement)
                             case CParser.IfStatementStructureContext:
-                                value = self.visitIfStatementStructure(statement)
-                                result += f'{value}\n'
+                                self.visitIfStatementStructure(statement)
                             case CParser.AssignmentContext:
-                                result += self.state.tabs
-                                value = self.visitAssignment(statement)
-                                result += f'{value}\n'
+                                self.visitAssignment(statement)
                             case CParser.InplaceAssignmentContext:
-                                result += self.state.tabs
-                                value = self.visitInplaceAssignment(statement)
-                                result += f'{value}\n'
+                                self.visitInplaceAssignment(statement)
                             case CParser.VariableDefinitionContext:
-                                result += self.state.tabs
-                                value = self.visitVariableDefinition(statement)
-                                result += value
-                                result += '\n'
+                                self.visitVariableDefinition(statement)
                             case CParser.FunctionReturnContext:
-                                result += self.state.tabs
-                                value = self.visitFunctionReturn(statement)
-                                result += f'{value}\n'
+                                self.visitFunctionReturn(statement)
                             case CParser.LeftShiftExpressionContext:
-                                result += self.state.tabs
-                                value, _ = self.visitLeftShiftExpression(statement)
-                                result += f'{value};\n'
+                                self.visitLeftShiftExpression(statement)
                             case antlr4.tree.Tree.TerminalNodeImpl:
                                 # this is the `;`
                                 pass
@@ -690,13 +647,7 @@ class Visitor(CVisitor):
                                 print(type(statement))
                                 raise Exception('Statement was not recognized!')
                 case CParser.ClassInstantiationContext:
-                    result += self.state.tabs
-                    value = self.visitClassInstantiation(child)
-                    result += value
-                    result += '\n'
-        # remove the last new line result[:-1]
-        # self.ungetch()
-        return result[:-1]
+                    self.visitClassInstantiation(child)
 
     def exitBlock(self, ctx: CParser.BlockContext):
         self.state.exit_block_scope()

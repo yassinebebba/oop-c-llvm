@@ -1,5 +1,7 @@
+import llvmlite.ir as ir
 from termcolor import colored
 from enum import Enum
+
 
 
 class ScopeType(Enum):
@@ -148,6 +150,7 @@ class Manager:
         self.objs: list[Obj] = []
         self.current_clazz: Clazz | None = None
         self.current_function: Function | None = None
+        self.builder: ir.IRBuilder | None = None
 
     def add_variable(self, variable: Variable):
         self.variables.append(variable)

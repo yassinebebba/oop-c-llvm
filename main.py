@@ -7,7 +7,7 @@ from visitor import Visitor
 
 
 def main(argv):
-    with open('input.c') as input, open('output.c', 'w') as output:
+    with open('input.c') as input, open('output.ll', 'w') as output:
         input_str = input.read()
         input_stream = antlr4.InputStream(input_str)
         lexer = CLexer(input_stream)
