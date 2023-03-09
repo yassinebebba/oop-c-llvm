@@ -495,30 +495,41 @@ class Visitor(CVisitor):
         return ctx.getText()
 
     def visitMultiplyExpression(self, ctx: CParser.MultiplyExpressionContext):
-        exp1, exp2 = ctx.expression(0), ctx.expression(1)
-
-        exp1 = exp1.getText()
-        exp2 = exp2.getText()
-
-        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
-        if obj1 and obj2:
-            overridden_method = obj1.clazz.get_method('mult').alias
-            return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
-        return ctx.getText()
-
-    def visitAddExpression(self, ctx: CParser.AddExpressionContext):
         expr1, expr2 = ctx.expression(0), ctx.expression(1)
         expr1_ir = None
+
         if isinstance(expr1, CParser.ConstantExpressionContext):
             constant: CParser.ConstantContext = expr1.constant()
             if x := constant.INTEGER_CONSTANT():
                 expr1_ir = ir.Constant(ir.IntType(32), x)
 
         expr2_ir = None
-        if isinstance(expr2, CParser.ConstantExpressionContext):
+        match type(expr2):
+            case CParser.ConstantExpressionContext:
+                constant: CParser.ConstantContext = expr1.constant()
+                if x := constant.INTEGER_CONSTANT():
+                    expr2_ir = ir.Constant(ir.IntType(32), x)
+
+        return self.manager.builder.mul(expr1_ir, expr2_ir)
+
+    def visitAddExpression(self, ctx: CParser.AddExpressionContext):
+        expr1, expr2 = ctx.expression(0), ctx.expression(1)
+        expr1_ir = None
+
+        if isinstance(expr1, CParser.ConstantExpressionContext):
             constant: CParser.ConstantContext = expr1.constant()
             if x := constant.INTEGER_CONSTANT():
-                expr2_ir = ir.Constant(ir.IntType(32), x)
+                expr1_ir = ir.Constant(ir.IntType(32), x)
+
+        expr2_ir = None
+        match type(expr2):
+            case CParser.ConstantExpressionContext:
+                constant: CParser.ConstantContext = expr1.constant()
+                if x := constant.INTEGER_CONSTANT():
+                    expr2_ir = ir.Constant(ir.IntType(32), x)
+            case CParser.MultiplyExpressionContext:
+                expr2_ir = self.visitMultiplyExpression(expr2)
+
         return self.manager.builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
