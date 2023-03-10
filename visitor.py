@@ -97,6 +97,15 @@ class Visitor(CVisitor):
         except:
             return None, ' '.join(chunks)
 
+    def expression_to_llvm_ir(self, expression):
+        match type(expression):
+            case CParser.ConstantExpressionContext:
+                constant: CParser.ConstantContext = expression.constant()
+                if x := constant.INTEGER_CONSTANT():
+                    return ir.Constant(ir.IntType(32), x)
+            case CParser.MultiplyExpressionContext:
+                return self.visitMultiplyExpression(expression)
+
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         for child in ctx.getChildren():
             match type(child):
@@ -495,43 +504,13 @@ class Visitor(CVisitor):
         return ctx.getText()
 
     def visitMultiplyExpression(self, ctx: CParser.MultiplyExpressionContext):
-        expr1, expr2 = ctx.expression(0), ctx.expression(1)
-        expr1_ir = None
-
-        match type(expr1):
-            case CParser.ConstantExpressionContext:
-                constant: CParser.ConstantContext = expr1.constant()
-                if x := constant.INTEGER_CONSTANT():
-                    expr1_ir = ir.Constant(ir.IntType(32), x)
-
-        expr2_ir = None
-        match type(expr2):
-            case CParser.ConstantExpressionContext:
-                constant: CParser.ConstantContext = expr2.constant()
-                if x := constant.INTEGER_CONSTANT():
-                    expr2_ir = ir.Constant(ir.IntType(32), x)
-
+        expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
+        expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
         return self.manager.builder.mul(expr1_ir, expr2_ir)
 
     def visitAddExpression(self, ctx: CParser.AddExpressionContext):
-        expr1, expr2 = ctx.expression(0), ctx.expression(1)
-
-        expr1_ir = None
-        match type(expr1):
-            case CParser.ConstantExpressionContext:
-                constant: CParser.ConstantContext = expr1.constant()
-                if x := constant.INTEGER_CONSTANT():
-                    expr1_ir = ir.Constant(ir.IntType(32), x)
-
-        expr2_ir = None
-        match type(expr2):
-            case CParser.ConstantExpressionContext:
-                constant: CParser.ConstantContext = expr2.constant()
-                if x := constant.INTEGER_CONSTANT():
-                    expr2_ir = ir.Constant(ir.IntType(32), x)
-            case CParser.MultiplyExpressionContext:
-                expr2_ir = self.visitMultiplyExpression(expr2)
-
+        expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
+        expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
         return self.manager.builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
