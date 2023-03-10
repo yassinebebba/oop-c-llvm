@@ -5,3 +5,5 @@ venv
 *.pyc
 *.log
 *.pot
+output
+output.o

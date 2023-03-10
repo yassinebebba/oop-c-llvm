@@ -1,6 +1,6 @@
 import sys
 import antlr4
-from antlr4 import *
+from antlr4 import CommonTokenStream
 from core.CLexer import CLexer
 from core.CParser import CParser
 from visitor import Visitor

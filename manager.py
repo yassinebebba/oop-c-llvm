@@ -3,7 +3,6 @@ from termcolor import colored
 from enum import Enum
 
 
-
 class ScopeType(Enum):
     FUNC = 0
     CLAZZ = 1
@@ -21,7 +20,8 @@ class Arg:
         self.clazz: Clazz | None = clazz
 
     def __repr__(self):
-        return f'{type(self).__name__}(type={self.type_specifier}, name={self.name})'
+        return f'{type(self).__name__}' \
+               f'(type={self.type_specifier}, name={self.name})'
 
 
 class Function:
@@ -42,7 +42,11 @@ class Function:
             raise Exception(f'Arg {obj_name} does not exist')
 
     def __repr__(self):
-        return f'{type(self).__name__}(rtype={self.rtype}, name={self.name}, alias={self.alias}, args={self.args})'
+        return f'{type(self).__name__}' \
+               f'(rtype={self.rtype},' \
+               f' name={self.name},' \
+               f' alias={self.alias},' \
+               f' args={self.args})'
 
 
 class Attribute:
@@ -75,7 +79,7 @@ class Clazz:
         for attribute in self.attributes:
             if attribute.name == name:
                 return attribute
-        raise Exception(f'Attribute {name} does not exist!')
+        raise NameError(f'Attribute {name} does not exist!')
 
     def get_method(self, name) -> Function:
         for method in self.methods:
@@ -163,7 +167,7 @@ class Manager:
         for clazz in self.clazzes:
             if clazz.name == name:
                 return clazz
-        raise Exception(f'Class {name} does not exist!')
+        raise NameError(f'Class {name} does not exist!')
 
     def add_obj(self, obj: Obj) -> None:
         self.objs.append(obj)
