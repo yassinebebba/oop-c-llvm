@@ -95,9 +95,10 @@ class Obj:
 
 
 class Variable:
-    def __init__(self, name, type_specifier):
+    def __init__(self, name, type_specifier, ir_type):
         self.name: str = name
         self.clazz_name: str = type_specifier
+        self.ir_type = ir_type
 
 
 class Scope:
@@ -149,7 +150,7 @@ class Manager:
         self.clazzes: list[Clazz] = []
         self.objs: list[Obj] = []
         self.current_clazz: Clazz | None = None
-        self.current_function: Function | None = None
+        self.current_function: ir.Function | None = None
         self.builder: ir.IRBuilder | None = None
 
     def add_variable(self, variable: Variable):
@@ -171,4 +172,10 @@ class Manager:
         for obj in self.objs:
             if obj.name == name:
                 return obj
+        return None
+
+    def get_variable(self, name) -> Variable | None:
+        for var in self.variables:
+            if var.name == name:
+                return var
         return None

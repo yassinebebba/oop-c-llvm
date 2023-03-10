@@ -161,12 +161,12 @@ class Visitor(CVisitor):
             self.manager.add_obj(obj)
         except:
             pass
-        variable = Variable(name=identifier, type_specifier=type_specifier)
-        self.manager.add_variable(variable)
         expression = self.visitExpression(ctx.expression())
         builder = self.manager.builder
         type_specifier = self.type_specifier_to_ir_type(type_specifier)
         variable = builder.alloca(type_specifier, name=identifier)
+        var = Variable(name=identifier, type_specifier=type_specifier, ir_type=variable)
+        self.manager.add_variable(var)
 
         if type_specifier == expression.type:
             builder.store(expression, variable)
@@ -174,7 +174,7 @@ class Visitor(CVisitor):
             # type casting
             builder.store(builder.zext(expression, type_specifier), variable)
 
-        return Variable(name=identifier, type_specifier=type_specifier)
+        return var
 
     def visitVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext,
@@ -245,7 +245,9 @@ class Visitor(CVisitor):
         block = fn.append_basic_block(name='entry')
         builder = ir.IRBuilder(block)
         self.manager.builder = builder
+        self.manager.current_function = fn
         self.visitBlock(ctx.block())
+        self.manager.current_function = None
 
         func = Function(
             rtype=rtype,
@@ -253,24 +255,6 @@ class Visitor(CVisitor):
             args=args,
             alias=None
         )
-        self.manager.current_function = func
-        if ctx.functionArgs():
-            try:
-                for arg in ctx.functionArgs().getChildren():
-                    if isinstance(arg, CParser.ArgContext):
-                        arg_name = arg.identifier().getText()
-                        # possible class type
-                        clazz, _ = self.match_type_specifier(
-                            arg.typeSpecifier())
-                        # print(class_name)
-                        arg = Arg(name=arg_name, clazz=clazz,
-                                  type_specifier=clazz.name)
-                        self.manager.current_function.add_arg(arg)
-            except KeyError:
-                # no args
-                pass
-
-        self.manager.current_function = None
         return func
 
     def visitFunctionArgs(self, ctx: CParser.FunctionArgsContext) -> tuple[
@@ -404,7 +388,13 @@ class Visitor(CVisitor):
 
     def visitFunctionReturn(self, ctx: CParser.FunctionReturnContext):
         expression = self.visitExpression(ctx.expression())
-        self.manager.builder.ret(expression)
+        if self.manager.current_function.return_value.type == expression.type:
+            self.manager.builder.ret(expression)
+        elif self.manager.current_function.return_value.type.as_pointer() == expression.type:
+            val = self.manager.builder.load(expression)
+            self.manager.builder.ret(val)
+        else:
+            raise Exception('function return type does not match function return type')
 
     def visitIfStatementStructure(self,
                                   ctx: CParser.IfStatementStructureContext):
@@ -485,6 +475,8 @@ class Visitor(CVisitor):
 
     def visitExpression(self, ctx: CParser.ExpressionContext):
         match type(ctx):
+            case CParser.IdentifierExpressionContext:
+                return self.visitIdentifierExpression(ctx)
             case CParser.FuncCallExpressionContext:
                 return self.visitFuncCallExpression(ctx)
             case CParser.MultiplyExpressionContext:
@@ -544,7 +536,7 @@ class Visitor(CVisitor):
 
     def visitIdentifierExpression(self,
                                   ctx: CParser.IdentifierExpressionContext):
-        return ctx.getText()
+        return self.manager.get_variable(ctx.getText()).ir_type
 
     def visitChainedCallExpression(self,
                                    ctx: CParser.ChainedCallExpressionContext):
@@ -917,8 +909,6 @@ class Visitor(CVisitor):
             ctx.functionCall().functionCallArgs())
         obj: Obj = Obj(name=identifier, clazz=clazz)
         self.manager.add_obj(obj)
-        # result: str = f'{type_specifier} {identifier} = malloc(sizeof({class_name}));\n'
-        # result += f'{self.state.tabs}{class_name}{class_name}({identifier}, {args});'
         result: str = f'{type_specifier} {identifier} = {class_name}{class_name}({args});'
         return result
 
