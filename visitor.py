@@ -105,6 +105,12 @@ class Visitor(CVisitor):
                     return ir.Constant(ir.IntType(32), x)
             case CParser.MultiplyExpressionContext:
                 return self.visitMultiplyExpression(expression)
+            case CParser.DivideExpressionContext:
+                return self.visitDivideExpression(expression)
+            case CParser.AddExpressionContext:
+                return self.visitAddExpression(expression)
+            case CParser.SubtractExpressionContext:
+                return self.visitSubtractExpression(expression)
 
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         for child in ctx.getChildren():
@@ -508,13 +514,20 @@ class Visitor(CVisitor):
         expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
         return self.manager.builder.mul(expr1_ir, expr2_ir)
 
+    def visitDivideExpression(self, ctx: CParser.DivideExpressionContext):
+        expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
+        expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        return self.manager.builder.sdiv(expr1_ir, expr2_ir)
+
     def visitAddExpression(self, ctx: CParser.AddExpressionContext):
         expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
         expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
         return self.manager.builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
-        return ctx.getText()
+        expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
+        expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        return self.manager.builder.sub(expr1_ir, expr2_ir)
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         constant: CParser.ConstantContext = ctx.constant()
