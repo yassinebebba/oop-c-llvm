@@ -5,6 +5,8 @@ from termcolor import colored
 from core.CVisitor import CVisitor
 from core.CParser import CParser
 from manager import Manager
+from manager import Scope
+from manager import ScopeType
 from manager import Clazz
 from manager import Attribute
 from manager import Function
@@ -164,6 +166,7 @@ class Visitor(CVisitor):
         builder = self.manager.builder
         type_specifier = self.type_specifier_to_ir_type(type_specifier)
         variable = builder.alloca(type_specifier, name=identifier)
+        self.manager.scope_stack.add_variable(variable)
         var = Variable(
             name=identifier,
             type_specifier=type_specifier,
@@ -250,7 +253,10 @@ class Visitor(CVisitor):
         block = fn.append_basic_block(name='entry')
         builder = ir.IRBuilder(block)
         self.manager.builder = builder
+
         self.manager.current_function = fn
+        scope = Scope(ScopeType.FUNC)
+        self.manager.scope_stack.push(scope)
         self.visitBlock(ctx.block())
         self.manager.current_function = None
 
@@ -348,10 +354,10 @@ class Visitor(CVisitor):
         return f'{type_specifier} {identifier}: {bit_count};'
 
     def visitAssignment(self, ctx: CParser.AssignmentContext):
-        # self.check_variable_assignment(ctx)
         identifier: str = (ctx.identifier() or ctx.chainedCall()).getText()
-        expression: CParser.ExpressionContext = ctx.expression()
-        return f'{identifier} = {self.visitExpression(expression)};'
+        variable = self.manager.scope_stack.get_variable(identifier)
+        expression = self.expression_to_llvm_ir(ctx.expression())
+        self.manager.builder.store(expression, variable)
 
     def visitInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
         operator: str = (ctx.STAR_ASSIGN()
@@ -549,7 +555,7 @@ class Visitor(CVisitor):
 
     def visitIdentifierExpression(self,
                                   ctx: CParser.IdentifierExpressionContext):
-        return self.manager.get_variable(ctx.getText()).ir_type
+        return self.manager.scope_stack.get_variable(ctx.getText())
 
     def visitChainedCallExpression(self,
                                    ctx: CParser.ChainedCallExpressionContext):

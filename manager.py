@@ -4,8 +4,9 @@ from enum import Enum
 
 
 class ScopeType(Enum):
-    FUNC = 0
-    CLAZZ = 1
+    GLOBAL = 0
+    FUNC = 1
+    CLAZZ = 2
 
 
 def print_error(error: str):
@@ -106,49 +107,58 @@ class Variable:
 
 
 class Scope:
-    def __init__(self, scope_type: ScopeType, parent: 'Scope'):
-        self.parent: Scope = parent
+    def __init__(self, scope_type: ScopeType):
+        self.parent: Scope | None = None
         self.scope_type: ScopeType = scope_type
         self.functions: list[Function] = []
-        self.variables: list[Variable] = []
+        self.variables = []
         self.clazzes: list[Clazz] = []
         self.objs: list[Obj] = []
         self.scopes: list[Scope] = []
         # a scope has vars, objs, functions, methods and attributes
 
-
-class GlobalScope:
-    def __init__(self):
-        self.functions: list[Function] = []
-        self.variables: list[Variable] = []
-        self.clazzes: list[Clazz] = []
-        self.objs: list[Obj] = []
-        self.scopes: list[Scope] = []
-
-    def add_scope(self, scope: Scope):
+    def add_scope(self, scope: 'Scope'):
         self.scopes.append(scope)
 
+    def add_variable(self, variable):
+        self.variables.append(variable)
 
-class ScopeQueue:
+
+class GlobalScope(Scope):
     def __init__(self):
-        self.queue: list[Scope] = []
+        super().__init__(ScopeType.GLOBAL)
+
+
+class ScopeStack:
+    def __init__(self):
+        self.stack: list[Scope] = [GlobalScope()]
 
     def push(self, scope: Scope) -> None:
-        self.queue.append(scope)
+        self.stack.append(scope)
 
     def pop(self) -> Scope | None:
         try:
-            return self.queue.pop()
+            return self.stack.pop()
         except IndexError:
             return None
+
+    def add_variable(self, variable) -> None:
+        self.stack[-1].add_variable(variable)
+
+    def get_variable(self, identifier):
+        # this need optimisation meh not bothered for now
+        for lvl, scope in enumerate(self.stack[::-1]):
+            for _, var in enumerate(scope.variables[::-1]):
+                if var.name == identifier:
+                    return var
+        else:
+            raise NameError(f'`{identifier}` has never been declared!')
 
 
 class Manager:
     def __init__(self):
-        self.global_scope: GlobalScope = GlobalScope()
-
         # this is for nested scope push and pop
-        self.scope_queue: ScopeQueue = ScopeQueue()
+        self.scope_stack: ScopeStack = ScopeStack()
         self.functions: list[Function] = []
         self.variables: list[Variable] = []
         self.clazzes: list[Clazz] = []

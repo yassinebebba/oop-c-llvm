@@ -15,6 +15,7 @@ entry:
   %".3" = add i32 %".2", 3
   %"x" = alloca i32
   store i32 %".3", i32* %"x"
-  %".5" = load i32, i32* %"x"
-  ret i32 %".5"
+  store i32 10, i32* %"x"
+  %".6" = load i32, i32* %"x"
+  ret i32 %".6"
 }
