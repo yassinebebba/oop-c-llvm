@@ -16,9 +16,10 @@ entry:
   %".4" = sdiv i32 %".3", 5
   %".5" = add i32 1, %".4"
   %".6" = sub i32 %".5", 6
+  %".7" = icmp eq i32 %".6", 1
+  %".8" = icmp eq i1 %".7", 2
   %"x" = alloca i32
-  store i32 %".6", i32* %"x"
-  %".8" = mul i32 1, 2
-  %".9" = add i32 1, %".8"
+  %".9" = zext i1 %".8" to i32
+  store i32 %".9", i32* %"x"
   ret i32 0
 }

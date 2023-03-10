@@ -111,6 +111,8 @@ class Visitor(CVisitor):
                 return self.visitAddExpression(expression)
             case CParser.SubtractExpressionContext:
                 return self.visitSubtractExpression(expression)
+            case CParser.EqExpressionContext:
+                return self.visitEqExpression(expression)
 
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         for child in ctx.getChildren():
@@ -165,7 +167,13 @@ class Visitor(CVisitor):
         builder = self.manager.builder
         type_specifier = self.type_specifier_to_ir_type(type_specifier)
         variable = builder.alloca(type_specifier, name=identifier)
-        builder.store(expression, variable)
+
+        if type_specifier == expression.type:
+            builder.store(expression, variable)
+        else:
+            # type casting
+            builder.store(builder.zext(expression, type_specifier), variable)
+
         return Variable(name=identifier, type_specifier=type_specifier)
 
     def visitVariableDeclaration(self,
@@ -550,7 +558,9 @@ class Visitor(CVisitor):
         if obj1 and obj2:
             overridden_method = obj1.clazz.get_method('eq').alias
             return f'{obj1.name}->{overridden_method}({obj1.name}, {obj2.name})'
-        return ctx.getText()
+        exp1_ir = self.expression_to_llvm_ir(ctx.expression(0))
+        exp2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        return self.manager.builder.icmp_signed('==', exp1_ir, exp2_ir)
 
     def visitGtExpression(self, ctx: CParser.GtExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
