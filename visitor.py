@@ -498,15 +498,16 @@ class Visitor(CVisitor):
         expr1, expr2 = ctx.expression(0), ctx.expression(1)
         expr1_ir = None
 
-        if isinstance(expr1, CParser.ConstantExpressionContext):
-            constant: CParser.ConstantContext = expr1.constant()
-            if x := constant.INTEGER_CONSTANT():
-                expr1_ir = ir.Constant(ir.IntType(32), x)
+        match type(expr1):
+            case CParser.ConstantExpressionContext:
+                constant: CParser.ConstantContext = expr1.constant()
+                if x := constant.INTEGER_CONSTANT():
+                    expr1_ir = ir.Constant(ir.IntType(32), x)
 
         expr2_ir = None
         match type(expr2):
             case CParser.ConstantExpressionContext:
-                constant: CParser.ConstantContext = expr1.constant()
+                constant: CParser.ConstantContext = expr2.constant()
                 if x := constant.INTEGER_CONSTANT():
                     expr2_ir = ir.Constant(ir.IntType(32), x)
 
@@ -514,17 +515,18 @@ class Visitor(CVisitor):
 
     def visitAddExpression(self, ctx: CParser.AddExpressionContext):
         expr1, expr2 = ctx.expression(0), ctx.expression(1)
-        expr1_ir = None
 
-        if isinstance(expr1, CParser.ConstantExpressionContext):
-            constant: CParser.ConstantContext = expr1.constant()
-            if x := constant.INTEGER_CONSTANT():
-                expr1_ir = ir.Constant(ir.IntType(32), x)
+        expr1_ir = None
+        match type(expr1):
+            case CParser.ConstantExpressionContext:
+                constant: CParser.ConstantContext = expr1.constant()
+                if x := constant.INTEGER_CONSTANT():
+                    expr1_ir = ir.Constant(ir.IntType(32), x)
 
         expr2_ir = None
         match type(expr2):
             case CParser.ConstantExpressionContext:
-                constant: CParser.ConstantContext = expr1.constant()
+                constant: CParser.ConstantContext = expr2.constant()
                 if x := constant.INTEGER_CONSTANT():
                     expr2_ir = ir.Constant(ir.IntType(32), x)
             case CParser.MultiplyExpressionContext:
