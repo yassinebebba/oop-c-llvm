@@ -104,6 +104,9 @@ class Visitor(CVisitor):
                 constant: CParser.ConstantContext = expression.constant()
                 if x := constant.INTEGER_CONSTANT():
                     return ir.Constant(ir.IntType(32), x)
+            case CParser.IdentifierExpressionContext:
+                return self.manager.scope_stack.get_variable(
+                    (expression.identifier().getText()))
             case CParser.MultiplyExpressionContext:
                 return self.visitMultiplyExpression(expression)
             case CParser.DivideExpressionContext:
@@ -221,96 +224,81 @@ class Visitor(CVisitor):
                                  ) -> Function:
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        args, args_string = self.visitFunctionArgs(ctx.functionArgs())
-        ir_args = []
-        for arg in args:
-            ir_args.append(self.type_specifier_to_ir_type(arg.type_specifier))
+        args = self.visitFunctionArgs(ctx.functionArgs())
+        # only type specifiers 1st
+        ir_args = [arg[0] for arg in args]
         rtype = self.type_specifier_to_ir_type(rtype)
         func_type = ir.FunctionType(rtype, ir_args)
-        ir.Function(module, func_type, name=identifier)
-        func: Function = Function(
-            rtype=rtype,
-            name=identifier,
-            args=args,
-            alias=None
-        )
+
+        func = ir.Function(module, func_type, name=identifier)
+        for i in range(len(func.args)):
+            _, arg_identifier = args[i]
+            if arg_identifier:
+                func.args[i].name = arg_identifier
         return func
 
-    def visitFunctionDefinition(self,
-                                ctx: CParser.FunctionDefinitionContext
-                                ) -> Function:
+    def visitFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
         # typeSpecifier? identifier LP functionArgs? RP block
         self.state.visit_block_scope()
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
-        args, args_string = self.visitFunctionArgs(ctx.functionArgs())
-        ir_args = []
-        for arg in args:
-            ir_args.append(self.type_specifier_to_ir_type(arg.type_specifier))
+        args = self.visitFunctionArgs(ctx.functionArgs())
+        # only type specifiers 1st
+        ir_args = [arg[0] for arg in args]
         rtype = self.type_specifier_to_ir_type(rtype)
         func_type = ir.FunctionType(rtype, ir_args)
-        fn = ir.Function(module, func_type, name=identifier)
-        block = fn.append_basic_block(name='entry')
+        func = ir.Function(module, func_type, name=identifier)
+        for i in range(len(func.args)):
+            _, arg_identifier = args[i]
+            if arg_identifier:
+                func.args[i].name = arg_identifier
+        block = func.append_basic_block(name='entry')
         builder = ir.IRBuilder(block)
         self.manager.builder = builder
 
-        self.manager.current_function = fn
+        self.manager.current_function = func
         scope = Scope(ScopeType.FUNC)
         self.manager.scope_stack.push(scope)
         self.visitBlock(ctx.block())
         self.manager.current_function = None
 
-        func = Function(
-            rtype=rtype,
-            name=identifier,
-            args=args,
-            alias=None
-        )
         return func
 
-    def visitFunctionArgs(self,
-                          ctx: CParser.FunctionArgsContext
-                          ) -> tuple[list[Arg], str]:
+    def visitFunctionArgs(self, ctx: CParser.FunctionArgsContext):
         if ctx is None:
-            return [], ''
-
-        args: list[CParser.ArgContext] = [
-            arg for arg in ctx.getChildren()
-            if isinstance(arg, CParser.ArgContext)
-        ]
+            return []
 
         # check for duplicate args
         temp: dict = {}
-        for arg in args:
-            identifier = arg.identifier().getText()
-            if identifier == 'this':
-                print_error(
-                    'Error: can\' use`this` as an '
-                    'identifier, `this` is a reserved keyword')
-                exit(-1)
-            if identifier in temp:
-                print_error(
-                    f'Error: duplicate function argument `{identifier}`')
-                exit(-1)
-            else:
-                temp[identifier] = 1
+        for child in ctx.getChildren():
+            if isinstance(child, CParser.ArgContext):
+                if child.identifier() is None:
+                    continue
+                identifier = child.identifier().getText()
+                if identifier == 'this':
+                    print_error(
+                        'Error: can\' use`this` as an '
+                        'identifier, `this` is a reserved keyword')
+                    exit(-1)
+                if identifier in temp:
+                    print_error(
+                        f'Error: duplicate function argument `{identifier}`')
+                    exit(-1)
+                else:
+                    temp[identifier] = 1
 
-        processed_arguments: list[Arg] = []
-        result: list[str] = []
-        for arg in args:
-            arg, string = self.visitArg(arg)
-            processed_arguments.append(arg)
-            result.append(string)
-        return processed_arguments, ', '.join(result)
+        args = []
+        for child in ctx.getChildren():
+            if isinstance(child, CParser.ArgContext):
+                args.append(self.visitArg(child))
+        return args
 
-    def visitArg(self, ctx: CParser.ArgContext) -> tuple[Arg, str]:
+    def visitArg(self, ctx: CParser.ArgContext):
         clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
-        arg: Arg = Arg(type_specifier=type_specifier, name=None, clazz=clazz)
+        type_specifier = self.type_specifier_to_ir_type(type_specifier)
         if ctx.identifier():
-            identifier: str = ctx.identifier().getText()
-            arg.name = identifier
-            return arg, f'{type_specifier} {identifier}'
-        return arg, type_specifier
+            return type_specifier, ctx.identifier().getText()
+        return type_specifier, None
 
     def visitStructDeclaration(self, ctx: CParser.StructDeclarationContext):
         return f'struct {ctx.identifier().getText()};'
@@ -357,7 +345,11 @@ class Visitor(CVisitor):
         identifier: str = (ctx.identifier() or ctx.chainedCall()).getText()
         variable = self.manager.scope_stack.get_variable(identifier)
         expression = self.expression_to_llvm_ir(ctx.expression())
-        self.manager.builder.store(expression, variable)
+        try:
+            self.manager.builder.store(expression, variable)
+        except TypeError:
+            self.manager.builder.store(
+                self.manager.builder.load(expression), variable)
 
     def visitInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
         operator: str = (ctx.STAR_ASSIGN()
@@ -541,11 +533,19 @@ class Visitor(CVisitor):
     def visitAddExpression(self, ctx: CParser.AddExpressionContext):
         expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
         expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        if expr1_ir.type.is_pointer:
+            expr1_ir = self.manager.builder.load(expr1_ir)
+        if expr2_ir.type.is_pointer:
+            expr2_ir = self.manager.builder.load(expr2_ir)
         return self.manager.builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
         expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
         expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        if expr1_ir.type.is_pointer:
+            expr1_ir = self.manager.builder.load(expr1_ir)
+        if expr2_ir.type.is_pointer:
+            expr2_ir = self.manager.builder.load(expr2_ir)
         return self.manager.builder.sub(expr1_ir, expr2_ir)
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):

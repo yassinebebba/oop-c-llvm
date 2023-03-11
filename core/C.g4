@@ -115,7 +115,7 @@ functionReturn
 // this next parser rule fixes the above note make sure you use it if
 // you encounter the same problem
 functionArgs
-    : arg (COMMA arg)*
+    : arg (COMMA arg)* (COMMA ELLIPSIS)?
     ;
 
 arg: typeSpecifier identifier?;
