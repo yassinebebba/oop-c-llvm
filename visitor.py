@@ -224,12 +224,12 @@ class Visitor(CVisitor):
                                  ) -> Function:
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        args = self.visitFunctionArgs(ctx.functionArgs())
+        args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
         # only type specifiers 1st
         ir_args = [arg[0] for arg in args]
         rtype = self.type_specifier_to_ir_type(rtype)
         func_type = ir.FunctionType(rtype, ir_args)
-
+        func_type.var_arg = var_arg
         func = ir.Function(module, func_type, name=identifier)
         for i in range(len(func.args)):
             _, arg_identifier = args[i]
@@ -242,11 +242,12 @@ class Visitor(CVisitor):
         self.state.visit_block_scope()
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
-        args = self.visitFunctionArgs(ctx.functionArgs())
+        args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
         # only type specifiers 1st
         ir_args = [arg[0] for arg in args]
         rtype = self.type_specifier_to_ir_type(rtype)
         func_type = ir.FunctionType(rtype, ir_args)
+        func_type.var_arg = var_arg
         func = ir.Function(module, func_type, name=identifier)
         for i in range(len(func.args)):
             _, arg_identifier = args[i]
@@ -288,10 +289,15 @@ class Visitor(CVisitor):
                     temp[identifier] = 1
 
         args = []
+        var_arg = False
+        # parse every arg
         for child in ctx.getChildren():
             if isinstance(child, CParser.ArgContext):
                 args.append(self.visitArg(child))
-        return args
+            elif child.getText() == '...':
+                var_arg = True
+
+        return args, var_arg
 
     def visitArg(self, ctx: CParser.ArgContext):
         clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())

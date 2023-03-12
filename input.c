@@ -1,12 +1,9 @@
-char * a(int x);
-int **** b(char* a);
-int c(int a, int b);
 // @str_fmt = private unnamed_addr constant [3 x i8] c"%d\00"
 
 // declare i32 @printf(i8*, ...)
 
 //const int d = 0;
-//int printf(char *, ...);
+int printf(char *, ...);
 
 int main(int a) {
     int x = 150;
