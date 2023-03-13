@@ -19,6 +19,11 @@ import llvmlite.ir as ir
 module = ir.Module(name="example")
 module.triple = "x86_64-redhat-linux-gnu"
 
+i8 = ir.IntType(8)
+i16 = ir.IntType(16)
+i32 = ir.IntType(32)
+i64 = ir.IntType(64)
+
 
 class State:
     def __init__(self):
@@ -170,19 +175,20 @@ class Visitor(CVisitor):
         type_specifier = self.type_specifier_to_ir_type(type_specifier)
         variable = builder.alloca(type_specifier, name=identifier)
         self.manager.scope_stack.add_variable(variable)
-        var = Variable(
-            name=identifier,
-            type_specifier=type_specifier,
-            ir_type=variable)
-        self.manager.add_variable(var)
-
         if type_specifier == expression.type:
             builder.store(expression, variable)
         else:
             # type casting
-            builder.store(builder.zext(expression, type_specifier), variable)
+            if type_specifier == i8.as_pointer() \
+                    and isinstance(expression, ir.GlobalVariable):
+                builder.store(expression.gep([ir.Constant(i32, 0),
+                                              ir.Constant(i32, 0)], ),
+                              variable)
+            else:
+                # ptr = builder.bitcast(expression, ir.IntType(8).as_pointer())
+                builder.store(expression, variable)
 
-        return var
+        return variable
 
     def visitVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext,
@@ -235,6 +241,7 @@ class Visitor(CVisitor):
             _, arg_identifier = args[i]
             if arg_identifier:
                 func.args[i].name = arg_identifier
+        self.manager.scope_stack.add_function(func)
         return func
 
     def visitFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
@@ -267,7 +274,7 @@ class Visitor(CVisitor):
 
     def visitFunctionArgs(self, ctx: CParser.FunctionArgsContext):
         if ctx is None:
-            return []
+            return [], False
 
         # check for duplicate args
         temp: dict = {}
@@ -382,21 +389,29 @@ class Visitor(CVisitor):
         unary = ''
         if ctx.unarySign():
             unary += ctx.unarySign().getText()
-        return f'{unary}{self.visitFunctionCall(ctx.functionCallExpression())}'
+        return self.visitFunctionCall(ctx.functionCallExpression())
+        # return f'{unary}{self.visitFunctionCall(ctx.functionCallExpression())}'
 
     def visitFunctionCall(self, ctx: CParser.FunctionCallContext):
+        builder = self.manager.builder
         args = self.visitFunctionCallArgs(ctx.functionCallArgs())
-        return f'{ctx.identifier().getText()}({args});'
+        # TODO: load from pointers this needs more work
+        for i, v in enumerate(args):
+            if isinstance(v, ir.AllocaInstr):
+                args[i] = builder.load(v)
+        func = self.manager.scope_stack.get_function(
+            ctx.identifier().getText())
+        builder.call(func, args)
 
     def visitFunctionCallArgs(self, ctx: CParser.FunctionCallArgsContext):
         if ctx is None:
-            return ''
-        expressions: list[CParser.ExpressionContext] = [
-            arg for arg in ctx.getChildren()
-            if isinstance(arg, CParser.ExpressionContext)
-        ]
-        values: list[str] = list(map(self.visitExpression, expressions))
-        return ', '.join(values)
+            return None
+
+        args = []
+        for child in ctx.getChildren():
+            if isinstance(child, CParser.ExpressionContext):
+                args.append(self.visitExpression(child))
+        return args
 
     def visitFunctionReturn(self, ctx: CParser.FunctionReturnContext):
         expression = self.visitExpression(ctx.expression())
@@ -494,6 +509,8 @@ class Visitor(CVisitor):
         match type(ctx):
             case CParser.IdentifierExpressionContext:
                 return self.visitIdentifierExpression(ctx)
+            case CParser.ConstantExpressionContext:
+                return self.visitConstantExpression(ctx)
             case CParser.FuncCallExpressionContext:
                 return self.visitFuncCallExpression(ctx)
             case CParser.MultiplyExpressionContext:
@@ -556,8 +573,46 @@ class Visitor(CVisitor):
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         constant: CParser.ConstantContext = ctx.constant()
-        if constant.INTEGER_CONSTANT():
-            return ir.Constant(ir.IntType(32), ctx.getText())
+        builder = self.manager.builder
+        if isinstance(ctx.parentCtx, CParser.VariableDefinitionContext):
+            if constant.INTEGER_CONSTANT():
+                return ir.Constant(ir.IntType(32), ctx.getText())
+            if constant.STRING_LITERAL():
+                value = ctx.getText()[1:-1] + '\0'
+                value = value.replace('\\n', '\n')
+                string_array = ir.GlobalVariable(
+                    module,
+                    ir.ArrayType(ir.IntType(8), len(value)),
+                    name=self.manager.slc,
+                )
+                string_array.linkage = 'internal'
+                string_array.global_constant = True
+                string_array.initializer = ir.Constant(
+                    ir.ArrayType(ir.IntType(8), len(value)),
+                    bytearray(value.encode()))
+                # val  = ir.Constant(
+                #         ir.ArrayType(ir.IntType(8), len(value)),
+                #         bytearray(value.encode("utf8")))
+
+                # fmt_str_ptr = builder.bitcast(str_ptr, ir.IntType(8))
+                return string_array
+        else:
+            if constant.INTEGER_CONSTANT():
+                return ir.Constant(ir.IntType(32), ctx.getText())
+            if constant.STRING_LITERAL():
+                value = ctx.getText()[1:-1] + '\0'
+                value = value.replace('\\n', '\n')
+                string_array = ir.GlobalVariable(
+                    module,
+                    ir.ArrayType(ir.IntType(8), len(value)),
+                    name=self.manager.slc,
+                )
+                string_array.linkage = 'internal'
+                string_array.global_constant = True
+                string_array.initializer = ir.Constant(
+                    ir.ArrayType(ir.IntType(8), len(value)),
+                    bytearray(value.encode()))
+                return string_array
 
     def visitIdentifierExpression(self,
                                   ctx: CParser.IdentifierExpressionContext):

@@ -123,6 +123,9 @@ class Scope:
     def add_variable(self, variable):
         self.variables.append(variable)
 
+    def add_function(self, func):
+        self.functions.append(func)
+
 
 class GlobalScope(Scope):
     def __init__(self):
@@ -142,6 +145,9 @@ class ScopeStack:
         except IndexError:
             return None
 
+    def is_global_scope(self):
+        return isinstance(self.stack[-1], GlobalScope)
+
     def add_variable(self, variable) -> None:
         self.stack[-1].add_variable(variable)
 
@@ -149,6 +155,18 @@ class ScopeStack:
         # this need optimisation meh not bothered for now
         for lvl, scope in enumerate(self.stack[::-1]):
             for _, var in enumerate(scope.variables[::-1]):
+                if var.name == identifier:
+                    return var
+        else:
+            raise NameError(f'`{identifier}` has never been declared!')
+
+    def add_function(self, func):
+        self.stack[-1].add_function(func)
+
+    def get_function(self, identifier):
+        # this need optimisation meh not bothered for now
+        for lvl, scope in enumerate(self.stack[::-1]):
+            for _, var in enumerate(scope.functions[::-1]):
                 if var.name == identifier:
                     return var
         else:
@@ -166,6 +184,14 @@ class Manager:
         self.current_clazz: Clazz | None = None
         self.current_function: ir.Function | None = None
         self.builder: ir.IRBuilder | None = None
+
+        # string literal counter to prevent global duplication
+        self.__slc = 0
+
+    @property
+    def slc(self):
+        self.__slc += 1
+        return f'.str.{self.__slc}'
 
     def add_variable(self, variable: Variable):
         self.variables.append(variable)
