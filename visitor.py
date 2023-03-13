@@ -16,7 +16,7 @@ from manager import Arg
 import llvmlite.ir as ir
 
 # Create a module
-module = ir.Module(name="example")
+module = ir.Module(name="main")
 module.triple = "x86_64-redhat-linux-gnu"
 
 i8 = ir.IntType(8)
@@ -159,6 +159,28 @@ class Visitor(CVisitor):
         clazz, type_specifier = self.match_type_specifier(ctx)
         return clazz, type_specifier
 
+    def store(self, value, ptr, **kwargs):
+        builder = self.manager.builder
+        try:
+            builder.store(value, ptr)
+        except TypeError:
+            if ptr.type == i8.as_pointer() \
+                    and isinstance(value, ir.GlobalVariable):
+                builder.store(value.gep([ir.Constant(i32, 0),
+                                         ir.Constant(i32, 0)], ),
+                              ptr)
+            elif ptr.type == i8.as_pointer().as_pointer() \
+                    and isinstance(value, ir.GlobalVariable):
+                # this is a sting literal
+                start_ptr = value.gep([
+                    ir.Constant(i32, 0),
+                    ir.Constant(i32, 0)
+                ])
+                builder.store(start_ptr, ptr)
+            elif ptr.type == i16.as_pointer():
+                # handle short int
+                builder.store(builder.trunc(value, i16), ptr)
+
     def visitVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
         _, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
@@ -175,19 +197,7 @@ class Visitor(CVisitor):
         type_specifier = self.type_specifier_to_ir_type(type_specifier)
         variable = builder.alloca(type_specifier, name=identifier)
         self.manager.scope_stack.add_variable(variable)
-        if type_specifier == expression.type:
-            builder.store(expression, variable)
-        else:
-            # type casting
-            if type_specifier == i8.as_pointer() \
-                    and isinstance(expression, ir.GlobalVariable):
-                builder.store(expression.gep([ir.Constant(i32, 0),
-                                              ir.Constant(i32, 0)], ),
-                              variable)
-            else:
-                # ptr = builder.bitcast(expression, ir.IntType(8).as_pointer())
-                builder.store(expression, variable)
-
+        self.store(expression, variable)
         return variable
 
     def visitVariableDeclaration(self,
@@ -212,10 +222,17 @@ class Visitor(CVisitor):
 
     def type_specifier_to_ir_type(self, type_specifier: str):
         result = None
-        if 'char' in type_specifier:
-            result = ir.IntType(8)
-        elif 'int' in type_specifier:
-            result = ir.IntType(32)
+        match type_specifier.split():
+            case 'short', 'int', *_:
+                result = ir.IntType(16)
+            case 'long', 'int', *_:
+                result = ir.IntType(64)
+            case 'long', *_:
+                result = ir.IntType(64)
+            case 'int', *_:
+                result = ir.IntType(32)
+            case 'char', *_:
+                result = ir.IntType(8)
 
         if '*' in type_specifier:
             count = type_specifier.count('*')
@@ -358,11 +375,7 @@ class Visitor(CVisitor):
         identifier: str = (ctx.identifier() or ctx.chainedCall()).getText()
         variable = self.manager.scope_stack.get_variable(identifier)
         expression = self.expression_to_llvm_ir(ctx.expression())
-        try:
-            self.manager.builder.store(expression, variable)
-        except TypeError:
-            self.manager.builder.store(
-                self.manager.builder.load(expression), variable)
+        self.store(expression, variable)
 
     def visitInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
         operator: str = (ctx.STAR_ASSIGN()
@@ -390,7 +403,8 @@ class Visitor(CVisitor):
         if ctx.unarySign():
             unary += ctx.unarySign().getText()
         return self.visitFunctionCall(ctx.functionCallExpression())
-        # return f'{unary}{self.visitFunctionCall(ctx.functionCallExpression())}'
+        # return f'{unary}{self.visitFunctionCal
+        # l(ctx.functionCallExpression())}'
 
     def visitFunctionCall(self, ctx: CParser.FunctionCallContext):
         builder = self.manager.builder
@@ -573,7 +587,6 @@ class Visitor(CVisitor):
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         constant: CParser.ConstantContext = ctx.constant()
-        builder = self.manager.builder
         if isinstance(ctx.parentCtx, CParser.VariableDefinitionContext):
             if constant.INTEGER_CONSTANT():
                 return ir.Constant(ir.IntType(32), ctx.getText())

@@ -1,4 +1,4 @@
-; ModuleID = "example"
+; ModuleID = "main"
 target triple = "x86_64-redhat-linux-gnu"
 target datalayout = ""
 
@@ -7,13 +7,16 @@ declare i32 @"printf"(i8* %".1", ...)
 define i32 @"main"(i32 %"a")
 {
 entry:
-  %"x" = alloca i32
-  store i32 256, i32* %"x"
+  %"x" = alloca i16
+  %".3" = trunc i32 2566465454 to i16
+  store i16 %".3", i16* %"x"
+  %".5" = trunc i32 65536 to i16
+  store i16 %".5", i16* %"x"
   %"fmt" = alloca i8*
   store i8* getelementptr ([43 x i8], [43 x i8]* @".str.1", i32 0, i32 0), i8** %"fmt"
-  %".5" = load i8*, i8** %"fmt"
-  %".6" = load i32, i32* %"x"
-  %".7" = call i32 (i8*, ...) @"printf"(i8* %".5", i32 %".6", [7 x i8]* @".str.2")
+  %".8" = load i8*, i8** %"fmt"
+  %".9" = load i16, i16* %"x"
+  %".10" = call i32 (i8*, ...) @"printf"(i8* %".8", i16 %".9", [7 x i8]* @".str.2")
   ret i32 0
 }
 

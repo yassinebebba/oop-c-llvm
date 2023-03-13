@@ -6,9 +6,9 @@
 int printf(char *, ...);
 
 int main(int a) {
-    int x = 256;
-//    x = 10;
-//    int x = 1 + 2 * 3 * 4 / 5 - 6 == 1;
+    short int x = 2566465454;
+    x = 65536;
+//    int x = 1 + 2 * 3 * 4 / 5 - 6 ;
   // call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @str_fmt, i32 0, i32 0), i32 %".3")
     char * fmt = "%d %s\n(IGNORE need fix null-termination)->";
     printf(fmt, x, "asdsad");
