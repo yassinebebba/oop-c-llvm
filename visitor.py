@@ -103,26 +103,6 @@ class Visitor(CVisitor):
         except NameError:
             return None, ' '.join(chunks)
 
-    def expression_to_llvm_ir(self, expression):
-        match type(expression):
-            case CParser.ConstantExpressionContext:
-                constant: CParser.ConstantContext = expression.constant()
-                if x := constant.INTEGER_CONSTANT():
-                    return ir.Constant(ir.IntType(32), x)
-            case CParser.IdentifierExpressionContext:
-                return self.manager.scope_stack.get_variable(
-                    (expression.identifier().getText()))
-            case CParser.MultiplyExpressionContext:
-                return self.visitMultiplyExpression(expression)
-            case CParser.DivideExpressionContext:
-                return self.visitDivideExpression(expression)
-            case CParser.AddExpressionContext:
-                return self.visitAddExpression(expression)
-            case CParser.SubtractExpressionContext:
-                return self.visitSubtractExpression(expression)
-            case CParser.EqExpressionContext:
-                return self.visitEqExpression(expression)
-
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         for child in ctx.getChildren():
             match type(child):
@@ -374,7 +354,7 @@ class Visitor(CVisitor):
     def visitAssignment(self, ctx: CParser.AssignmentContext):
         identifier: str = (ctx.identifier() or ctx.chainedCall()).getText()
         variable = self.manager.scope_stack.get_variable(identifier)
-        expression = self.expression_to_llvm_ir(ctx.expression())
+        expression = self.visitExpression(ctx.expression())
         self.store(expression, variable)
 
     def visitInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
@@ -558,18 +538,18 @@ class Visitor(CVisitor):
         return ctx.getText()
 
     def visitMultiplyExpression(self, ctx: CParser.MultiplyExpressionContext):
-        expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
-        expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        expr1_ir = self.visitExpression(ctx.expression(0))
+        expr2_ir = self.visitExpression(ctx.expression(1))
         return self.manager.builder.mul(expr1_ir, expr2_ir)
 
     def visitDivideExpression(self, ctx: CParser.DivideExpressionContext):
-        expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
-        expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        expr1_ir = self.visitExpression(ctx.expression(0))
+        expr2_ir = self.visitExpression(ctx.expression(1))
         return self.manager.builder.sdiv(expr1_ir, expr2_ir)
 
     def visitAddExpression(self, ctx: CParser.AddExpressionContext):
-        expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
-        expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        expr1_ir = self.visitExpression(ctx.expression(0))
+        expr2_ir = self.visitExpression(ctx.expression(1))
         if expr1_ir.type.is_pointer:
             expr1_ir = self.manager.builder.load(expr1_ir)
         if expr2_ir.type.is_pointer:
@@ -577,8 +557,8 @@ class Visitor(CVisitor):
         return self.manager.builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
-        expr1_ir = self.expression_to_llvm_ir(ctx.expression(0))
-        expr2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        expr1_ir = self.visitExpression(ctx.expression(0))
+        expr2_ir = self.visitExpression(ctx.expression(1))
         if expr1_ir.type.is_pointer:
             expr1_ir = self.manager.builder.load(expr1_ir)
         if expr2_ir.type.is_pointer:
@@ -645,8 +625,8 @@ class Visitor(CVisitor):
             overridden_method = obj1.clazz.get_method('eq').alias
             return f'{obj1.name}->{overridden_method}' \
                    f'({obj1.name}, {obj2.name})'
-        exp1_ir = self.expression_to_llvm_ir(ctx.expression(0))
-        exp2_ir = self.expression_to_llvm_ir(ctx.expression(1))
+        exp1_ir = self.visitExpression(ctx.expression(0))
+        exp2_ir = self.visitExpression(ctx.expression(1))
         return self.manager.builder.icmp_signed('==', exp1_ir, exp2_ir)
 
     def visitGtExpression(self, ctx: CParser.GtExpressionContext):
