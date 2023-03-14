@@ -7,10 +7,10 @@ declare i32 @"printf"(i8* %".1", ...)
 define i32 @"main"(i32 %"a")
 {
 entry:
-  %".3" = mul i32 2, 3
-  %".4" = add i32 1, %".3"
   %"x" = alloca i16
-  %".5" = trunc i32 %".4" to i16
+  %".3" = trunc i32 45 to i16
+  store i16 %".3", i16* %"x"
+  %".5" = trunc i32 45 to i16
   store i16 %".5", i16* %"x"
   %"fmt" = alloca i8*
   store i8* getelementptr ([43 x i8], [43 x i8]* @".str.1", i32 0, i32 0), i8** %"fmt"

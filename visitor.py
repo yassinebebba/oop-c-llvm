@@ -139,25 +139,73 @@ class Visitor(CVisitor):
         clazz, type_specifier = self.match_type_specifier(ctx)
         return clazz, type_specifier
 
+    def getPointerCount(self, ptr_type):
+        ptr_count = 0
+        while isinstance(ptr_type, ir.PointerType):
+            ptr_count += 1
+            ptr_type = ptr_type.pointee
+        return ptr_count
+
+    def isInt(self, value):
+        return value.type in [i8, i16, i32, i64]
+
+    def isIntPtr(self, value):
+        return value.type in [
+            i8.as_pointer(),
+            i16.as_pointer(),
+            i32.as_pointer(),
+            i64.as_pointer(),
+        ]
+
+    def isIntPtrPtr(self, value):
+        # print(value.type, self.getPointerCount(value.type))
+        return value.type in [
+            i8.as_pointer().as_pointer(),
+            i16.as_pointer().as_pointer(),
+            i32.as_pointer().as_pointer(),
+            i64.as_pointer().as_pointer(),
+        ]
+
+    def isString(self, value):
+        return value.type == i8.as_pointer().as_pointer()
+
     def store(self, value, ptr, **kwargs):
+        """
+        keep it simple with only 1 pts deep
+        everything should be hardcoded for now
+        """
         builder = self.manager.builder
         try:
             builder.store(value, ptr)
         except TypeError:
-            if ptr.type == i8.as_pointer() \
-                    and isinstance(value, ir.GlobalVariable):
-                builder.store(value.gep([ir.Constant(i32, 0),
-                                         ir.Constant(i32, 0)], ),
-                              ptr)
-            elif ptr.type == i8.as_pointer().as_pointer() \
-                    and isinstance(value, ir.GlobalVariable):
-                # this is a sting literal
-                start_ptr = value.gep([
-                    ir.Constant(i32, 0),
-                    ir.Constant(i32, 0)
-                ])
-                builder.store(start_ptr, ptr)
-            elif ptr.type == i16.as_pointer():
+            if self.isInt(ptr):
+                # which means int
+                pass
+            elif self.isIntPtr(ptr):
+                # which means allocated
+                if isinstance(value, ir.GlobalVariable):
+                    if isinstance(value.value_type, ir.ArrayType):
+                        raise TypeError('Incompatible pointer to integer '
+                                        'conversion initializing \'int\' '
+                                        'with an expression of type '
+                                        f'\'char[{value.value_type.count}]\'')
+                elif self.isInt(value):
+                    # handle type casting
+                    builder.store(builder.trunc(value, ptr.type.pointee), ptr)
+
+            elif self.isIntPtrPtr(ptr):
+                if isinstance(value, ir.GlobalVariable):
+                    if isinstance(value.value_type, ir.ArrayType):
+                        # this is a sting literal
+                        start_ptr = value.gep([
+                            ir.Constant(i32, 0),
+                            ir.Constant(i32, 0)
+                        ])
+                        builder.store(start_ptr, ptr)
+            else:
+                raise TypeError(f'Type \'{ptr.type}\' not yet supported')
+
+            if ptr.type == i16.as_pointer() and value.type in [i32, i64]:
                 # handle short int
                 builder.store(builder.trunc(value, i16), ptr)
 
