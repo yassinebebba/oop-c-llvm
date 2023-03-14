@@ -1,2 +1,7 @@
 antlr4-python3-runtime==4.11.1
+flake8==6.0.0
+llvmlite==0.39.1
+mccabe==0.7.0
+pycodestyle==2.10.0
+pyflakes==3.0.1
 termcolor==2.2.0
