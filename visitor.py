@@ -25,29 +25,6 @@ i32 = ir.IntType(32)
 i64 = ir.IntType(64)
 
 
-class State:
-    def __init__(self):
-        self.is_class = False
-        self.scope_level = 0
-
-    @property
-    def tabs(self):
-        return '\t' * self.scope_level
-
-    def visit_block_scope(self):
-        self.scope_level += 1
-
-    def exit_block_scope(self):
-        if self.scope_level > 0:
-            self.scope_level -= 1
-
-    def visit_class(self):
-        self.is_class = True
-
-    def exit_class(self):
-        self.is_class = False
-
-
 def print_error(error: str):
     print(colored(error, 'red'))
 
@@ -57,7 +34,6 @@ class Visitor(CVisitor):
         # steam is CommonTokenStream to get hidden channel
         self.stream = stream
         self.output: FileIO = output
-        self.state = State()
         self.manager = Manager()
 
     def write(self, text: str):
@@ -232,8 +208,6 @@ class Visitor(CVisitor):
     def visitVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext,
                                  is_clazz_attribute: bool = False):
-        ctx.scope_level = self.state.scope_level
-        # self.check_variable_declaration(ctx)
         clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         variable = Variable(name=identifier, type_specifier=type_specifier)
@@ -299,8 +273,6 @@ class Visitor(CVisitor):
         return func
 
     def visitFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
-        # typeSpecifier? identifier LP functionArgs? RP block
-        self.state.visit_block_scope()
         _, rtype = self.match_type_specifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
         args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
@@ -371,32 +343,19 @@ class Visitor(CVisitor):
         return f'struct {ctx.identifier().getText()};'
 
     def visitStructDefinition(self, ctx: CParser.StructDefinitionContext):
-        self.state.visit_block_scope()
-        struct_block: str = self.visitStructBlock(ctx.structBlock())
-        self.state.exit_block_scope()
-        return f'struct {ctx.identifier().getText()} ' \
-               f'{"{"}\n{struct_block}\n{self.state.tabs}{"}"};'
+        self.visitStructBlock(ctx.structBlock())
+        raise NotImplementedError
 
     def visitStructBlock(self, ctx: CParser.StructBlockContext):
         if ctx is None:
-            return ''
-
-        result: str = ''
+            return None
         for child in ctx.getChildren():
             match type(child):
                 case CParser.FieldContext:
-                    result += self.state.tabs
-                    value = self.visitField(child)
-                    result += value
-                    result += '\n'
+                    self.visitField(child)
                 case CParser.BitFieldContext:
-                    result += self.state.tabs
-                    value = self.visitBitField(child)
-                    result += value
-                    result += '\n'
-
-        # [:-1] remove the last newline
-        return result[:-1]
+                    self.visitBitField(child)
+        raise NotImplementedError
 
     def visitField(self, ctx: CParser.FieldContext):
         _, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
@@ -478,73 +437,50 @@ class Visitor(CVisitor):
 
     def visitIfStatementStructure(self,
                                   ctx: CParser.IfStatementStructureContext):
-        result: str = ''
         for child in ctx.getChildren():
             match type(child):
                 case CParser.IfStatementContext:
-                    result += self.state.tabs
-                    value = self.visitIfStatement(child)
-                    result += value
-                    result += '\n'
+                    self.visitIfStatement(child)
                 case CParser.ElseIfStatementContext:
-                    result += self.state.tabs
-                    value = self.visitElseIfStatement(child)
-                    result += value
-                    result += '\n'
+                    self.visitElseIfStatement(child)
                 case CParser.ElseStatementContext:
-                    result += self.state.tabs
-                    value = self.visitElseStatement(child)
-                    result += value
-                    result += '\n'
-        return result
+                    self.visitElseStatement(child)
+        raise NotImplementedError
 
     def visitIfStatement(self, ctx: CParser.IfStatementContext):
-        self.state.visit_block_scope()
         conditions: list[CParser.ConditionContext] = [
             condition for condition in ctx.getChildren()
             if isinstance(condition, CParser.ConditionContext)
         ]
-        values: list[str] = list(map(self.visitCondition, conditions))
-        block: str = self.visitBlock(ctx.block())
-        self.state.exit_block_scope()
-        return f'if ({", ".join(values)}) ' \
-               f'{"{"}\n {block}\n{self.state.tabs}{"}"}'
+        map(self.visitCondition, conditions)
+        self.visitBlock(ctx.block())
+        raise NotImplementedError
 
     def visitElseIfStatement(self, ctx: CParser.ElseIfStatementContext):
         if_statement: str = self.visitIfStatement(ctx.ifStatement())
         return f'else {if_statement}'
 
     def visitElseStatement(self, ctx: CParser.ElseStatementContext):
-        self.state.visit_block_scope()
-        block: str = self.visitBlock(ctx.block())
-        self.state.exit_block_scope()
-        return f'else {"{"}\n {block}\n{self.state.tabs}{"}"}'
+        self.visitBlock(ctx.block())
+        raise NotImplementedError
 
     def visitWhileStatement(self, ctx: CParser.WhileStatementContext):
-        self.state.visit_block_scope()
         conditions: list[CParser.ConditionContext] = [
             condition for condition in ctx.getChildren()
             if isinstance(condition, CParser.ConditionContext)
         ]
-        values = list(map(self.visitCondition, conditions))
-        block: str = self.visitBlock(ctx.block())
-        self.state.exit_block_scope()
-
-        return f'while ({", ".join(values)})' \
-               f' {"{"}\n {block}\n{self.state.tabs}{"}"}'
+        map(self.visitCondition, conditions)
+        self.visitBlock(ctx.block())
+        raise NotImplementedError
 
     def visitDoWhileStatement(self, ctx: CParser.DoWhileStatementContext):
-        self.state.visit_block_scope()
         conditions: list[CParser.ConditionContext] = [
             condition for condition in ctx.getChildren()
             if isinstance(condition, CParser.ConditionContext)
         ]
-        values = list(map(self.visitCondition, conditions))
-        block: str = self.visitBlock(ctx.block())
-        self.state.exit_block_scope()
-
-        return f'do {"{"}\n {block}\n{self.state.tabs}{"}"} ' \
-               f'while ({", ".join(values)});'
+        map(self.visitCondition, conditions)
+        self.visitBlock(ctx.block())
+        raise NotImplementedError
 
     def visitCondition(self, ctx: CParser.ConditionContext):
         result = ''
@@ -794,11 +730,9 @@ class Visitor(CVisitor):
                     self.visitClassInstantiation(child)
 
     def exitBlock(self, ctx: CParser.BlockContext):
-        self.state.exit_block_scope()
+        pass
 
     def visitClassDefinition(self, ctx: CParser.ClassDefinitionContext):
-        self.state.visit_block_scope()
-        self.state.visit_class()
         identifier: str = ctx.identifier().getText()
         clazz: Clazz = Clazz(
             name=identifier,
@@ -808,11 +742,7 @@ class Visitor(CVisitor):
         self.manager.add_clazz(clazz)
         attributes, methods, method_declarations = self.visitClassBlock(
             ctx.classBlock())
-        self.state.exit_class()
-        self.state.exit_block_scope()
-        # self.manager.current_clazz = None
-        return f'typedef struct {identifier} {"{"}\n {attributes}\n{"}"}' \
-               f' {identifier};\n\n{method_declarations}\n{methods}'
+        raise NotImplementedError
 
     def getFunctionPointer(self, class_name: str,
                            function: CParser.ClassMethodContext):
@@ -874,17 +804,16 @@ class Visitor(CVisitor):
             self.manager.current_clazz.add_method(method)
             method_block: str = ''
             # `this` malloc is implicit bc it has to be hmmm
-            method_block += f'{self.state.tabs}{clazz_name}* this =' \
+            method_block += f'{clazz_name}* this =' \
                             f' malloc(sizeof({clazz_name}));\n'
-            method_block += f'{self.state.tabs}this->{clazz_name * 2} = ' \
+            method_block += f'this->{clazz_name * 2} = ' \
                             f'&{clazz_name * 2};\n'
             for method in methods:
                 if method.name == clazz_name:
                     continue
                 name: str = method.name
                 new_name: str = f'{clazz_name}{name}'
-                method_block += f'{self.state.tabs}' \
-                                f'this->{new_name} = &{new_name};\n'
+                method_block += f'this->{new_name} = &{new_name};\n'
             method_block += self.visitBlock(constructor.block())
             return f'{clazz_name}* {method_alias}({args_string})' \
                    f' {"{"}\n{method_block}\n{"}"}'
@@ -937,20 +866,13 @@ class Visitor(CVisitor):
         attributes: str = ''
 
         for attribute in attribute_declarations:
-            attributes += self.state.tabs
-            value = self.visitVariableDeclaration(attribute,
-                                                  is_clazz_attribute=True)
-            attributes += value
-            attributes += '\n'
+            self.visitVariableDeclaration(attribute, is_clazz_attribute=True)
 
         # attribute definition is quite tricky to handle
         # it has to be split into declaration and initialization
         # in the class constructor
         for attribute in attribute_definitions:
-            attributes += self.state.tabs
-            value = self.visitVariableDefinition(attribute)
-            attributes += value
-            attributes += '\n'
+            self.visitVariableDefinition(attribute)
 
         parsed_methods: str = ''
         constructor: CParser.ClassMethodContext | None = None
@@ -966,7 +888,6 @@ class Visitor(CVisitor):
             method_name = method.identifier().getText()
             if method_name == class_name:
                 constructor = method
-                attributes += self.state.tabs
                 attributes += self.getFunctionPointer(class_name, constructor)
                 attributes += '\n'
                 continue
@@ -974,15 +895,10 @@ class Visitor(CVisitor):
                 overridden_magic_methods['toString'] = True
 
             function_pointer = self.getFunctionPointer(class_name, method)
-            attributes += self.state.tabs
             attributes += function_pointer
             attributes += '\n'
-            self.state.exit_block_scope()
-            self.state.exit_block_scope()
             func, func_string = self.visitClassMethod(method)
             clean_methods.append(func)
-            # self.manager.current_clazz.add_method(func)
-            self.state.visit_block_scope()
             parsed_methods += func_string
             parsed_methods += '\n'
 
@@ -991,7 +907,6 @@ class Visitor(CVisitor):
             match k, v:
                 case 'toString', False:
                     # create string representation
-                    attributes += self.state.tabs
                     # need function pointer
                     attributes += f'char * (*{class_name}toString)' \
                                   f'(struct {class_name} *);'
@@ -1051,18 +966,16 @@ class Visitor(CVisitor):
             args=args,
             alias=alias,
         )
-        self.state.visit_block_scope()
         block = self.visitBlock(ctx.block())
-        self.state.exit_block_scope()
         self.manager.current_clazz.add_method(method)
         return method, f'{rtype} {alias}({args_string}) ' \
-                       f'{"{"}\n {block}\n{self.state.tabs}{"}"}'
+                       f'{"{"}\n {block}\n{"}"}'
 
     def visitClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
         clazz, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
         class_name: str = type_specifier.split()[0]  # to remove the pointer
         identifier: str = ctx.identifier().getText()
-        args: str = self.visitFunctionCallArgs(
+        args = self.visitFunctionCallArgs(
             ctx.functionCall().functionCallArgs())
         obj: Obj = Obj(name=identifier, clazz=clazz)
         self.manager.add_obj(obj)
@@ -1089,7 +1002,7 @@ class Visitor(CVisitor):
                     case CParser.FunctionCallExpressionContext:
                         method: Function = obj.clazz.get_method(
                             child.identifier().getText())
-                        args: str = self.visitFunctionCallArgs(
+                        args = self.visitFunctionCallArgs(
                             child.functionCallArgs())
                         if args:
                             if is_nested:
@@ -1145,7 +1058,7 @@ class Visitor(CVisitor):
                                   CParser.FunctionCallExpressionContext):
                         method: Function = arg.clazz.get_method(
                             child.identifier().getText())
-                        args: str = self.visitFunctionCallArgs(
+                        args = self.visitFunctionCallArgs(
                             child.functionCallArgs())
                         if args:
                             result += f'{method.alias}({obj_name}, {args})'
