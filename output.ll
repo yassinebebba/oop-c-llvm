@@ -20,5 +20,5 @@ entry:
   ret i32 0
 }
 
-@".str.1" = internal constant [43 x i8] c"%d %s\0a(IGNORE need fix null-termination)->\00"
+@".str.1" = private unnamed_addr constant [43 x i8] c"%d %s\0a(IGNORE need fix null-termination)->\00"
 @".str.2" = internal constant [7 x i8] c"asdsad\00"

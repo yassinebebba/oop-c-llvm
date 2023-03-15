@@ -185,10 +185,10 @@ class Visitor(CVisitor):
                 # which means allocated
                 if isinstance(value, ir.GlobalVariable):
                     if isinstance(value.value_type, ir.ArrayType):
-                        raise TypeError('Incompatible pointer to integer '
-                                        'conversion initializing \'int\' '
-                                        'with an expression of type '
-                                        f'\'char[{value.value_type.count}]\'')
+                        print_error('Incompatible pointer to integer '
+                                    'conversion initializing \'int\' '
+                                    'with an expression of type '
+                                    f'\'char[{value.value_type.count}]\'')
                 elif self.isInt(value):
                     # handle type casting
                     builder.store(builder.trunc(value, ptr.type.pointee), ptr)
@@ -197,13 +197,14 @@ class Visitor(CVisitor):
                 if isinstance(value, ir.GlobalVariable):
                     if isinstance(value.value_type, ir.ArrayType):
                         # this is a sting literal
+
                         start_ptr = value.gep([
                             ir.Constant(i32, 0),
                             ir.Constant(i32, 0)
                         ])
                         builder.store(start_ptr, ptr)
             else:
-                raise TypeError(f'Type \'{ptr.type}\' not yet supported')
+                print_error(f'Type \'{ptr.type}\' not yet supported')
 
             if ptr.type == i16.as_pointer() and value.type in [i32, i64]:
                 # handle short int
@@ -249,26 +250,34 @@ class Visitor(CVisitor):
         return f'{type_specifier} {identifier}{cells};'
 
     def type_specifier_to_ir_type(self, type_specifier: str):
-        result = None
         match type_specifier.split():
-            case 'short', 'int', *_:
-                result = ir.IntType(16)
-            case 'long', 'int', *_:
-                result = ir.IntType(64)
-            case 'long', *_:
-                result = ir.IntType(64)
-            case 'int', *_:
-                result = ir.IntType(32)
-            case 'char', *_:
-                result = ir.IntType(8)
-
-        if '*' in type_specifier:
-            count = type_specifier.count('*')
-            result = ir.PointerType(result)
-            for i in range(count - 1):
-                result = result.as_pointer()
-            return result
-        return result
+            case 'short', 'int', *ptr_count:
+                t = ir.IntType(16)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'long', 'int', *ptr_count:
+                t = ir.IntType(64)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'long', *ptr_count:
+                t = ir.IntType(64)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'int', *ptr_count:
+                t = ir.IntType(32)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'char', *ptr_count:
+                t = ir.IntType(8)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case _:
+                print_error('Type was not recognized!')
 
     def visitFunctionDeclaration(self,
                                  ctx: CParser.FunctionDeclarationContext
@@ -464,7 +473,7 @@ class Visitor(CVisitor):
             val = self.manager.builder.load(expression)
             self.manager.builder.ret(val)
         else:
-            raise Exception(
+            print_error(
                 'function return type does not match function return type')
 
     def visitIfStatementStructure(self,
@@ -580,7 +589,7 @@ class Visitor(CVisitor):
             case CParser.SizeofExpressionContext:
                 return self.visitSizeofExpression(ctx)
             case _:
-                raise Exception('Expression was not recognised!')
+                print_error('Expression was not recognised!')
 
     def visitSizeofExpression(self, ctx: CParser.SizeofExpressionContext):
         return ctx.getText()
@@ -626,7 +635,8 @@ class Visitor(CVisitor):
                     ir.ArrayType(ir.IntType(8), len(value)),
                     name=self.manager.slc,
                 )
-                string_array.linkage = 'internal'
+                string_array.unnamed_addr = True
+                string_array.linkage = 'private'
                 string_array.global_constant = True
                 string_array.initializer = ir.Constant(
                     ir.ArrayType(ir.IntType(8), len(value)),
@@ -779,9 +789,7 @@ class Visitor(CVisitor):
                                 # this is the `;`
                                 pass
                             case _:
-                                print(type(statement))
-                                raise Exception(
-                                    'Statement was not recognized!')
+                                print_error('Statement was not recognized!')
                 case CParser.ClassInstantiationContext:
                     self.visitClassInstantiation(child)
 
