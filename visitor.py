@@ -132,10 +132,12 @@ class Visitor(CVisitor):
             ptr_type = ptr_type.pointee
         return ptr_count
 
-    def isInt(self, value):
+    @staticmethod
+    def isInt(value):
         return value.type in [i8, i16, i32, i64]
 
-    def isIntPtr(self, value):
+    @staticmethod
+    def isIntPtr(value):
         return value.type in [
             i8.as_pointer(),
             i16.as_pointer(),
@@ -143,7 +145,8 @@ class Visitor(CVisitor):
             i64.as_pointer(),
         ]
 
-    def isIntPtrPtr(self, value):
+    @staticmethod
+    def isIntPtrPtr(value):
         # print(value.type, self.getPointerCount(value.type))
         return value.type in [
             i8.as_pointer().as_pointer(),
@@ -155,7 +158,7 @@ class Visitor(CVisitor):
     def isString(self, value):
         return value.type == i8.as_pointer().as_pointer()
 
-    def store(self, value, ptr, **kwargs):
+    def store(self, value, ptr):
         """
         keep it simple with only 1 pts deep
         everything should be hardcoded for now
@@ -164,37 +167,35 @@ class Visitor(CVisitor):
         try:
             builder.store(value, ptr)
         except TypeError:
-            if self.isInt(ptr):
-                # which means int
-                pass
-            elif self.isIntPtr(ptr):
-                # which means allocated
-                if isinstance(value, ir.GlobalVariable):
-                    if isinstance(value.value_type, ir.ArrayType):
-                        print_error('Incompatible pointer to integer '
-                                    'conversion initializing \'int\' '
-                                    'with an expression of type '
-                                    f'\'char[{value.value_type.count}]\'')
-                elif self.isInt(value):
-                    # handle type casting
-                    builder.store(builder.trunc(value, ptr.type.pointee), ptr)
+            if isinstance(ptr, ir.AllocaInstr):
+                if ptr.type.pointee.is_pointer:
+                    # this is a ptr and treated as a ptr
+                    if isinstance(value, ir.GlobalVariable):
+                        if isinstance(value.value_type, ir.ArrayType):
+                            start_ptr = value.gep([
+                                ir.Constant(i64, 0),
+                                ir.Constant(i64, 0)
+                            ])
+                            start_ptr = builder.bitcast(
+                                start_ptr,
+                                ptr.type.pointee
+                            )
+                            builder.store(start_ptr, ptr)
 
-            elif self.isIntPtrPtr(ptr):
-                if isinstance(value, ir.GlobalVariable):
-                    if isinstance(value.value_type, ir.ArrayType):
-                        # this is a sting literal
-
-                        start_ptr = value.gep([
-                            ir.Constant(i32, 0),
-                            ir.Constant(i32, 0)
-                        ])
-                        builder.store(start_ptr, ptr)
+                else:
+                    # this is a ptr but treated as a dereferenced ptr
+                    if isinstance(value, ir.GlobalVariable):
+                        if isinstance(value.value_type, ir.ArrayType):
+                            print_error('Incompatible pointer to integer '
+                                        'conversion initializing \'int\' '
+                                        'with an expression of type '
+                                        f'\'char[{value.value_type.count}]\'')
+                    else:
+                        # handle type casting
+                        trunc_val = builder.trunc(value, ptr.type.pointee)
+                        builder.store(trunc_val, ptr)
             else:
-                print_error(f'Type \'{ptr.type}\' not yet supported')
-
-            if ptr.type == i16.as_pointer() and value.type in [i32, i64]:
-                # handle short int
-                builder.store(builder.trunc(value, i16), ptr)
+                print('not allocated')
 
     def visitVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
         type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
@@ -334,11 +335,11 @@ class Visitor(CVisitor):
         raise NotImplementedError
 
     def visitField(self, ctx: CParser.FieldContext):
-        _, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
+        _, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         return f'{type_specifier} {ctx.identifier().getText()};'
 
     def visitBitField(self, ctx: CParser.BitFieldContext):
-        _, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
+        _, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
         bit_count: str = ctx.INTEGER_CONSTANT()
         return f'{type_specifier} {identifier}: {bit_count};'
@@ -722,7 +723,7 @@ class Visitor(CVisitor):
 
     def getFunctionPointer(self, class_name: str,
                            function: CParser.ClassMethodContext):
-        clazz, rtype = self.match_type_specifier(
+        clazz, rtype = self.visitTypeSpecifier(
             function.typeSpecifier())
         if clazz:
             rtype = f'struct {rtype}'
@@ -740,7 +741,7 @@ class Visitor(CVisitor):
         if function.functionArgs():
             for arg in function.functionArgs().getChildren():
                 try:
-                    clazz, type_specifier = self.match_type_specifier(
+                    clazz, type_specifier = self.visitTypeSpecifier(
                         arg.typeSpecifier())
                     if clazz:
                         type_specifier = f'struct {type_specifier}'
@@ -948,7 +949,7 @@ class Visitor(CVisitor):
                        f'{"{"}\n {block}\n{"}"}'
 
     def visitClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
-        clazz, type_specifier = self.match_type_specifier(ctx.typeSpecifier())
+        clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         class_name: str = type_specifier.split()[0]  # to remove the pointer
         identifier: str = ctx.identifier().getText()
         args = self.visitFunctionCallArgs(

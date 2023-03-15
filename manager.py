@@ -40,7 +40,7 @@ class Function:
             if arg.name == obj_name:
                 return arg
         else:
-            raise Exception(f'Arg {obj_name} does not exist')
+            print_error(f'Arg {obj_name} does not exist')
 
     def __repr__(self):
         return f'{type(self).__name__}' \
@@ -80,13 +80,13 @@ class Clazz:
         for attribute in self.attributes:
             if attribute.name == name:
                 return attribute
-        raise NameError(f'Attribute {name} does not exist!')
+        print(f'Attribute {name} does not exist!')
 
     def get_method(self, name) -> Function:
         for method in self.methods:
             if method.name == name:
                 return method
-        raise Exception(f'Method {name} does not exist!')
+        print_error(f'Method {name} does not exist!')
 
 
 class Obj:
@@ -158,7 +158,7 @@ class ScopeStack:
                 if var.name == identifier:
                     return var
         else:
-            raise NameError(f'`{identifier}` has never been declared!')
+            print_error(f'`{identifier}` has never been declared!')
 
     def add_function(self, func):
         self.stack[-1].add_function(func)
@@ -170,7 +170,7 @@ class ScopeStack:
                 if var.name == identifier:
                     return var
         else:
-            raise NameError(f'`{identifier}` has never been declared!')
+            print_error(f'`{identifier}` has never been declared!')
 
 
 class Manager:
@@ -209,7 +209,7 @@ class Manager:
         for clazz in self.clazzes:
             if clazz.name == name:
                 return clazz
-        raise NameError(f'Class {name} does not exist!')
+        print_error(f'Class {name} does not exist!')
 
     def add_obj(self, obj: Obj) -> None:
         self.objs.append(obj)
