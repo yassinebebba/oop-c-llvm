@@ -193,8 +193,14 @@ class Manager:
         self.__slc += 1
         return f'.str.{self.__slc}'
 
-    def add_variable(self, variable: Variable):
-        self.variables.append(variable)
+    def add_variable(self, variable):
+        self.scope_stack.add_variable(variable)
+
+    def add_function(self, func):
+        self.scope_stack.add_function(func)
+
+    def push_scope(self, scope):
+        self.scope_stack.push(scope)
 
     def add_clazz(self, clazz: Clazz):
         self.clazzes.append(clazz)
@@ -214,8 +220,8 @@ class Manager:
                 return obj
         return None
 
-    def get_variable(self, name) -> Variable | None:
-        for var in self.variables:
-            if var.name == name:
-                return var
-        return None
+    def get_variable(self, identifier):
+        return self.scope_stack.get_variable(identifier)
+
+    def get_function(self, identifier):
+        return self.scope_stack.get_function(identifier)

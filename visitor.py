@@ -1,4 +1,3 @@
-import os
 import antlr4.tree.Tree
 from io import FileIO
 from termcolor import colored
@@ -8,9 +7,7 @@ from manager import Manager
 from manager import Scope
 from manager import ScopeType
 from manager import Clazz
-from manager import Attribute
 from manager import Function
-from manager import Variable
 from manager import Obj
 from manager import Arg
 import llvmlite.ir as ir
@@ -38,46 +35,6 @@ class Visitor(CVisitor):
 
     def write(self, text: str):
         self.output.write(text)
-
-    def add_newline(self) -> None:
-        self.output.write('\n')
-
-    def ungetch(self):
-        cur = self.output.tell()
-        self.output.seek(cur - 1, os.SEEK_SET)
-        self.output.truncate()
-
-    def match_type_specifier(self, ctx: CParser.TypeSpecifierContext):
-        # custom method to not repeat type matching
-        chunks: list[str] = []
-        for terminal_node in ctx.getChildren():
-            match terminal_node.getText():
-                case 'unsigned':
-                    chunks.append('unsigned')
-                case 'signed':
-                    chunks.append('signed')
-                case 'void':
-                    chunks.append('void')
-                case 'char':
-                    chunks.append('char')
-                case 'short':
-                    chunks.append('short')
-                case 'int':
-                    chunks.append('int')
-                case 'long':
-                    chunks.append('long')
-                case 'float':
-                    chunks.append('float')
-                case 'double':
-                    chunks.append('double')
-                case '*':
-                    chunks.append('*')
-                case _identifier:
-                    chunks.append(_identifier)
-        try:
-            return self.manager.get_clazz(chunks[0]), ' '.join(chunks)
-        except NameError:
-            return None, ' '.join(chunks)
 
     def visitCompilationUnit(self, ctx: CParser.CompilationUnitContext):
         for child in ctx.getChildren():
@@ -112,8 +69,61 @@ class Visitor(CVisitor):
         self.write(str(module))
 
     def visitTypeSpecifier(self, ctx: CParser.TypeSpecifierContext):
-        clazz, type_specifier = self.match_type_specifier(ctx)
-        return clazz, type_specifier
+        type_specifier: list[str] = []
+        for terminal_node in ctx.getChildren():
+            match terminal_node.getText():
+                case 'unsigned':
+                    type_specifier.append('unsigned')
+                case 'signed':
+                    type_specifier.append('signed')
+                case 'void':
+                    type_specifier.append('void')
+                case 'char':
+                    type_specifier.append('char')
+                case 'short':
+                    type_specifier.append('short')
+                case 'int':
+                    type_specifier.append('int')
+                case 'long':
+                    type_specifier.append('long')
+                case 'float':
+                    type_specifier.append('float')
+                case 'double':
+                    type_specifier.append('double')
+                case '*':
+                    type_specifier.append('*')
+                case _identifier:
+                    type_specifier.append(_identifier)
+
+        match type_specifier:
+            case 'char', *ptr_count:
+                t = ir.IntType(8)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'short', 'int', *ptr_count:
+                t = ir.IntType(16)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'long', 'int', *ptr_count:
+                t = ir.IntType(64)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'long', *ptr_count:
+                t = ir.IntType(64)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'int', *ptr_count:
+                t = ir.IntType(32)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case _:
+                print(type_specifier)
+                print_error('Type was not recognized!')
 
     def getPointerCount(self, ptr_type):
         ptr_count = 0
@@ -187,81 +197,49 @@ class Visitor(CVisitor):
                 builder.store(builder.trunc(value, i16), ptr)
 
     def visitVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
-        _, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
+        type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         # check if this is a class object variable definition
-        clazz_name, *_ = type_specifier.split()
-        try:
-            clazz = self.manager.get_clazz(clazz_name)
-            obj: Obj = Obj(name=identifier, clazz=clazz)
-            self.manager.add_obj(obj)
-        except NameError:
-            pass
+        # clazz_name, *_ = type_specifier.split()
+        # try:
+        #     clazz = self.manager.get_clazz(clazz_name)
+        #     obj: Obj = Obj(name=identifier, clazz=clazz)
+        #     self.manager.add_obj(obj)
+        # except NameError:
+        #     pass
         expression = self.visitExpression(ctx.expression())
         builder = self.manager.builder
-        type_specifier = self.type_specifier_to_ir_type(type_specifier)
         variable = builder.alloca(type_specifier, name=identifier)
-        self.manager.scope_stack.add_variable(variable)
+        self.manager.add_variable(variable)
         self.store(expression, variable)
         return variable
 
     def visitVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext,
                                  is_clazz_attribute: bool = False):
-        clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
+        type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        variable = Variable(name=identifier, type_specifier=type_specifier)
+        builder = self.manager.builder
+        variable = builder.alloca(type_specifier, name=identifier)
         self.manager.add_variable(variable)
-        cells: str = ''
-        if ctx.arrayCell():
-            for cell in ctx.arrayCell():
-                cells += cell.getText()
-        if is_clazz_attribute:
-            attribute = Attribute(
-                type_specifier=type_specifier, name=identifier, clazz=clazz
-            )
-            self.manager.current_clazz.add_attribute(attribute)
-        return f'{type_specifier} {identifier}{cells};'
-
-    def type_specifier_to_ir_type(self, type_specifier: str):
-        match type_specifier.split():
-            case 'short', 'int', *ptr_count:
-                t = ir.IntType(16)
-                for _ in ptr_count:
-                    t = ir.PointerType(t)
-                return t
-            case 'long', 'int', *ptr_count:
-                t = ir.IntType(64)
-                for _ in ptr_count:
-                    t = ir.PointerType(t)
-                return t
-            case 'long', *ptr_count:
-                t = ir.IntType(64)
-                for _ in ptr_count:
-                    t = ir.PointerType(t)
-                return t
-            case 'int', *ptr_count:
-                t = ir.IntType(32)
-                for _ in ptr_count:
-                    t = ir.PointerType(t)
-                return t
-            case 'char', *ptr_count:
-                t = ir.IntType(8)
-                for _ in ptr_count:
-                    t = ir.PointerType(t)
-                return t
-            case _:
-                print_error('Type was not recognized!')
+        # cells: str = ''
+        # if ctx.arrayCell():
+        #     for cell in ctx.arrayCell():
+        #         cells += cell.getText()
+        # if is_clazz_attribute:
+        #     attribute = Attribute(
+        #         type_specifier=type_specifier, name=identifier, clazz=clazz
+        #     )
+        #     self.manager.current_clazz.add_attribute(attribute)
+        return variable
 
     def visitFunctionDeclaration(self,
-                                 ctx: CParser.FunctionDeclarationContext
-                                 ) -> Function:
-        _, rtype = self.match_type_specifier(ctx.typeSpecifier())
+                                 ctx: CParser.FunctionDeclarationContext):
+        rtype = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
         # only type specifiers 1st
         ir_args = [arg[0] for arg in args]
-        rtype = self.type_specifier_to_ir_type(rtype)
         func_type = ir.FunctionType(rtype, ir_args)
         func_type.var_arg = var_arg
         func = ir.Function(module, func_type, name=identifier)
@@ -269,16 +247,15 @@ class Visitor(CVisitor):
             _, arg_identifier = args[i]
             if arg_identifier:
                 func.args[i].name = arg_identifier
-        self.manager.scope_stack.add_function(func)
+        self.manager.add_function(func)
         return func
 
     def visitFunctionDefinition(self, ctx: CParser.FunctionDefinitionContext):
-        _, rtype = self.match_type_specifier(ctx.typeSpecifier())
+        rtype = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier().getText()
         args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
         # only type specifiers 1st
         ir_args = [arg[0] for arg in args]
-        rtype = self.type_specifier_to_ir_type(rtype)
         func_type = ir.FunctionType(rtype, ir_args)
         func_type.var_arg = var_arg
         func = ir.Function(module, func_type, name=identifier)
@@ -292,7 +269,7 @@ class Visitor(CVisitor):
 
         self.manager.current_function = func
         scope = Scope(ScopeType.FUNC)
-        self.manager.scope_stack.push(scope)
+        self.manager.push_scope(scope)
         self.visitBlock(ctx.block())
         self.manager.current_function = None
 
@@ -333,8 +310,7 @@ class Visitor(CVisitor):
         return args, var_arg
 
     def visitArg(self, ctx: CParser.ArgContext):
-        clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
-        type_specifier = self.type_specifier_to_ir_type(type_specifier)
+        type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         if ctx.identifier():
             return type_specifier, ctx.identifier().getText()
         return type_specifier, None
@@ -369,7 +345,7 @@ class Visitor(CVisitor):
 
     def visitAssignment(self, ctx: CParser.AssignmentContext):
         identifier: str = (ctx.identifier() or ctx.chainedCall()).getText()
-        variable = self.manager.scope_stack.get_variable(identifier)
+        variable = self.manager.get_variable(identifier)
         expression = self.visitExpression(ctx.expression())
         self.store(expression, variable)
 
@@ -409,7 +385,7 @@ class Visitor(CVisitor):
         for i, v in enumerate(args):
             if isinstance(v, ir.AllocaInstr):
                 args[i] = builder.load(v)
-        func = self.manager.scope_stack.get_function(
+        func = self.manager.get_function(
             ctx.identifier().getText())
         builder.call(func, args)
 
@@ -603,7 +579,7 @@ class Visitor(CVisitor):
 
     def visitIdentifierExpression(self,
                                   ctx: CParser.IdentifierExpressionContext):
-        return self.manager.scope_stack.get_variable(ctx.getText())
+        return self.manager.get_variable(ctx.getText())
 
     def visitChainedCallExpression(self,
                                    ctx: CParser.ChainedCallExpressionContext):

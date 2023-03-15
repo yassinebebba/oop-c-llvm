@@ -7,6 +7,7 @@ declare i32 @"printf"(i8* %".1", ...)
 define i32 @"main"(i32 %"a")
 {
 entry:
+  %"a.1" = alloca i32
   %"x" = alloca i16
   %".3" = trunc i32 45 to i16
   store i16 %".3", i16* %"x"

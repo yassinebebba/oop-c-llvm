@@ -6,6 +6,7 @@
 int printf(char *, ...);
 
 int main(int a) {
+    int a;
     short int x = 45;
     // x = "";
     char * fmt = "%d %s\n(IGNORE need fix null-termination)->";
