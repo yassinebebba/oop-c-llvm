@@ -10,7 +10,7 @@ int main() {
     int a;
     a = x;
     int * t = "abc";
-    char * fmt = "%d %s %d %s\n(IGNORE need fix null-termination)->";
-    printf(fmt, x, t,a, "asdsad");
+    char * fmt = "%d %s %d %s\n(IGNORE need fix null-termination)->" "sada\"sa";
+    printf(fmt, x, t,a, "asdsad" "132");
     return 0;
 }

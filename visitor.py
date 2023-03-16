@@ -547,7 +547,31 @@ class Visitor(CVisitor):
             if constant.INTEGER_CONSTANT():
                 return ir.Constant(ir.IntType(32), ctx.getText())
             if constant.STRING_LITERAL():
-                value = ctx.getText()[1:-1] + '\0'
+                value = ctx.getText()
+
+                chunks: list[str] = []
+                temp: str = ''
+                inside = False
+
+                for i in value:
+                    if i == '"':
+                        try:
+                            if temp[-1] == '\\':
+                                temp += i
+                                continue
+                        except IndexError:
+                            pass
+                        if not inside:
+                            inside = True
+                        else:
+                            inside = False
+                            chunks.append(temp)
+                            temp = ''
+                        continue
+                    if inside:
+                        temp += i
+
+                value = ''.join(chunks) + '\0'
                 value = value.replace('\\n', '\n')
                 string_array = ir.GlobalVariable(
                     module,
@@ -560,28 +584,49 @@ class Visitor(CVisitor):
                 string_array.initializer = ir.Constant(
                     ir.ArrayType(ir.IntType(8), len(value)),
                     bytearray(value.encode()))
-                # val  = ir.Constant(
-                #         ir.ArrayType(ir.IntType(8), len(value)),
-                #         bytearray(value.encode("utf8")))
 
-                # fmt_str_ptr = builder.bitcast(str_ptr, ir.IntType(8))
                 return string_array
         else:
             if constant.INTEGER_CONSTANT():
                 return ir.Constant(ir.IntType(32), ctx.getText())
             if constant.STRING_LITERAL():
-                value = ctx.getText()[1:-1] + '\0'
+                value = ctx.getText()
+                chunks: list[str] = []
+                temp: str = ''
+                inside = False
+
+                for i in value:
+                    if i == '"':
+                        try:
+                            if temp[-1] == '\\':
+                                temp += i
+                                continue
+                        except IndexError:
+                            pass
+                        if not inside:
+                            inside = True
+                        else:
+                            inside = False
+                            chunks.append(temp)
+                            temp = ''
+                        continue
+                    if inside:
+                        temp += i
+
+                value = ''.join(chunks) + '\0'
                 value = value.replace('\\n', '\n')
                 string_array = ir.GlobalVariable(
                     module,
                     ir.ArrayType(ir.IntType(8), len(value)),
                     name=self.manager.slc,
                 )
-                string_array.linkage = 'internal'
+                string_array.unnamed_addr = True
+                string_array.linkage = 'private'
                 string_array.global_constant = True
                 string_array.initializer = ir.Constant(
                     ir.ArrayType(ir.IntType(8), len(value)),
                     bytearray(value.encode()))
+
                 return string_array
 
     def visitIdentifierExpression(self,

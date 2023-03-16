@@ -230,8 +230,8 @@ INCLUDE_DIRECTIVE
      //   -> channel(HIDDEN)
     ;
 
-STRING_LITERAL: '"' ~('"')* '"';
-CHAR_CONSTANT: '\'' ~('\'')* '\'';
+STRING_LITERAL: '"' (~('"') | '\\"')* '"';
+CHAR_CONSTANT: '\'' (~('\'') | '\'')* '\'';
 INTEGER_CONSTANT: '0' | [1-9][0-9]*;
 FLOAT_CONSTANT
     : [0-9]+ DOT [0-9]* EXPONENT?
