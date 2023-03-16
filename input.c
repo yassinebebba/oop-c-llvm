@@ -6,9 +6,11 @@
 int printf(char *, ...);
 
 int main() {
-    short int x = 45;
+    short int x = -12;
+    int a;
+    a = x;
     int * t = "abc";
-    char * fmt = "%d %s %s\n(IGNORE need fix null-termination)->";
-    printf(fmt, x, t, "asdsad");
+    char * fmt = "%d %s %d %s\n(IGNORE need fix null-termination)->";
+    printf(fmt, x, t,a, "asdsad");
     return 0;
 }

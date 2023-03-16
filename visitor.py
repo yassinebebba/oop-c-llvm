@@ -192,8 +192,14 @@ class Visitor(CVisitor):
                                         f'\'char[{value.value_type.count}]\'')
                     else:
                         # handle type casting
-                        trunc_val = builder.trunc(value, ptr.type.pointee)
-                        builder.store(trunc_val, ptr)
+                        if isinstance(value, ir.AllocaInstr):
+                            sext_val = builder.sext(
+                                builder.load(value),
+                                ptr.type.pointee)
+                            builder.store(sext_val, ptr)
+                        else:
+                            trunc_val = builder.trunc(value, ptr.type.pointee)
+                            builder.store(trunc_val, ptr)
             else:
                 print('not allocated')
 
