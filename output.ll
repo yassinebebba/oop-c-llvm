@@ -4,6 +4,8 @@ target datalayout = ""
 
 declare i32 @"printf"(i8* %".1", ...)
 
+@"T" = dso_local global i32 1
+@"d" = dso_local global i8 0
 define i32 @"main"()
 {
 entry:

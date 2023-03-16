@@ -5,6 +5,9 @@
 //const int d = 0;
 int printf(char *, ...);
 
+int T = 1;
+char d;
+
 int main() {
     short int x = -12;
     int a;

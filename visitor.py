@@ -215,30 +215,47 @@ class Visitor(CVisitor):
         # except NameError:
         #     pass
         expression = self.visitExpression(ctx.expression())
-        builder = self.manager.builder
-        variable = builder.alloca(type_specifier, name=identifier)
-        self.manager.add_variable(variable)
-        self.store(expression, variable)
-        return variable
+        if self.manager.scope_stack.is_global_scope():
+            variable = ir.GlobalVariable(module, type_specifier,
+                                         name=identifier)
+            variable.initializer = expression
+            variable.linkage = 'dso_local'
+            self.manager.add_variable(variable)
+            return variable
+        else:
+            builder = self.manager.builder
+            variable = builder.alloca(type_specifier, name=identifier)
+            self.manager.add_variable(variable)
+            self.store(expression, variable)
+            return variable
 
     def visitVariableDeclaration(self,
                                  ctx: CParser.VariableDeclarationContext,
                                  is_clazz_attribute: bool = False):
         type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        builder = self.manager.builder
-        variable = builder.alloca(type_specifier, name=identifier)
-        self.manager.add_variable(variable)
-        # cells: str = ''
-        # if ctx.arrayCell():
-        #     for cell in ctx.arrayCell():
-        #         cells += cell.getText()
-        # if is_clazz_attribute:
-        #     attribute = Attribute(
-        #         type_specifier=type_specifier, name=identifier, clazz=clazz
-        #     )
-        #     self.manager.current_clazz.add_attribute(attribute)
-        return variable
+        if self.manager.scope_stack.is_global_scope():
+            variable = ir.GlobalVariable(module, type_specifier,
+                                         name=identifier)
+            variable.initializer = ir.Constant(type_specifier, 0)
+            variable.linkage = 'dso_local'
+            self.manager.add_variable(variable)
+            return variable
+        else:
+            builder = self.manager.builder
+            variable = builder.alloca(type_specifier, name=identifier)
+            self.manager.add_variable(variable)
+            # cells: str = ''
+            # if ctx.arrayCell():
+            #     for cell in ctx.arrayCell():
+            #         cells += cell.getText()
+            # if is_clazz_attribute:
+            #     attribute = Attribute(
+            #         type_specifier=type_specifier,
+            #         name=identifier, clazz=clazz
+            #     )
+            #     self.manager.current_clazz.add_attribute(attribute)
+            return variable
 
     def visitFunctionDeclaration(self,
                                  ctx: CParser.FunctionDeclarationContext):
