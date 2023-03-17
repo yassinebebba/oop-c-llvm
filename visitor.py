@@ -650,8 +650,8 @@ class Visitor(CVisitor):
     def visitChainedCallExpression(self,
                                    ctx: CParser.ChainedCallExpressionContext):
         if ctx.unarySign():
-            return f'{ctx.unarySign().getText()}' \
-                   f'{self.visitChainedCall(ctx.chainedCall())}'
+            return self.manager.builder.neg(
+                self.visitChainedCall(ctx.chainedCall()))
         return self.visitChainedCall(ctx.chainedCall())
 
     def visitEqExpression(self, ctx: CParser.EqExpressionContext):
@@ -1019,6 +1019,13 @@ class Visitor(CVisitor):
         ir_args = [arg[0] for arg in args]
         method_type = ir.FunctionType(rtype, ir_args)
         method_type.var_arg = var_arg
+
+        method_ptr = ir.PointerType(method_type)
+        method_ptr.name = alias
+        clazz.elements.append(method_ptr)
+        clazz.counter += 1
+        clazz.elements[clazz.counter].index = clazz.counter
+
         method = ir.Function(module, method_type, alias)
 
         for i in range(len(method.args)):

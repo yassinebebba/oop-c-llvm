@@ -2,7 +2,7 @@
 target triple = "x86_64-redhat-linux-gnu"
 target datalayout = ""
 
-%"Foo" = type {i32, i32}
+%"Foo" = type {i32, i32, void (%"Foo"*, i32)*}
 declare i32 @"printf"(i8* %".1", ...)
 
 @"T" = dso_local global i32 1
