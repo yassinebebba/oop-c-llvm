@@ -6,10 +6,6 @@ from core.CParser import CParser
 from manager import Manager
 from manager import Scope
 from manager import ScopeType
-from manager import Clazz
-from manager import Function
-from manager import Obj
-from manager import Arg
 import llvmlite.ir as ir
 
 # Create a module
@@ -96,6 +92,11 @@ class Visitor(CVisitor):
                     type_specifier.append(_identifier)
 
         match type_specifier:
+            case 'void', *ptr_count:
+                t = ir.VoidType()
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
             case 'char', *ptr_count:
                 t = ir.IntType(8)
                 for _ in ptr_count:
@@ -121,8 +122,10 @@ class Visitor(CVisitor):
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
-            case _:
-                print(type_specifier)
+            case clazz_name:
+                clazz_name = clazz_name[0]
+                if cls := self.manager.get_clazz(clazz_name):
+                    return cls
                 print_error('Type was not recognized!')
 
     def getPointerCount(self, ptr_type):
@@ -368,10 +371,31 @@ class Visitor(CVisitor):
         return f'{type_specifier} {identifier}: {bit_count};'
 
     def visitAssignment(self, ctx: CParser.AssignmentContext):
-        identifier: str = (ctx.identifier() or ctx.chainedCall()).getText()
-        variable = self.manager.get_variable(identifier)
-        expression = self.visitExpression(ctx.expression())
-        self.store(expression, variable)
+        if ctx.identifier():
+            identifier: str = ctx.identifier().getText()
+            variable = self.manager.get_variable(identifier)
+            expression = self.visitExpression(ctx.expression())
+            self.store(expression, variable)
+        elif ctx.chainedCall():
+            chain: CParser.ChainedCallContext = ctx.chainedCall()
+            identifier: str = chain.identifier(0).getText()
+            obj = self.manager.get_variable(identifier)
+            builder = self.manager.builder
+            elements = obj.type.pointee.elements
+            attribute = None
+            for name in chain.identifier()[1:]:
+                for element in elements:
+                    if element.name == name.getText():
+                        attribute = builder.gep(obj, [i32(0), i32(element.index)])
+                        break
+                else:
+                    print_error(f'AttributeError: \'{obj.name}\' object has'
+                                f' no attribute \'{name.getText()}\'')
+                    exit(1)
+            expression = self.visitExpression(ctx.expression())
+            self.store(expression, attribute)
+        else:
+            print_error('Assignment was not recognized')
 
     def visitInplaceAssignment(self, ctx: CParser.InplaceAssignmentContext):
         operator: str = (ctx.STAR_ASSIGN()
@@ -736,15 +760,17 @@ class Visitor(CVisitor):
 
     def visitClassDefinition(self, ctx: CParser.ClassDefinitionContext):
         identifier: str = ctx.identifier().getText()
-        clazz: Clazz = Clazz(
-            name=identifier,
-            alias=None,
-        )
-        self.manager.current_clazz = clazz
+        clazz = module.context.get_identified_type(identifier)
+        # using a list instead of set_body() bc it returns a tuple
+        # so I cannot modify it later on unless I copy it
+        clazz.elements = []
         self.manager.add_clazz(clazz)
-        attributes, methods, method_declarations = self.visitClassBlock(
-            ctx.classBlock())
-        raise NotImplementedError
+        # count struct elements padding in memory
+        clazz.counter = -1
+        self.manager.current_clazz = clazz
+        self.visitClassBlock(ctx.classBlock())
+        # attributes, methods, method_declarations = self.visitClassBlock(
+        #     ctx.classBlock())
 
     def getFunctionPointer(self, class_name: str,
                            function: CParser.ClassMethodContext):
@@ -754,6 +780,7 @@ class Visitor(CVisitor):
             rtype = f'struct {rtype}'
 
         identifier: str = function.identifier().getText()
+        raise NotImplementedError
 
         # struct {class_name} * this: is always the 1st arg
         # except for the constructor bc it creates the object reference
@@ -786,8 +813,8 @@ class Visitor(CVisitor):
 
     def createClassConstructor(self,
                                constructor: CParser.ClassMethodContext | None,
-                               methods: list[Function]):
-
+                               methods):
+        raise NotImplementedError
         clazz_name: str = self.manager.current_clazz.name
         if constructor:
             method_name: str = constructor.identifier().getText()
@@ -850,8 +877,24 @@ class Visitor(CVisitor):
         # args = matches.group('args')
         # return f'{rtype}{alias}{args};'
 
+    def visitClassAttributeDeclaration(self,
+                                       ctx: CParser.ClassAttributeDeclarationContext):
+        clazz = self.manager.current_clazz
+        type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
+        identifier = ctx.identifier().getText()
+        clazz.elements.append(type_specifier)
+        clazz.counter += 1
+        clazz.elements[clazz.counter].index = clazz.counter
+        clazz.elements[clazz.counter].name = identifier
+
     def visitClassBlock(self, ctx: CParser.ClassBlockContext):
-        class_name: str = ctx.parentCtx.identifier().getText()
+        clazz = self.manager.current_clazz
+        for child in ctx.getChildren():
+            match type(child):
+                case CParser.ClassAttributeDeclarationContext:
+                    self.visitClassAttributeDeclaration(child)
+
+        return
         attribute_declarations: list[CParser.VariableDeclarationContext] = []
         attribute_definitions: list[CParser.VariableDefinitionContext] = []
         methods: list[CParser.ClassMethodContext] = []
@@ -885,8 +928,6 @@ class Visitor(CVisitor):
 
         method: CParser.ClassMethodContext
         for method in methods:
-            # print(self.visitFunctionArgs(method.functionArgs()))
-            # print(method.getText())
             method_name = method.identifier().getText()
             if method_name == class_name:
                 constructor = method
@@ -974,100 +1015,119 @@ class Visitor(CVisitor):
                        f'{"{"}\n {block}\n{"}"}'
 
     def visitClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
-        clazz, type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
-        class_name: str = type_specifier.split()[0]  # to remove the pointer
-        identifier: str = ctx.identifier().getText()
-        args = self.visitFunctionCallArgs(
-            ctx.functionCall().functionCallArgs())
-        obj: Obj = Obj(name=identifier, clazz=clazz)
-        self.manager.add_obj(obj)
-        result: str = f'{type_specifier} {identifier} =' \
-                      f' {class_name}{class_name}({args});'
-        return result
+        #TODO: fix this
+        clazz = self.visitTypeSpecifier(ctx.typeSpecifier())
+        identifier: str = ctx.identifier(0).getText()
+        builder = self.manager.builder
+        obj = builder.alloca(clazz, name=identifier)
+        x = builder.gep(obj, [i32(0), i32(0)], inbounds=True)
+        builder.store(i32(10), x)
+        self.manager.add_variable(obj)
+        # builder.store(clazz(1), obj)
+        # clazz(1).
+        # class_name: str = type_specifier.split()[0]  # to remove the pointer
+        # args = self.visitFunctionCallArgs(
+        #     ctx.functionCall().functionCallArgs())
+        # obj: Obj = Obj(name=identifier, clazz=clazz)
+        # self.manager.add_obj(obj)
+        # result: str = f'{type_specifier} {identifier} =' \
+        #               f' {class_name}{class_name}({args});'
+        return obj
 
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
         obj_name: str = ctx.identifier(0).getText()
-        obj: Obj = self.manager.get_obj(obj_name)
-        if obj is not None:
-            result: str = ''
-            # this is to check if you are accessing nested attributes
-            # so it would reference it like this:
-            # Pizza * pizza = new Pizza()
-            # pizza->topping->get_name() should be
-            # pizza->topping.get_name(pizza->topping)
-            # instead of pizza->topping.get_name(topping)
-            # which might not exist outside the class
-            is_nested: bool = False
-            original_ref: str = obj_name
-            for child in ctx.getChildren():
-                match type(child):
-                    case CParser.FunctionCallExpressionContext:
-                        method: Function = obj.clazz.get_method(
-                            child.identifier().getText())
-                        args = self.visitFunctionCallArgs(
-                            child.functionCallArgs())
-                        if args:
-                            if is_nested:
-                                result += f'{method.alias}({original_ref}' \
-                                          f'->{obj.name}, {args})'
-                            else:
-                                result += f'{method.alias}({obj.name}, {args})'
-                        else:
-                            if is_nested:
-                                result += f'{method.alias}' \
-                                          f'({original_ref}->{obj.name})'
-                            else:
-                                result += f'{method.alias}({obj.name})'
-                    case CParser.IdentifierContext:
-                        try:
-                            attribute = obj.clazz.get_attribute(
-                                child.getText())
-                            if attribute.clazz:
-                                # this means it is an object attribute
-                                obj = attribute
-                                is_nested = True
-                        except NameError:
-                            pass
-                        result += child.getText()
-                    case _:
-                        result += child.getText()
-            return result
-        elif self.manager.current_function:
-            result: str = ''
-            if obj_name == 'this':
-                clazz: Clazz = self.manager.current_clazz
-                for child in ctx.getChildren():
-                    match type(child):
-                        case CParser.FunctionCallContext:
-                            method: Function = clazz.get_method(
-                                child.identifier().getText())
-                            args: str = self.visitFunctionCallArgs(
-                                child.functionCallArgs())
-                            if args:
-                                result += f'{method.alias}({obj.name}, {args})'
-                            else:
-                                result += f'{method.alias}({obj.name})'
-                        case CParser.IdentifierContext:
-                            # if not function call it must be an attribute
-                            result += child.getText()
-                        case _:
-                            result += child.getText()
-                return result
-            else:
-                arg: Arg = self.manager.current_function.get_arg(obj_name)
-                for child in ctx.getChildren():
-                    if isinstance(child,
-                                  CParser.FunctionCallExpressionContext):
-                        method: Function = arg.clazz.get_method(
-                            child.identifier().getText())
-                        args = self.visitFunctionCallArgs(
-                            child.functionCallArgs())
-                        if args:
-                            result += f'{method.alias}({obj_name}, {args})'
-                        else:
-                            result += f'{method.alias}({obj_name})'
-                    else:
-                        result += child.getText()
-                return result
-        else:
-            return ctx.getText()
+        obj = self.manager.get_variable(obj_name)
+        builder = self.manager.builder
+        attribute = None
+        elements = obj.type.pointee.elements
+
+        for name in ctx.identifier()[1:]:
+            for element in elements:
+                if element.name == name.getText():
+                    attribute =  builder.gep(obj, [i32(0), i32(element.index)])
+
+        return builder.load(attribute)
+
+        # if obj is not None:
+        #     result: str = ''
+        #     # this is to check if you are accessing nested attributes
+        #     # so it would reference it like this:
+        #     # Pizza * pizza = new Pizza()
+        #     # pizza->topping->get_name() should be
+        #     # pizza->topping.get_name(pizza->topping)
+        #     # instead of pizza->topping.get_name(topping)
+        #     # which might not exist outside the class
+        #     is_nested: bool = False
+        #     original_ref: str = obj_name
+        #     for child in ctx.getChildren():
+        #         match type(child):
+        #             case CParser.FunctionCallExpressionContext:
+        #                 method: Function = obj.clazz.get_method(
+        #                     child.identifier().getText())
+        #                 args = self.visitFunctionCallArgs(
+        #                     child.functionCallArgs())
+        #                 if args:
+        #                     if is_nested:
+        #                         result += f'{method.alias}({original_ref}' \
+        #                                   f'->{obj.name}, {args})'
+        #                     else:
+        #                         result += f'{method.alias}({obj.name}, {args})'
+        #                 else:
+        #                     if is_nested:
+        #                         result += f'{method.alias}' \
+        #                                   f'({original_ref}->{obj.name})'
+        #                     else:
+        #                         result += f'{method.alias}({obj.name})'
+        #             case CParser.IdentifierContext:
+        #                 try:
+        #                     attribute = obj.clazz.get_attribute(
+        #                         child.getText())
+        #                     if attribute.clazz:
+        #                         # this means it is an object attribute
+        #                         obj = attribute
+        #                         is_nested = True
+        #                 except NameError:
+        #                     pass
+        #                 result += child.getText()
+        #             case _:
+        #                 result += child.getText()
+        #     return result
+        # elif self.manager.current_function:
+        #     result: str = ''
+        #     if obj_name == 'this':
+        #         clazz: Clazz = self.manager.current_clazz
+        #         for child in ctx.getChildren():
+        #             match type(child):
+        #                 case CParser.FunctionCallContext:
+        #                     method: Function = clazz.get_method(
+        #                         child.identifier().getText())
+        #                     args: str = self.visitFunctionCallArgs(
+        #                         child.functionCallArgs())
+        #                     if args:
+        #                         result += f'{method.alias}({obj.name}, {args})'
+        #                     else:
+        #                         result += f'{method.alias}({obj.name})'
+        #                 case CParser.IdentifierContext:
+        #                     # if not function call it must be an attribute
+        #                     result += child.getText()
+        #                 case _:
+        #                     result += child.getText()
+        #         return result
+        #     else:
+        #         arg: Arg = self.manager.current_function.get_arg(obj_name)
+        #         for child in ctx.getChildren():
+        #             if isinstance(child,
+        #                           CParser.FunctionCallExpressionContext):
+        #                 method: Function = arg.clazz.get_method(
+        #                     child.identifier().getText())
+        #                 args = self.visitFunctionCallArgs(
+        #                     child.functionCallArgs())
+        #                 if args:
+        #                     result += f'{method.alias}({obj_name}, {args})'
+        #                 else:
+        #                     result += f'{method.alias}({obj_name})'
+        #             else:
+        #                 result += child.getText()
+        #         return result
+        # else:
+        #     return ctx.getText()

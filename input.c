@@ -7,13 +7,18 @@ int printf(char *, ...);
 
 int T = 1;
 char d;
+class Foo {
+    int i;
+    int d;
+    void Foo(int i) {
+        this.i = i;
+    }
+}
 
 int main() {
-    short int x = -12;
-    int a;
-    a = x;
-    int * t = "abc";
-    char * fmt = "%d %s %d %s\n(IGNORE need fix null-termination)->" "sada\"sa";
-    printf(fmt, x, t,a, "asdsad" "132");
+    Foo x = new Foo(1);
+    x.d = 20;
+    char * fmt = "%d\n";
+    printf(fmt, x.d);
     return 0;
 }

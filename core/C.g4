@@ -199,17 +199,21 @@ condition
 classDefinition
     : CLASS identifier classBlock
     ;
+
+classAttributeDefinition: typeSpecifier identifier ASSIGN expression SEMI;
+classAttributeDeclaration: typeSpecifier identifier arrayCell* SEMI;
+
 classBlock
     : LC (
-        variableDefinition
-      | variableDeclaration
+        classAttributeDefinition
+      | classAttributeDeclaration
       | classMethod
      )* RC
    ;
 
 classMethod: typeSpecifier identifier LP functionArgs? RP block;
 
-classInstantiation: typeSpecifier identifier ASSIGN NEW functionCall;
+classInstantiation: typeSpecifier identifier ASSIGN NEW identifier LP functionCallArgs? RP SEMI;
 // END OOP SECTION
 
 block

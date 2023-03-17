@@ -467,6 +467,24 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#classAttributeDefinition.
+    def enterClassAttributeDefinition(self, ctx:CParser.ClassAttributeDefinitionContext):
+        pass
+
+    # Exit a parse tree produced by CParser#classAttributeDefinition.
+    def exitClassAttributeDefinition(self, ctx:CParser.ClassAttributeDefinitionContext):
+        pass
+
+
+    # Enter a parse tree produced by CParser#classAttributeDeclaration.
+    def enterClassAttributeDeclaration(self, ctx:CParser.ClassAttributeDeclarationContext):
+        pass
+
+    # Exit a parse tree produced by CParser#classAttributeDeclaration.
+    def exitClassAttributeDeclaration(self, ctx:CParser.ClassAttributeDeclarationContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#classBlock.
     def enterClassBlock(self, ctx:CParser.ClassBlockContext):
         pass

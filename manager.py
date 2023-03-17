@@ -12,108 +12,13 @@ class ScopeType(Enum):
 def print_error(error: str):
     print(colored(error, 'red'))
 
-
-class Arg:
-    def __init__(self, type_specifier: str, name: str | None,
-                 clazz: 'Clazz' or None):
-        self.type_specifier = type_specifier
-        self.name = name
-        self.clazz: Clazz | None = clazz
-
-    def __repr__(self):
-        return f'{type(self).__name__}' \
-               f'(type={self.type_specifier}, name={self.name})'
-
-
-class Function:
-    def __init__(self, rtype, name, alias, args):
-        self.rtype = rtype
-        self.name = name
-        self.alias = alias
-        self.args: list[Arg] = args
-
-    def add_arg(self, arg: Arg):
-        self.args.append(arg)
-
-    def get_arg(self, obj_name):
-        for arg in self.args:
-            if arg.name == obj_name:
-                return arg
-        else:
-            print_error(f'Arg {obj_name} does not exist')
-
-    def __repr__(self):
-        return f'{type(self).__name__}' \
-               f'(rtype={self.rtype},' \
-               f' name={self.name},' \
-               f' alias={self.alias},' \
-               f' args={self.args})'
-
-
-class Attribute:
-    def __init__(self, name, type_specifier, clazz: 'Clazz' or None):
-        self.type_specifier: str = type_specifier
-        self.name: str = name
-        self.clazz: Clazz | None = clazz
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-
-class Clazz:
-    def __init__(self, name, alias):
-        self.name: str = name
-        self.alias: str = alias
-        self.constructor: Function | None = None
-        self.methods: list[Function] = []
-        self.attributes: list[Attribute] = []
-
-    def add_method(self, method: Function):
-        self.methods.append(method)
-
-    def add_attribute(self, attribute: Attribute):
-        if attribute in self.attributes:
-            print_error(f'error: duplicate member `{attribute.name}`')
-        self.attributes.append(attribute)
-
-    def get_attribute(self, name) -> Attribute:
-        for attribute in self.attributes:
-            if attribute.name == name:
-                return attribute
-        print(f'Attribute {name} does not exist!')
-
-    def get_method(self, name) -> Function:
-        for method in self.methods:
-            if method.name == name:
-                return method
-        print_error(f'Method {name} does not exist!')
-
-
-class Obj:
-    def __init__(self, name, clazz: Clazz):
-        self.name: str = name
-        # should this be an instance of a class?
-        self.clazz: Clazz = clazz
-
-    def __repr__(self):
-        return f'{type(self).__name__}(name={self.name}, class={self.clazz})'
-
-
-class Variable:
-    def __init__(self, name, type_specifier, ir_type):
-        self.name: str = name
-        self.clazz_name: str = type_specifier
-        self.ir_type = ir_type
-
-
 class Scope:
     def __init__(self, scope_type: ScopeType):
         self.parent: Scope | None = None
         self.scope_type: ScopeType = scope_type
-        self.functions: list[Function] = []
+        self.functions = []
         self.variables = []
-        self.clazzes: list[Clazz] = []
-        self.objs: list[Obj] = []
+        self.clazzes = []
         self.scopes: list[Scope] = []
         # a scope has vars, objs, functions, methods and attributes
 
@@ -125,6 +30,9 @@ class Scope:
 
     def add_function(self, func):
         self.functions.append(func)
+
+    def add_clazz(self, clazz):
+        self.clazzes.append(clazz)
 
 
 class GlobalScope(Scope):
@@ -172,16 +80,27 @@ class ScopeStack:
         else:
             print_error(f'`{identifier}` has never been declared!')
 
+    def add_clazz(self, clazz):
+        self.stack[-1].add_clazz(clazz)
+
+    def get_clazz(self, identifier):
+        # this need optimisation meh not bothered for now
+        for lvl, scope in enumerate(self.stack[::-1]):
+            for _, clazz in enumerate(scope.clazzes[::-1]):
+                if clazz.name == identifier:
+                    return clazz
+        else:
+            print_error(f'`{identifier}` has never been declared!')
+
 
 class Manager:
     def __init__(self):
         # this is for nested scope push and pop
         self.scope_stack: ScopeStack = ScopeStack()
-        self.functions: list[Function] = []
-        self.variables: list[Variable] = []
-        self.clazzes: list[Clazz] = []
-        self.objs: list[Obj] = []
-        self.current_clazz: Clazz | None = None
+        self.functions = []
+        self.variables = []
+        self.clazzes = []
+        self.current_clazz = None
         self.current_function: ir.Function | None = None
         self.builder: ir.IRBuilder | None = None
 
@@ -202,23 +121,11 @@ class Manager:
     def push_scope(self, scope):
         self.scope_stack.push(scope)
 
-    def add_clazz(self, clazz: Clazz):
-        self.clazzes.append(clazz)
+    def add_clazz(self, clazz):
+        self.scope_stack.add_clazz(clazz)
 
-    def get_clazz(self, name):
-        for clazz in self.clazzes:
-            if clazz.name == name:
-                return clazz
-        print_error(f'Class {name} does not exist!')
-
-    def add_obj(self, obj: Obj) -> None:
-        self.objs.append(obj)
-
-    def get_obj(self, name) -> Obj | None:
-        for obj in self.objs:
-            if obj.name == name:
-                return obj
-        return None
+    def get_clazz(self, identifier):
+        return self.scope_stack.get_clazz(identifier)
 
     def get_variable(self, identifier):
         return self.scope_stack.get_variable(identifier)

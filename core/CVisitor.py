@@ -264,6 +264,16 @@ class CVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by CParser#classAttributeDefinition.
+    def visitClassAttributeDefinition(self, ctx:CParser.ClassAttributeDefinitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by CParser#classAttributeDeclaration.
+    def visitClassAttributeDeclaration(self, ctx:CParser.ClassAttributeDeclarationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by CParser#classBlock.
     def visitClassBlock(self, ctx:CParser.ClassBlockContext):
         return self.visitChildren(ctx)
