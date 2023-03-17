@@ -128,42 +128,9 @@ class Visitor(CVisitor):
                     return cls
                 print_error('Type was not recognized!')
 
-    def getPointerCount(self, ptr_type):
-        ptr_count = 0
-        while isinstance(ptr_type, ir.PointerType):
-            ptr_count += 1
-            ptr_type = ptr_type.pointee
-        return ptr_count
-
-    @staticmethod
-    def isInt(value):
-        return value.type in [i8, i16, i32, i64]
-
-    @staticmethod
-    def isIntPtr(value):
-        return value.type in [
-            i8.as_pointer(),
-            i16.as_pointer(),
-            i32.as_pointer(),
-            i64.as_pointer(),
-        ]
-
-    @staticmethod
-    def isIntPtrPtr(value):
-        # print(value.type, self.getPointerCount(value.type))
-        return value.type in [
-            i8.as_pointer().as_pointer(),
-            i16.as_pointer().as_pointer(),
-            i32.as_pointer().as_pointer(),
-            i64.as_pointer().as_pointer(),
-        ]
-
-    def isString(self, value):
-        return value.type == i8.as_pointer().as_pointer()
-
     def store(self, value, ptr):
         """
-        keep it simple with only 1 pts deep
+        keep it simple with only 1 ptr deep
         everything should be hardcoded for now
         """
         builder = self.manager.builder
@@ -209,14 +176,6 @@ class Visitor(CVisitor):
     def visitVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
         type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
-        # check if this is a class object variable definition
-        # clazz_name, *_ = type_specifier.split()
-        # try:
-        #     clazz = self.manager.get_clazz(clazz_name)
-        #     obj: Obj = Obj(name=identifier, clazz=clazz)
-        #     self.manager.add_obj(obj)
-        # except NameError:
-        #     pass
         expression = self.visitExpression(ctx.expression())
         if self.manager.scope_stack.is_global_scope():
             variable = ir.GlobalVariable(module, type_specifier,
@@ -248,16 +207,6 @@ class Visitor(CVisitor):
             builder = self.manager.builder
             variable = builder.alloca(type_specifier, name=identifier)
             self.manager.add_variable(variable)
-            # cells: str = ''
-            # if ctx.arrayCell():
-            #     for cell in ctx.arrayCell():
-            #         cells += cell.getText()
-            # if is_clazz_attribute:
-            #     attribute = Attribute(
-            #         type_specifier=type_specifier,
-            #         name=identifier, clazz=clazz
-            #     )
-            #     self.manager.current_clazz.add_attribute(attribute)
             return variable
 
     def visitFunctionDeclaration(self,
@@ -343,7 +292,7 @@ class Visitor(CVisitor):
         return type_specifier, None
 
     def visitStructDeclaration(self, ctx: CParser.StructDeclarationContext):
-        return f'struct {ctx.identifier().getText()};'
+        raise NotImplementedError
 
     def visitStructDefinition(self, ctx: CParser.StructDefinitionContext):
         self.visitStructBlock(ctx.structBlock())
@@ -436,8 +385,6 @@ class Visitor(CVisitor):
         if ctx.unarySign():
             unary += ctx.unarySign().getText()
         return self.visitFunctionCall(ctx.functionCallExpression())
-        # return f'{unary}{self.visitFunctionCal
-        # l(ctx.functionCallExpression())}'
 
     def visitFunctionCall(self, ctx: CParser.FunctionCallContext):
         builder = self.manager.builder
@@ -462,12 +409,12 @@ class Visitor(CVisitor):
 
     def visitFunctionReturn(self, ctx: CParser.FunctionReturnContext):
         expression = self.visitExpression(ctx.expression())
+        func = self.manager.current_function
         if expression is None:
             self.manager.builder.ret_void()
-        elif self.manager.current_function.return_value.type == expression.type:
+        elif func.return_value.type == expression.type:
             self.manager.builder.ret(expression)
-        elif (self.manager.current_function.return_value.type.as_pointer()
-              == expression.type):
+        elif func.return_value.type.as_pointer() == expression.type:
             val = self.manager.builder.load(expression)
             self.manager.builder.ret(val)
         else:
@@ -531,7 +478,7 @@ class Visitor(CVisitor):
                     result += ' ' + child.getText()
         return result
 
-    def visitExpression(self, ctx: CParser.ExpressionContext):
+    def visitExpression(self, ctx):
         match type(ctx):
             case CParser.IdentifierExpressionContext:
                 return self.visitIdentifierExpression(ctx)
@@ -776,9 +723,6 @@ class Visitor(CVisitor):
                 case CParser.ClassInstantiationContext:
                     self.visitClassInstantiation(child)
 
-    def exitBlock(self, ctx: CParser.BlockContext):
-        pass
-
     def visitClassDefinition(self, ctx: CParser.ClassDefinitionContext):
         identifier: str = ctx.identifier().getText()
         clazz = module.context.get_identified_type(identifier)
@@ -792,116 +736,10 @@ class Visitor(CVisitor):
         scope = Scope(ScopeType.CLAZZ)
         self.manager.scope_stack.push(scope)
         self.visitClassBlock(ctx.classBlock())
-        # attributes, methods, method_declarations = self.visitClassBlock(
-        #     ctx.classBlock())
 
-    def getFunctionPointer(self, class_name: str,
-                           function: CParser.ClassMethodContext):
-        clazz, rtype = self.visitTypeSpecifier(
-            function.typeSpecifier())
-        if clazz:
-            rtype = f'struct {rtype}'
-
-        identifier: str = function.identifier().getText()
-        raise NotImplementedError
-
-        # struct {class_name} * this: is always the 1st arg
-        # except for the constructor bc it creates the object reference
-        if function.identifier().getText() == class_name:
-            args: list[Arg] = []
-        else:
-            this = f'struct {class_name} *'
-            args: list[Arg] = [
-                Arg(name=None, type_specifier=this, clazz=clazz)]
-        if function.functionArgs():
-            for arg in function.functionArgs().getChildren():
-                try:
-                    clazz, type_specifier = self.visitTypeSpecifier(
-                        arg.typeSpecifier())
-                    if clazz:
-                        type_specifier = f'struct {type_specifier}'
-                        arg = Arg(name=None, type_specifier=type_specifier,
-                                  clazz=clazz)
-                    else:
-                        arg = Arg(name=None, type_specifier=type_specifier,
-                                  clazz=clazz)
-                    args.append(arg)
-                except AttributeError:
-                    # skip, it is not a func arg
-                    continue
-        new_args: list[str] = []
-        for arg in args:
-            new_args.append(arg.type_specifier)
-        return f'{rtype} (*{class_name}{identifier})({", ".join(new_args)});'
-
-    def createClassConstructor(self,
-                               constructor: CParser.ClassMethodContext | None,
-                               methods):
-        raise NotImplementedError
-        clazz_name: str = self.manager.current_clazz.name
-        if constructor:
-            method_name: str = constructor.identifier().getText()
-            method_alias: str = f'{clazz_name}{method_name}'
-            args, args_string = self.visitFunctionArgs(
-                constructor.functionArgs())
-            # args_string = ', '.join([f'{clazz_name} * this', args_string])
-
-            method: Function = Function(
-                rtype='void',
-                name=method_name,
-                alias=method_alias,
-                args=args,
-            )
-            self.manager.current_clazz.constructor = method
-            self.manager.current_clazz.add_method(method)
-            method_block: str = ''
-            # `this` malloc is implicit bc it has to be hmmm
-            method_block += f'{clazz_name}* this =' \
-                            f' malloc(sizeof({clazz_name}));\n'
-            method_block += f'this->{clazz_name * 2} = ' \
-                            f'&{clazz_name * 2};\n'
-            for method in methods:
-                if method.name == clazz_name:
-                    continue
-                name: str = method.name
-                new_name: str = f'{clazz_name}{name}'
-                method_block += f'this->{new_name} = &{new_name};\n'
-            method_block += self.visitBlock(constructor.block())
-            return f'{clazz_name}* {method_alias}({args_string})' \
-                   f' {"{"}\n{method_block}\n{"}"}'
-
-        else:
-            return f'{clazz_name}* {clazz_name}{clazz_name}' \
-                   f'() {"{"}\n// Not implemented\n{"}"}'
-
-    def createClassStringRepresentation(self, clazz_name):
-        string = f'<{clazz_name} object at 0xFFFFFFF>\n'
-        result: str = f'char * {clazz_name}' \
-                      f'toString({clazz_name} * this) {"{"}\n' \
-                      f'\tchar * str = ' \
-                      f'malloc(sizeof(char *) * {len(string)});\n' \
-                      f'\tsprintf(str, ' \
-                      f'"<{clazz_name} object at %p>\\n", this);\n' \
-                      f'\treturn str;\n' \
-                      '}\n'
-        return result
-
-    def methodDefinitionToMethodDeclaretion(self,
-                                            class_name: str,
-                                            method: CParser.ClassMethodContext
-                                            ):
-        pass
-        # ptr = self.getFunctionPointer(class_name, method)
-        # matches = re.match(
-        #     '(?P<rtype>.*?)\(\*(?P<alias>.*)\)(?P<args>\(.*\))'
-        #     , ptr)
-        # rtype = matches.group('rtype')
-        # alias = matches.group('alias')
-        # args = matches.group('args')
-        # return f'{rtype}{alias}{args};'
-
-    def visitClassAttributeDeclaration(self,
-                                       ctx: CParser.ClassAttributeDeclarationContext):
+    def visitClassAttributeDeclaration(
+            self,
+            ctx: CParser.ClassAttributeDeclarationContext):
         clazz = self.manager.current_clazz
         type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
@@ -911,103 +749,12 @@ class Visitor(CVisitor):
         clazz.elements[clazz.counter].name = identifier
 
     def visitClassBlock(self, ctx: CParser.ClassBlockContext):
-        clazz = self.manager.current_clazz
         for child in ctx.getChildren():
             match type(child):
                 case CParser.ClassAttributeDeclarationContext:
                     self.visitClassAttributeDeclaration(child)
                 case CParser.ClassMethodContext:
                     self.visitClassMethod(child)
-
-        return
-        attribute_declarations: list[CParser.VariableDeclarationContext] = []
-        attribute_definitions: list[CParser.VariableDefinitionContext] = []
-        methods: list[CParser.ClassMethodContext] = []
-
-        for child in ctx.getChildren():
-            match type(child):
-                case CParser.VariableDeclarationContext:
-                    attribute_declarations.append(child)
-                case CParser.VariableDefinitionContext:
-                    attribute_definitions.append(child)
-                case CParser.ClassMethodContext:
-                    methods.append(child)
-
-        attributes: str = ''
-
-        for attribute in attribute_declarations:
-            self.visitVariableDeclaration(attribute, is_clazz_attribute=True)
-
-        # attribute definition is quite tricky to handle
-        # it has to be split into declaration and initialization
-        # in the class constructor
-        for attribute in attribute_definitions:
-            self.visitVariableDefinition(attribute)
-
-        parsed_methods: str = ''
-        constructor: CParser.ClassMethodContext | None = None
-
-        overridden_magic_methods = {'toString': False}
-
-        clean_methods: list[Function] = []
-
-        method: CParser.ClassMethodContext
-        for method in methods:
-            method_name = method.identifier().getText()
-            if method_name == class_name:
-                constructor = method
-                attributes += self.getFunctionPointer(class_name, constructor)
-                attributes += '\n'
-                continue
-            elif method_name == 'toString':
-                overridden_magic_methods['toString'] = True
-
-            function_pointer = self.getFunctionPointer(class_name, method)
-            attributes += function_pointer
-            attributes += '\n'
-            func, func_string = self.visitClassMethod(method)
-            clean_methods.append(func)
-            parsed_methods += func_string
-            parsed_methods += '\n'
-
-        # MAGIC METHODS GO HERE
-        for k, v in overridden_magic_methods.items():
-            match k, v:
-                case 'toString', False:
-                    # create string representation
-                    # need function pointer
-                    attributes += f'char * (*{class_name}toString)' \
-                                  f'(struct {class_name} *);'
-                    attributes += '\n'
-                    to_string = self.createClassStringRepresentation(
-                        class_name)
-                    parsed_methods += to_string
-                    method: Function = Function(
-                        rtype='char *',
-                        name='toString',
-                        args=Arg(
-                            type_specifier=f'{class_name} *',
-                            name='this',
-                            clazz=self.manager.get_clazz(class_name),
-                        ),
-                        alias=f'{class_name}toString')
-                    clean_methods.append(method)
-                    self.manager.current_clazz.add_method(method)
-
-        # TODO: urgent this has to be all Function instance in class
-        #  constructor
-        parsed_constructor = self.createClassConstructor(constructor,
-                                                         clean_methods)
-        parsed_methods = parsed_constructor + '\n' + parsed_methods
-
-        # so other methods can have access to each other
-        method_declarations: str = ''
-        for method in methods:
-            method_declaration = self.methodDefinitionToMethodDeclaretion(
-                class_name, method)
-            method_declarations += method_declaration
-            method_declarations += '\n'
-        return attributes[:-1], parsed_methods, method_declarations
 
     def visitClassMethod(self, ctx: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
@@ -1045,32 +792,6 @@ class Visitor(CVisitor):
 
         if rtype == ir.VoidType() and not builder.block.is_terminated:
             builder.ret_void()
-        return
-        alias = f'{clazz_name}{original_identifier}'
-        args, args_string = self.visitFunctionArgs(ctx.functionArgs())
-
-        if args_string:
-            args_string = ', '.join([f'{clazz_name} * this', args_string])
-        else:
-            args_string = f'{clazz_name} * this'
-
-        obj_ref_arg = Arg(
-            type_specifier=f'{clazz_name} *',
-            name='this',
-            clazz=self.manager.get_clazz(clazz_name)
-        )
-        args.insert(0, obj_ref_arg)
-        rtype = ctx.typeSpecifier().getText()
-        method: Function = Function(
-            rtype=rtype,
-            name=original_identifier,
-            args=args,
-            alias=alias,
-        )
-        block = self.visitBlock(ctx.block())
-        self.manager.current_clazz.add_method(method)
-        return method, f'{rtype} {alias}({args_string}) ' \
-                       f'{"{"}\n {block}\n{"}"}'
 
     def visitClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
         # TODO: fix this
@@ -1102,87 +823,3 @@ class Visitor(CVisitor):
                     attribute = builder.gep(obj, [i32(0), i32(element.index)])
 
         return builder.load(attribute)
-
-        # if obj is not None:
-        #     result: str = ''
-        #     # this is to check if you are accessing nested attributes
-        #     # so it would reference it like this:
-        #     # Pizza * pizza = new Pizza()
-        #     # pizza->topping->get_name() should be
-        #     # pizza->topping.get_name(pizza->topping)
-        #     # instead of pizza->topping.get_name(topping)
-        #     # which might not exist outside the class
-        #     is_nested: bool = False
-        #     original_ref: str = obj_name
-        #     for child in ctx.getChildren():
-        #         match type(child):
-        #             case CParser.FunctionCallExpressionContext:
-        #                 method: Function = obj.clazz.get_method(
-        #                     child.identifier().getText())
-        #                 args = self.visitFunctionCallArgs(
-        #                     child.functionCallArgs())
-        #                 if args:
-        #                     if is_nested:
-        #                         result += f'{method.alias}({original_ref}' \
-        #                                   f'->{obj.name}, {args})'
-        #                     else:
-        #                         result += f'{method.alias}({obj.name}, {args})'
-        #                 else:
-        #                     if is_nested:
-        #                         result += f'{method.alias}' \
-        #                                   f'({original_ref}->{obj.name})'
-        #                     else:
-        #                         result += f'{method.alias}({obj.name})'
-        #             case CParser.IdentifierContext:
-        #                 try:
-        #                     attribute = obj.clazz.get_attribute(
-        #                         child.getText())
-        #                     if attribute.clazz:
-        #                         # this means it is an object attribute
-        #                         obj = attribute
-        #                         is_nested = True
-        #                 except NameError:
-        #                     pass
-        #                 result += child.getText()
-        #             case _:
-        #                 result += child.getText()
-        #     return result
-        # elif self.manager.current_function:
-        #     result: str = ''
-        #     if obj_name == 'this':
-        #         clazz: Clazz = self.manager.current_clazz
-        #         for child in ctx.getChildren():
-        #             match type(child):
-        #                 case CParser.FunctionCallContext:
-        #                     method: Function = clazz.get_method(
-        #                         child.identifier().getText())
-        #                     args: str = self.visitFunctionCallArgs(
-        #                         child.functionCallArgs())
-        #                     if args:
-        #                         result += f'{method.alias}({obj.name}, {args})'
-        #                     else:
-        #                         result += f'{method.alias}({obj.name})'
-        #                 case CParser.IdentifierContext:
-        #                     # if not function call it must be an attribute
-        #                     result += child.getText()
-        #                 case _:
-        #                     result += child.getText()
-        #         return result
-        #     else:
-        #         arg: Arg = self.manager.current_function.get_arg(obj_name)
-        #         for child in ctx.getChildren():
-        #             if isinstance(child,
-        #                           CParser.FunctionCallExpressionContext):
-        #                 method: Function = arg.clazz.get_method(
-        #                     child.identifier().getText())
-        #                 args = self.visitFunctionCallArgs(
-        #                     child.functionCallArgs())
-        #                 if args:
-        #                     result += f'{method.alias}({obj_name}, {args})'
-        #                 else:
-        #                     result += f'{method.alias}({obj_name})'
-        #             else:
-        #                 result += child.getText()
-        #         return result
-        # else:
-        #     return ctx.getText()
