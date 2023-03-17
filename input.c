@@ -17,8 +17,8 @@ class Foo {
 
 int main() {
     Foo x = new Foo(1);
-    x.d = 20;
+    x.i = 20;
     char * fmt = "%d\n";
-    printf(fmt, x.d);
+    printf(fmt, x.i);
     return 0;
 }

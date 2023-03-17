@@ -381,12 +381,25 @@ class Visitor(CVisitor):
             identifier: str = chain.identifier(0).getText()
             obj = self.manager.get_variable(identifier)
             builder = self.manager.builder
-            elements = obj.type.pointee.elements
+            try:
+                # this is if allocated so pointee is needed
+                elements = obj.type.pointee.elements
+            except AttributeError:
+                # this is if like it is in func args
+                elements = obj.type.elements
             attribute = None
             for name in chain.identifier()[1:]:
                 for element in elements:
                     if element.name == name.getText():
-                        attribute = builder.gep(obj, [i32(0), i32(element.index)])
+                        try:
+                            # this is if allocated so pointee is needed
+                            attribute = builder.gep(
+                                obj,
+                                [i32(0), i32(element.index)]
+                            )
+                        except AttributeError:
+                            # this is if like it is in func args
+                            attribute = obj.type.gep(ir.IntType(32)(0))
                         break
                 else:
                     print_error(f'AttributeError: \'{obj.name}\' object has'
@@ -449,7 +462,9 @@ class Visitor(CVisitor):
 
     def visitFunctionReturn(self, ctx: CParser.FunctionReturnContext):
         expression = self.visitExpression(ctx.expression())
-        if self.manager.current_function.return_value.type == expression.type:
+        if expression is None:
+            self.manager.builder.ret_void()
+        elif self.manager.current_function.return_value.type == expression.type:
             self.manager.builder.ret(expression)
         elif (self.manager.current_function.return_value.type.as_pointer()
               == expression.type):
@@ -549,7 +564,8 @@ class Visitor(CVisitor):
             case CParser.SizeofExpressionContext:
                 return self.visitSizeofExpression(ctx)
             case _:
-                print_error('Expression was not recognised!')
+                # should be empty return?
+                return None
 
     def visitSizeofExpression(self, ctx: CParser.SizeofExpressionContext):
         return ctx.getText()
@@ -640,7 +656,8 @@ class Visitor(CVisitor):
 
     def visitEqExpression(self, ctx: CParser.EqExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
-        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        obj1 = self.manager.get_variable(exp1)
+        obj2 = self.manager.get_variable(exp2)
         if obj1 and obj2:
             overridden_method = obj1.clazz.get_method('eq').alias
             return f'{obj1.name}->{overridden_method}' \
@@ -651,7 +668,8 @@ class Visitor(CVisitor):
 
     def visitGtExpression(self, ctx: CParser.GtExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
-        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        obj1 = self.manager.get_variable(exp1)
+        obj2 = self.manager.get_variable(exp2)
         if obj1 and obj2:
             overridden_method = obj1.clazz.get_method('gt').alias
             return f'{obj1.name}->{overridden_method}' \
@@ -660,7 +678,8 @@ class Visitor(CVisitor):
 
     def visitGteExpression(self, ctx: CParser.GteExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
-        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        obj1 = self.manager.get_variable(exp1)
+        obj2 = self.manager.get_variable(exp2)
         if obj1 and obj2:
             overridden_method = obj1.clazz.get_method('gte').alias
             return f'{obj1.name}->{overridden_method}' \
@@ -669,7 +688,8 @@ class Visitor(CVisitor):
 
     def visitLtExpression(self, ctx: CParser.LtExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
-        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        obj1 = self.manager.get_variable(exp1)
+        obj2 = self.manager.get_variable(exp2)
         if obj1 and obj2:
             overridden_method = obj1.clazz.get_method('lt').alias
             return f'{obj1.name}->{overridden_method}' \
@@ -678,7 +698,8 @@ class Visitor(CVisitor):
 
     def visitLteExpression(self, ctx: CParser.LteExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
-        obj1, obj2 = self.manager.get_obj(exp1), self.manager.get_obj(exp2)
+        obj1 = self.manager.get_variable(exp1)
+        obj2 = self.manager.get_variable(exp2)
         if obj1 and obj2:
             overridden_method = obj1.clazz.get_method('lte').alias
             return f'{obj1.name}->{overridden_method}' \
@@ -695,13 +716,13 @@ class Visitor(CVisitor):
             _result, _obj1 = self.visitLeftShiftExpression(expr1)
             if _obj1:
                 if isinstance(expr2, CParser.IdentifierExpressionContext):
-                    obj2 = self.manager.get_obj(expr2.getText())
+                    obj2 = self.manager.get_variable(expr2.getText())
                     overridden_method = obj2.clazz.get_method('lshift').alias
                     result: str = f'{_result}->{overridden_method}' \
                                   f'({_obj1.name}, {obj2.name})'
                     return result, _obj1
-        obj1 = self.manager.get_obj(expr1.getText())
-        obj2 = self.manager.get_obj(expr2.getText())
+        obj1 = self.manager.get_variable(expr1.getText())
+        obj2 = self.manager.get_variable(expr2.getText())
         if obj1 and obj2:
             overridden_method = obj1.clazz.get_method('lshift').alias
             result: str = f'{obj1.name}->{overridden_method}' \
@@ -768,6 +789,8 @@ class Visitor(CVisitor):
         # count struct elements padding in memory
         clazz.counter = -1
         self.manager.current_clazz = clazz
+        scope = Scope(ScopeType.CLAZZ)
+        self.manager.scope_stack.push(scope)
         self.visitClassBlock(ctx.classBlock())
         # attributes, methods, method_declarations = self.visitClassBlock(
         #     ctx.classBlock())
@@ -893,6 +916,8 @@ class Visitor(CVisitor):
             match type(child):
                 case CParser.ClassAttributeDeclarationContext:
                     self.visitClassAttributeDeclaration(child)
+                case CParser.ClassMethodContext:
+                    self.visitClassMethod(child)
 
         return
         attribute_declarations: list[CParser.VariableDeclarationContext] = []
@@ -985,9 +1010,34 @@ class Visitor(CVisitor):
         return attributes[:-1], parsed_methods, method_declarations
 
     def visitClassMethod(self, ctx: CParser.ClassMethodContext):
-        original_identifier: str = ctx.identifier().getText()
-        # class ctx -> class block ctx -> class method ctx
-        clazz_name = ctx.parentCtx.parentCtx.identifier().getText()
+        clazz = self.manager.current_clazz
+        rtype = self.visitTypeSpecifier(ctx.typeSpecifier())
+        method_name: str = ctx.identifier().getText()
+        alias: str = f'{clazz.name}.{method_name}'
+        args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
+        args = [(clazz.as_pointer(), 'this'), *args]
+        ir_args = [arg[0] for arg in args]
+        method_type = ir.FunctionType(rtype, ir_args)
+        method_type.var_arg = var_arg
+        method = ir.Function(module, method_type, alias)
+
+        for i in range(len(method.args)):
+            _, arg_identifier = args[i]
+            if arg_identifier:
+                method.args[i].name = arg_identifier
+
+        block = method.append_basic_block(name='entry')
+        builder = ir.IRBuilder(block)
+
+        self.manager.builder = builder
+        scope = Scope(ScopeType.FUNC, function=method)
+        self.manager.scope_stack.push(scope)
+        self.manager.current_function = method
+        self.visitBlock(ctx.block())
+
+        if rtype == ir.VoidType() and not builder.block.is_terminated:
+            builder.ret_void()
+        return
         alias = f'{clazz_name}{original_identifier}'
         args, args_string = self.visitFunctionArgs(ctx.functionArgs())
 
@@ -1015,7 +1065,7 @@ class Visitor(CVisitor):
                        f'{"{"}\n {block}\n{"}"}'
 
     def visitClassInstantiation(self, ctx: CParser.ClassInstantiationContext):
-        #TODO: fix this
+        # TODO: fix this
         clazz = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier(0).getText()
         builder = self.manager.builder
@@ -1044,7 +1094,7 @@ class Visitor(CVisitor):
         for name in ctx.identifier()[1:]:
             for element in elements:
                 if element.name == name.getText():
-                    attribute =  builder.gep(obj, [i32(0), i32(element.index)])
+                    attribute = builder.gep(obj, [i32(0), i32(element.index)])
 
         return builder.load(attribute)
 

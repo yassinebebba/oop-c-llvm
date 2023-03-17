@@ -12,9 +12,11 @@ class ScopeType(Enum):
 def print_error(error: str):
     print(colored(error, 'red'))
 
+
 class Scope:
-    def __init__(self, scope_type: ScopeType):
+    def __init__(self, scope_type: ScopeType, function=None):
         self.parent: Scope | None = None
+        self.function = function
         self.scope_type: ScopeType = scope_type
         self.functions = []
         self.variables = []
@@ -61,10 +63,16 @@ class ScopeStack:
 
     def get_variable(self, identifier):
         # this need optimisation meh not bothered for now
+        # TODO: fix flaw where it skips func args
+        # TODO: probably fixed it
         for lvl, scope in enumerate(self.stack[::-1]):
             for _, var in enumerate(scope.variables[::-1]):
                 if var.name == identifier:
                     return var
+            if scope.scope_type == ScopeType.FUNC:
+                for _, arg in enumerate(scope.function.args):
+                    if arg.name == identifier:
+                        return arg
         else:
             print_error(f'`{identifier}` has never been declared!')
 
