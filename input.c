@@ -10,15 +10,15 @@ char d;
 class Foo {
     int i;
     int d;
-    void Foo(int i) {
-        this.i = i;
+    void Foo(int i, int d) {
+        this->i = i;
+        this->d = d;
     }
 }
 
 int main() {
-    Foo x = new Foo(1);
-    x.i = 20;
-    char * fmt = "%d\n";
-    printf(fmt, x.i);
+    Foo x = new Foo(2, 2);
+    char * fmt = "%d %d\n";
+    printf(fmt, x.i, x.d + x.i);
     return 0;
 }

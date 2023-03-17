@@ -1040,6 +1040,7 @@ class Visitor(CVisitor):
         scope = Scope(ScopeType.FUNC, function=method)
         self.manager.scope_stack.push(scope)
         self.manager.current_function = method
+        self.manager.add_function(method)
         self.visitBlock(ctx.block())
 
         if rtype == ir.VoidType() and not builder.block.is_terminated:
@@ -1077,18 +1078,15 @@ class Visitor(CVisitor):
         identifier: str = ctx.identifier(0).getText()
         builder = self.manager.builder
         obj = builder.alloca(clazz, name=identifier)
-        x = builder.gep(obj, [i32(0), i32(0)], inbounds=True)
-        builder.store(i32(10), x)
         self.manager.add_variable(obj)
-        # builder.store(clazz(1), obj)
-        # clazz(1).
-        # class_name: str = type_specifier.split()[0]  # to remove the pointer
-        # args = self.visitFunctionCallArgs(
-        #     ctx.functionCall().functionCallArgs())
-        # obj: Obj = Obj(name=identifier, clazz=clazz)
-        # self.manager.add_obj(obj)
-        # result: str = f'{type_specifier} {identifier} =' \
-        #               f' {class_name}{class_name}({args});'
+        elements = obj.type.pointee.elements
+        constructor_alias = f'{clazz.name}.{clazz.name}'
+        for element in elements:
+            if element.name == constructor_alias:
+                constructor = self.manager.get_function(element.name)
+                args = self.visitFunctionCallArgs(ctx.functionCallArgs())
+                args = [obj, *args]
+                builder.call(constructor, args)
         return obj
 
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
