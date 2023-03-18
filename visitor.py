@@ -816,6 +816,19 @@ class Visitor(CVisitor):
         for attribute in ctx.classAttributeDeclaration():
             self.visitClassAttributeDeclaration(attribute)
 
+        # this will create method ptr in the class structure
+        # before creating the body of the method
+        # bc if a method 1 created before method 2
+        # and method 1 calls method 2, without this
+        # it will cause a problem
+        for method in ctx.classMethod():
+            if method.identifier().getText() == clazz.name:
+                # TODO: should I add the constructor too?
+                # TODO: so this.__init__(...) works?
+                # TODO: you get what I mean
+                continue
+            self.createClassMethodPointer(method)
+
         constructor = None
         for method in ctx.classMethod():
             if method.identifier().getText() == clazz.name:
@@ -825,12 +838,15 @@ class Visitor(CVisitor):
 
         self.createConstructor(constructor)
 
-    def visitClassMethod(self, ctx: CParser.ClassMethodContext):
+    def createClassMethodPointer(self, method: CParser.ClassMethodContext):
+        # this method need to be executed before function block
+        # gets created so methods can have access to each other
+        # despite being declared after it
         clazz = self.manager.current_clazz
-        rtype = self.visitTypeSpecifier(ctx.typeSpecifier())
-        method_name: str = ctx.identifier().getText()
+        rtype = self.visitTypeSpecifier(method.typeSpecifier())
+        method_name: str = method.identifier().getText()
         alias: str = f'{clazz.name}.{method_name}'
-        args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
+        args, var_arg = self.visitFunctionArgs(method.functionArgs())
         args = [(clazz.as_pointer(), 'this'), *args]
         ir_args = [arg[0] for arg in args]
         method_type = ir.FunctionType(rtype, ir_args)
@@ -841,6 +857,19 @@ class Visitor(CVisitor):
         clazz.elements.append(method_ptr)
         clazz.counter += 1
         clazz.elements[clazz.counter].index = clazz.counter
+
+    def visitClassMethod(self, ctx: CParser.ClassMethodContext):
+        clazz = self.manager.current_clazz
+        rtype = self.visitTypeSpecifier(ctx.typeSpecifier())
+        method_name: str = ctx.identifier().getText()
+        alias: str = f'{clazz.name}.{method_name}'
+        args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
+        args = [(clazz.as_pointer(), 'this'), *args]
+
+        method_type: ir.FunctionType | None = None
+        for element in clazz.elements:
+            if element.name == alias:
+                method_type = element.pointee
 
         method = ir.Function(module, method_type, alias)
 

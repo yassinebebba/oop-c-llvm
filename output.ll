@@ -12,7 +12,11 @@ define i32 @"Player.getx"(%"Player"* %"this")
 entry:
   %".3" = getelementptr %"Player", %"Player"* %"this", i32 0, i32 0
   %".4" = load i32, i32* %".3"
-  ret i32 %".4"
+  %".5" = getelementptr %"Player", %"Player"* %"this", i32 0, i32 3
+  %".6" = load i32 (%"Player"*)*, i32 (%"Player"*)** %".5"
+  %".7" = call i32 %".6"(%"Player"* %"this")
+  %".8" = add i32 %".4", %".7"
+  ret i32 %".8"
 }
 
 define i32 @"Player.gety"(%"Player"* %"this")

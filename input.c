@@ -11,7 +11,7 @@ class Player {
     }
 
     int getx() {
-        return this->x;
+        return this->x + this->gety();
     }
 
     int gety() {
