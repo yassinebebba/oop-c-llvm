@@ -748,13 +748,65 @@ class Visitor(CVisitor):
         clazz.elements[clazz.counter].index = clazz.counter
         clazz.elements[clazz.counter].name = identifier
 
+    def createConstructor(self, constructor: CParser.ClassMethodContext):
+        clazz = self.manager.current_clazz
+        rtype = self.visitTypeSpecifier(constructor.typeSpecifier())
+        method_name: str = constructor.identifier().getText()
+        alias: str = f'{clazz.name}.{method_name}'
+        args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
+        args = [(clazz.as_pointer(), 'this'), *args]
+        ir_args = [arg[0] for arg in args]
+        method_type = ir.FunctionType(rtype, ir_args)
+        method_type.var_arg = var_arg
+
+        method_ptr = ir.PointerType(method_type)
+        method_ptr.name = alias
+        clazz.elements.append(method_ptr)
+        clazz.counter += 1
+        clazz.elements[clazz.counter].index = clazz.counter
+
+        method = ir.Function(module, method_type, alias)
+
+        for i in range(len(method.args)):
+            _, arg_identifier = args[i]
+            if arg_identifier:
+                method.args[i].name = arg_identifier
+
+        block = method.append_basic_block(name='entry')
+        builder = ir.IRBuilder(block)
+
+        self.manager.builder = builder
+        scope = Scope(ScopeType.FUNC, function=method)
+        self.manager.scope_stack.push(scope)
+        self.manager.current_function = method
+        self.manager.add_function(method)
+
+        for element in clazz.elements:
+            if isinstance(element, ir.PointerType):
+                if isinstance(element.pointee, ir.FunctionType):
+                    if element.name != alias:
+                        m: ir.Function = module.get_global(element.name)
+                        obj = method.args[0]
+                        m_ptr = builder.gep(obj, [i32(0), i32(element.index)])
+                        builder.store(m, m_ptr)
+        self.visitBlock(constructor.block())
+
+        if rtype == ir.VoidType() and not builder.block.is_terminated:
+            builder.ret_void()
+
     def visitClassBlock(self, ctx: CParser.ClassBlockContext):
-        for child in ctx.getChildren():
-            match type(child):
-                case CParser.ClassAttributeDeclarationContext:
-                    self.visitClassAttributeDeclaration(child)
-                case CParser.ClassMethodContext:
-                    self.visitClassMethod(child)
+        clazz = self.manager.current_clazz
+        for attribute in ctx.classAttributeDeclaration():
+            self.visitClassAttributeDeclaration(attribute)
+
+        constructor = None
+        for method in ctx.classMethod():
+            if method.identifier().getText() == clazz.name:
+                constructor = method
+                continue
+            self.visitClassMethod(method)
+
+        self.createConstructor(constructor)
 
     def visitClassMethod(self, ctx: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
@@ -817,9 +869,25 @@ class Visitor(CVisitor):
         attribute = None
         elements = obj.type.pointee.elements
 
-        for name in ctx.identifier()[1:]:
-            for element in elements:
-                if element.name == name.getText():
-                    attribute = builder.gep(obj, [i32(0), i32(element.index)])
+        for child in list(ctx.getChildren())[1:]:
+            match type(child):
+                case CParser.IdentifierContext:
+                    for element in elements:
+                        if element.name == child.getText():
+                            attribute = builder.gep(obj, [i32(0),
+                                                          i32(element.index)])
+                            attribute = builder.load(attribute)
+                case CParser.FunctionCallExpressionContext:
+                    name = child.identifier().getText()
+                    alias = f'{obj.type.pointee.name}.{name}'
+                    for element in elements:
+                        if element.name == alias:
+                            method = builder.gep(obj, [i32(0),
+                                                       i32(element.index)])
+                            method = builder.load(method)
+                            attribute = builder.call(method, [obj])
+                case antlr4.tree.Tree.TerminalNodeImpl:
+                    # this is to check -> or . later on
+                    continue
 
-        return builder.load(attribute)
+        return attribute

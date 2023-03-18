@@ -2,18 +2,32 @@ int printf(char *, ...);
 
 int T = 1;
 char d;
-class Foo {
-    int i;
-    int d;
-    void Foo(int i, int d) {
-        this->i = i;
-        this->d = d;
+class Player {
+    int x;
+    int y;
+    void Player(int x, int y) {
+        this->x = x;
+        this->y = y;
+    }
+
+    int getx() {
+        return this->x;
+    }
+
+    int gety() {
+        return this->y;
     }
 }
 
 int main() {
-    Foo x = new Foo(2, 2);
-    char * fmt = "%d %d\n";
-    printf(fmt, x.i, x.d + x.i);
+    Player player = new Player(1, 2);
+    char * fmt = "player.x = %d\n"
+                 "player.y = %d\n"
+                 "player.getx() = %d\n"
+                 "player.gety() = %d\n"
+                 "add x + y = %d\n"
+                 "add getters x + y = %d\n";
+    printf(fmt, player.x, player.y, player.getx(), player.gety(),
+                player.x + player.y,player.getx()+ player.gety());
     return 0;
 }
