@@ -434,6 +434,20 @@ class Visitor(CVisitor):
         elif func.return_value.type.as_pointer() == expression.type:
             val = self.manager.builder.load(expression)
             self.manager.builder.ret(val)
+        elif isinstance(expression, ir.GlobalVariable):
+            if isinstance(expression.type, ir.PointerType):
+                if isinstance(expression.type.pointee, ir.ArrayType):
+                    expr_type = expression.type.pointee.element.as_pointer()
+                    if func.return_value.type == i8.as_pointer() == expr_type:
+                        start_ptr = expression.gep([
+                            ir.Constant(i64, 0),
+                            ir.Constant(i64, 0)
+                        ])
+                        start_ptr = self.manager.builder.bitcast(
+                            start_ptr,
+                            i8.as_pointer()
+                        )
+                        self.manager.builder.ret(start_ptr)
         else:
             print_error(
                 'function return type does not match function return type')

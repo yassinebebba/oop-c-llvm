@@ -17,6 +17,10 @@ class Player {
     int gety() {
         return this->y;
     }
+
+    char * __repr__() {
+        return "This is a Player object\n";
+    }
 }
 
 int main() {
@@ -30,5 +34,6 @@ int main() {
     printf("hey\n");
     printf(fmt, player.x, player.y, player.getx(), player.gety(),
                 player.x + player.y,player.getx()+ player.gety());
+    printf("%s", player.__repr__());
     return 0;
 }
