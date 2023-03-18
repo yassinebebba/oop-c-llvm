@@ -395,6 +395,23 @@ class Visitor(CVisitor):
                 args[i] = builder.load(v)
         func = self.manager.get_function(
             ctx.identifier().getText())
+
+        # this code below fixes errors like this
+        # TypeError: Type of #1 arg mismatch: i8* != [4 x i8]*
+        for (i, arg_type), arg in zip(enumerate(func.args), args):
+            if isinstance(arg.type.pointee, ir.ArrayType):
+                if arg.type.pointee.element == i8 \
+                        and arg_type.type == i8.as_pointer():
+                    start_ptr = args[i].gep([
+                        ir.Constant(i64, 0),
+                        ir.Constant(i64, 0)
+                    ])
+                    start_ptr = builder.bitcast(
+                        start_ptr,
+                        i8.as_pointer()
+                    )
+                    args[i] = start_ptr
+
         builder.call(func, args)
 
     def visitFunctionCallArgs(self, ctx: CParser.FunctionCallArgsContext):

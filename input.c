@@ -27,6 +27,7 @@ int main() {
                  "player.gety() = %d\n"
                  "add x + y = %d\n"
                  "add getters x + y = %d\n";
+    printf("hey\n");
     printf(fmt, player.x, player.y, player.getx(), player.gety(),
                 player.x + player.y,player.getx()+ player.gety());
     return 0;
