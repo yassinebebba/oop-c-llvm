@@ -781,49 +781,82 @@ class Visitor(CVisitor):
 
     def createConstructor(self, constructor: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
-        rtype = self.visitTypeSpecifier(constructor.typeSpecifier())
-        method_name: str = constructor.identifier().getText()
-        alias: str = f'{clazz.name}.{method_name}'
-        args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
-        args = [(clazz.as_pointer(), 'this'), *args]
-        ir_args = [arg[0] for arg in args]
-        method_type = ir.FunctionType(rtype, ir_args)
-        method_type.var_arg = var_arg
+        if constructor is None:
+            # create an empty constructor
+            method_type = ir.FunctionType(ir.VoidType(), [clazz.as_pointer()])
+            alias: str = f'{clazz.name}.{clazz.name}'
+            method = ir.Function(module, method_type, alias)
+            method.args[0].name = 'this'
+            method_ptr = ir.PointerType(method_type)
+            method_ptr.name = alias
+            clazz.elements.append(method_ptr)
+            clazz.counter += 1
+            clazz.elements[clazz.counter].index = clazz.counter
+            block = method.append_basic_block(name='entry')
+            builder = ir.IRBuilder(block)
 
-        method_ptr = ir.PointerType(method_type)
-        method_ptr.name = alias
-        clazz.elements.append(method_ptr)
-        clazz.counter += 1
-        clazz.elements[clazz.counter].index = clazz.counter
+            self.manager.builder = builder
+            scope = Scope(ScopeType.FUNC, function=method)
+            self.manager.scope_stack.push(scope)
+            self.manager.current_function = method
+            self.manager.add_function(method)
 
-        method = ir.Function(module, method_type, alias)
-
-        for i in range(len(method.args)):
-            _, arg_identifier = args[i]
-            if arg_identifier:
-                method.args[i].name = arg_identifier
-
-        block = method.append_basic_block(name='entry')
-        builder = ir.IRBuilder(block)
-
-        self.manager.builder = builder
-        scope = Scope(ScopeType.FUNC, function=method)
-        self.manager.scope_stack.push(scope)
-        self.manager.current_function = method
-        self.manager.add_function(method)
-
-        for element in clazz.elements:
-            if isinstance(element, ir.PointerType):
-                if isinstance(element.pointee, ir.FunctionType):
-                    if element.name != alias:
-                        m: ir.Function = module.get_global(element.name)
-                        obj = method.args[0]
-                        m_ptr = builder.gep(obj, [i32(0), i32(element.index)])
-                        builder.store(m, m_ptr)
-        self.visitBlock(constructor.block())
-
-        if rtype == ir.VoidType() and not builder.block.is_terminated:
+            for element in clazz.elements:
+                if isinstance(element, ir.PointerType):
+                    if isinstance(element.pointee, ir.FunctionType):
+                        if element.name != alias:
+                            m: ir.Function = module.get_global(element.name)
+                            obj = method.args[0]
+                            m_ptr = builder.gep(obj,
+                                                [i32(0), i32(element.index)])
+                            builder.store(m, m_ptr)
             builder.ret_void()
+
+        else:
+            rtype = self.visitTypeSpecifier(constructor.typeSpecifier())
+            method_name: str = constructor.identifier().getText()
+            alias: str = f'{clazz.name}.{method_name}'
+            args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
+            args = [(clazz.as_pointer(), 'this'), *args]
+            ir_args = [arg[0] for arg in args]
+            method_type = ir.FunctionType(rtype, ir_args)
+            method_type.var_arg = var_arg
+
+            method_ptr = ir.PointerType(method_type)
+            method_ptr.name = alias
+            clazz.elements.append(method_ptr)
+            clazz.counter += 1
+            clazz.elements[clazz.counter].index = clazz.counter
+
+            method = ir.Function(module, method_type, alias)
+
+            for i in range(len(method.args)):
+                _, arg_identifier = args[i]
+                if arg_identifier:
+                    method.args[i].name = arg_identifier
+
+            block = method.append_basic_block(name='entry')
+            builder = ir.IRBuilder(block)
+
+            self.manager.builder = builder
+            scope = Scope(ScopeType.FUNC, function=method)
+            self.manager.scope_stack.push(scope)
+            self.manager.current_function = method
+            self.manager.add_function(method)
+
+            for element in clazz.elements:
+                if isinstance(element, ir.PointerType):
+                    if isinstance(element.pointee, ir.FunctionType):
+                        if element.name != alias:
+                            m: ir.Function = module.get_global(element.name)
+                            obj = method.args[0]
+                            m_ptr = builder.gep(obj,
+                                                [i32(0), i32(element.index)])
+                            builder.store(m, m_ptr)
+            self.visitBlock(constructor.block())
+
+            if rtype == ir.VoidType() and not builder.block.is_terminated:
+                builder.ret_void()
 
     def visitClassBlock(self, ctx: CParser.ClassBlockContext):
         clazz = self.manager.current_clazz
@@ -918,7 +951,10 @@ class Visitor(CVisitor):
             if element.name == constructor_alias:
                 constructor = self.manager.get_function(element.name)
                 args = self.visitFunctionCallArgs(ctx.functionCallArgs())
-                args = [obj, *args]
+                if args is None:
+                    args = [obj]
+                else:
+                    args = [obj, *args]
                 builder.call(constructor, args)
         return obj
 

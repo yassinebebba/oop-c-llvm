@@ -23,8 +23,18 @@ class Player {
     }
 }
 
+
+class Target {
+    int a;
+    int geta() {
+        return this->a;
+    }
+}
+
 int main() {
     Player player = new Player(1, 2);
+    Target target =  new Target();
+    printf("hey %d\n", target.geta());
     char * fmt = "player.x = %d\n"
                  "player.y = %d\n"
                  "player.getx() = %d\n"
