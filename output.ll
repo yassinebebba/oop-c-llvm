@@ -3,7 +3,7 @@ target triple = "x86_64-redhat-linux-gnu"
 target datalayout = ""
 
 %"class.Player" = type {i32, i32, void (%"class.Player"*, i32, i32)*, i32 (%"class.Player"*)*, i32 (%"class.Player"*)*, i8* (%"class.Player"*)*, void (%"class.Player"*, i32, i32)*}
-%"class.Target" = type {i32, i32 (%"class.Target"*)*, void (%"class.Target"*)*}
+%"class.Target" = type {i32, %"class.Player", i32 (%"class.Target"*)*, void (%"class.Target"*)*}
 declare i32 @"printf"(i8* %".1", ...)
 
 @"T" = dso_local global i32 1
@@ -62,7 +62,7 @@ entry:
 define void @"_ZN6Target6TargetEPS_"(%"class.Target"* %"this")
 {
 entry:
-  %".3" = getelementptr %"class.Target", %"class.Target"* %"this", i32 0, i32 1
+  %".3" = getelementptr %"class.Target", %"class.Target"* %"this", i32 0, i32 2
   store i32 (%"class.Target"*)* @"_ZN6Target4getaEPS_", i32 (%"class.Target"*)** %".3"
   ret void
 }
@@ -74,7 +74,7 @@ entry:
   call void @"_ZN6Player6PlayerEPS_ii"(%"class.Player"* %"player", i32 1, i32 2)
   %"target" = alloca %"class.Target"
   call void @"_ZN6Target6TargetEPS_"(%"class.Target"* %"target")
-  %".4" = getelementptr %"class.Target", %"class.Target"* %"target", i32 0, i32 1
+  %".4" = getelementptr %"class.Target", %"class.Target"* %"target", i32 0, i32 2
   %".5" = load i32 (%"class.Target"*)*, i32 (%"class.Target"*)** %".4"
   %".6" = call i32 %".5"(%"class.Target"* %"target")
   %".7" = call i32 (i8*, ...) @"printf"(i8* getelementptr ([8 x i8], [8 x i8]* @".str.2", i64 0, i64 0), i32 %".6")

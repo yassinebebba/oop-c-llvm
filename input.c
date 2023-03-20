@@ -26,6 +26,7 @@ class Player {
 
 class Target {
     int a;
+    Player player;
     int geta() {
         return this->a;
     }

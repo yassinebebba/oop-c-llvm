@@ -7,6 +7,7 @@ from termcolor import colored
 from core.CParser import CParser
 from core.CVisitor import CVisitor
 from manager import Manager
+from manager import ClazzMap
 from manager import Scope
 from manager import ScopeType
 
@@ -126,9 +127,11 @@ class Visitor(CVisitor):
                 return t
             case clazz_name:
                 clazz_name = f'class.{clazz_name[0]}'
-                if cls := self.manager.get_clazz(clazz_name):
-                    return cls
-                print_error('Type was not recognized!')
+                return module.context.get_identified_type(clazz_name)
+
+                # if cls := self.manager.get_clazz(clazz_name):
+                #     return cls
+                # print_error('Type was not recognized!')
 
     def store(self, value, ptr):
         """
@@ -335,27 +338,34 @@ class Visitor(CVisitor):
             try:
                 # this is if allocated so pointee is needed
                 elements = obj.type.pointee.elements
+                clazz_map = obj.type.pointee.map
             except AttributeError:
                 # this is if like it is in func args
                 elements = obj.type.elements
+                clazz_map = obj.type.map
             attribute = None
-            for name in chain.identifier()[1:]:
-                for element in elements:
-                    if element.name == name.getText():
-                        try:
-                            # this is if allocated so pointee is needed
-                            attribute = builder.gep(
-                                obj,
-                                [i32(0), i32(element.index)]
-                            )
-                        except AttributeError:
-                            # this is if like it is in func args
-                            attribute = obj.type.gep(ir.IntType(32)(0))
-                        break
-                else:
-                    print_error(f'AttributeError: \'{obj.name}\' object has'
-                                f' no attribute \'{name.getText()}\'')
-                    exit(1)
+
+            for child in chain.children[1:]:
+                if isinstance(child, CParser.IdentifierContext):
+                    identifier = child.getText()
+                    for element, name in zip(elements, clazz_map.elements):
+                        if name == identifier:
+                            try:
+                                # this is if allocated so pointee is needed
+                                idx = [
+                                    i32(0),
+                                    i32(clazz_map.elements[name]['index'])
+                                ]
+                                attribute = builder.gep(obj, idx)
+                            except AttributeError:
+                                # this is if like it is in func args
+                                attribute = obj.type.gep(ir.IntType(32)(0))
+                            break
+                    else:
+                        print_error(
+                            f'AttributeError: \'{obj.name}\' object has'
+                            f' no attribute \'{identifier}\'')
+                        exit(1)
             expression = self.visitExpression(ctx.expression())
             self.store(expression, attribute)
         else:
@@ -762,6 +772,8 @@ class Visitor(CVisitor):
         # using a list instead of set_body() bc it returns a tuple
         # so I cannot modify it later on unless I copy it
         clazz.elements = []
+        # to map elements to their names and position in memory
+        clazz.map = ClazzMap()
         self.manager.add_clazz(clazz)
         # count struct elements padding in memory
         clazz.counter = -1
@@ -778,8 +790,7 @@ class Visitor(CVisitor):
         identifier = ctx.identifier().getText()
         clazz.elements.append(type_specifier)
         clazz.counter += 1
-        clazz.elements[clazz.counter].index = clazz.counter
-        clazz.elements[clazz.counter].name = identifier
+        clazz.map.add_attribute(clazz.counter, identifier)
 
     def createConstructor(self, constructor: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
@@ -810,15 +821,17 @@ class Visitor(CVisitor):
             self.manager.current_function = method
             self.manager.add_function(method)
 
-            for element in clazz.elements:
+            clazz_map: ClazzMap = clazz.map
+            for element, name in zip(clazz.elements, clazz_map.elements):
                 if isinstance(element, ir.PointerType):
                     if isinstance(element.pointee, ir.FunctionType):
-                        if element.name != clazz_name:
+                        if name != clazz_name:
                             m: ir.Function = module.get_global(
-                                element.mangled_name)
+                                clazz_map.elements[name]['mangled_name'])
                             obj = method.args[0]
-                            m_ptr = builder.gep(obj,
-                                                [i32(0), i32(element.index)])
+                            idx = clazz_map.elements[name]['index']
+                            m_idx = [i32(0), i32(idx)]
+                            m_ptr = builder.gep(obj, m_idx)
                             builder.store(m, m_ptr)
             builder.ret_void()
 
@@ -862,15 +875,17 @@ class Visitor(CVisitor):
             self.manager.current_function = method
             self.manager.add_function(method)
 
-            for element in clazz.elements:
+            clazz_map: ClazzMap = clazz.map
+            for element, name in zip(clazz.elements, clazz_map.elements):
                 if isinstance(element, ir.PointerType):
                     if isinstance(element.pointee, ir.FunctionType):
-                        if element.name != method_name:
+                        if name != method_name:
                             m: ir.Function = module.get_global(
-                                element.mangled_name)
+                                clazz_map.elements[name]['mangled_name'])
                             obj = method.args[0]
-                            m_ptr = builder.gep(obj,
-                                                [i32(0), i32(element.index)])
+                            idx = clazz_map.elements[name]['index']
+                            m_idx = [i32(0), i32(idx)]
+                            m_ptr = builder.gep(obj, m_idx)
                             builder.store(m, m_ptr)
             self.visitBlock(constructor.block())
 
@@ -948,11 +963,9 @@ class Visitor(CVisitor):
         for arg in method_type.args:
             mangled_name += self.getArgMangledName(arg)
         # alias: str = f'{clazz.name}.{method_name}'
-        method_ptr.name = method_name
-        method_ptr.mangled_name = mangled_name
         clazz.elements.append(method_ptr)
         clazz.counter += 1
-        clazz.elements[clazz.counter].index = clazz.counter
+        clazz.map.add_method(clazz.counter, method_name, mangled_name)
 
     def visitClassMethod(self, ctx: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
@@ -969,10 +982,13 @@ class Visitor(CVisitor):
             mangled_name += self.getArgMangledName(arg[0])
 
         method_type: ir.FunctionType | None = None
-        for element in clazz.elements:
+
+        clazz_map: ClazzMap = clazz.map
+        for element, name in zip(clazz.elements, clazz_map.elements):
             if isinstance(element, ir.PointerType):
                 if isinstance(element.pointee, ir.FunctionType):
-                    if element.mangled_name == mangled_name:
+                    mn = clazz_map.elements[name]['mangled_name']
+                    if mn == mangled_name:
                         method_type = element.pointee
                         break
         # assign method mangled name to its method definition
@@ -1024,21 +1040,24 @@ class Visitor(CVisitor):
         builder = self.manager.builder
         attribute = None
         elements = obj.type.pointee.elements
+        clazz_map: ClazzMap = obj.type.pointee.map
 
         for child in list(ctx.getChildren())[1:]:
             match type(child):
                 case CParser.IdentifierContext:
-                    for element in elements:
-                        if element.name == child.getText():
-                            attribute = builder.gep(obj, [i32(0),
-                                                          i32(element.index)])
+                    for element, name in zip(elements, clazz_map.elements):
+                        if name == child.getText():
+                            idx = clazz_map.elements[name]['index']
+                            attr_idx = [i32(0), i32(idx)]
+                            attribute = builder.gep(obj, attr_idx)
                             attribute = builder.load(attribute)
                 case CParser.FunctionCallExpressionContext:
-                    name = child.identifier().getText()
-                    for element in elements:
-                        if element.name == name:
-                            method = builder.gep(obj, [i32(0),
-                                                       i32(element.index)])
+                    identifier = child.identifier().getText()
+                    for element, name in zip(elements, clazz_map.elements):
+                        if name == identifier:
+                            idx = clazz_map.elements[name]['index']
+                            method_idx = [i32(0), i32(idx)]
+                            method = builder.gep(obj, method_idx)
                             method = builder.load(method)
                             attribute = builder.call(method, [obj])
                 case antlr4.tree.Tree.TerminalNodeImpl:

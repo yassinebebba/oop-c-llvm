@@ -13,6 +13,22 @@ def print_error(error: str):
     print(colored(error, 'red'))
 
 
+class ClazzMap:
+    def __init__(self):
+        self.elements = {}
+
+    def add_attribute(self, index, name):
+        self.elements[name] = {
+            'index': index
+        }
+
+    def add_method(self, index, name, mangled_name):
+        self.elements[name] = {
+            'index': index,
+            'mangled_name': mangled_name,
+        }
+
+
 class Scope:
     def __init__(self, scope_type: ScopeType, function=None):
         self.parent: Scope | None = None
