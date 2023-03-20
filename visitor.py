@@ -1,12 +1,14 @@
-import antlr4.tree.Tree
 from io import FileIO
+
+import antlr4.tree.Tree
+import llvmlite.ir as ir
 from termcolor import colored
-from core.CVisitor import CVisitor
+
 from core.CParser import CParser
+from core.CVisitor import CVisitor
 from manager import Manager
 from manager import Scope
 from manager import ScopeType
-import llvmlite.ir as ir
 
 # Create a module
 module = ir.Module(name="main")
@@ -123,7 +125,7 @@ class Visitor(CVisitor):
                     t = ir.PointerType(t)
                 return t
             case clazz_name:
-                clazz_name = clazz_name[0]
+                clazz_name = f'class.{clazz_name[0]}'
                 if cls := self.manager.get_clazz(clazz_name):
                     return cls
                 print_error('Type was not recognized!')
@@ -755,7 +757,7 @@ class Visitor(CVisitor):
                     self.visitClassInstantiation(child)
 
     def visitClassDefinition(self, ctx: CParser.ClassDefinitionContext):
-        identifier: str = ctx.identifier().getText()
+        identifier: str = f'class.{ctx.identifier().getText()}'
         clazz = module.context.get_identified_type(identifier)
         # using a list instead of set_body() bc it returns a tuple
         # so I cannot modify it later on unless I copy it
@@ -784,11 +786,18 @@ class Visitor(CVisitor):
         if constructor is None:
             # create an empty constructor
             method_type = ir.FunctionType(ir.VoidType(), [clazz.as_pointer()])
-            alias: str = f'{clazz.name}.{clazz.name}'
-            method = ir.Function(module, method_type, alias)
+            # get method mangled name
+            clazz_name = clazz.name.split('.')[1]
+            mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
+                                f'{len(clazz_name)}{clazz_name}E'
+            for arg in method_type.args:
+                mangled_name += self.getArgMangledName(arg)
+            method = ir.Function(module, method_type, mangled_name)
             method.args[0].name = 'this'
             method_ptr = ir.PointerType(method_type)
-            method_ptr.name = alias
+            method_ptr.name = clazz_name
+            method_ptr.mangled_name = mangled_name
+            method_ptr.is_constructor = True
             clazz.elements.append(method_ptr)
             clazz.counter += 1
             clazz.elements[clazz.counter].index = clazz.counter
@@ -804,8 +813,9 @@ class Visitor(CVisitor):
             for element in clazz.elements:
                 if isinstance(element, ir.PointerType):
                     if isinstance(element.pointee, ir.FunctionType):
-                        if element.name != alias:
-                            m: ir.Function = module.get_global(element.name)
+                        if element.name != clazz_name:
+                            m: ir.Function = module.get_global(
+                                element.mangled_name)
                             obj = method.args[0]
                             m_ptr = builder.gep(obj,
                                                 [i32(0), i32(element.index)])
@@ -815,20 +825,28 @@ class Visitor(CVisitor):
         else:
             rtype = self.visitTypeSpecifier(constructor.typeSpecifier())
             method_name: str = constructor.identifier().getText()
-            alias: str = f'{clazz.name}.{method_name}'
             args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
             args = [(clazz.as_pointer(), 'this'), *args]
             ir_args = [arg[0] for arg in args]
             method_type = ir.FunctionType(rtype, ir_args)
             method_type.var_arg = var_arg
 
+            # get method mangled name
+            clazz_name = clazz.name.split('.')[1]
+            mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
+                                f'{len(method_name)}{method_name}E'
+            for arg in method_type.args:
+                mangled_name += self.getArgMangledName(arg)
+
             method_ptr = ir.PointerType(method_type)
-            method_ptr.name = alias
+            method_ptr.name = method_name
+            method_ptr.mangled_name = mangled_name
+            method_ptr.is_constructor = True
             clazz.elements.append(method_ptr)
             clazz.counter += 1
             clazz.elements[clazz.counter].index = clazz.counter
 
-            method = ir.Function(module, method_type, alias)
+            method = ir.Function(module, method_type, mangled_name)
 
             for i in range(len(method.args)):
                 _, arg_identifier = args[i]
@@ -847,8 +865,9 @@ class Visitor(CVisitor):
             for element in clazz.elements:
                 if isinstance(element, ir.PointerType):
                     if isinstance(element.pointee, ir.FunctionType):
-                        if element.name != alias:
-                            m: ir.Function = module.get_global(element.name)
+                        if element.name != method_name:
+                            m: ir.Function = module.get_global(
+                                element.mangled_name)
                             obj = method.args[0]
                             m_ptr = builder.gep(obj,
                                                 [i32(0), i32(element.index)])
@@ -876,14 +895,37 @@ class Visitor(CVisitor):
                 continue
             self.createClassMethodPointer(method)
 
+        class_name = clazz.name.split('.')[1]
         constructor = None
         for method in ctx.classMethod():
-            if method.identifier().getText() == clazz.name:
+            if method.identifier().getText() == class_name:
                 constructor = method
                 continue
             self.visitClassMethod(method)
 
         self.createConstructor(constructor)
+
+    def getArgMangledName(self, arg: ir.Argument) -> str:
+        if arg == i8:
+            return 'c'
+        elif arg == i16:
+            return 's'
+        elif arg == i32:
+            return 'i'
+        elif arg == i64:
+            return 'l'
+        elif arg == self.manager.current_clazz:
+            return 'S_'
+        elif arg == self.manager.current_clazz:
+            return 'S_'
+        elif isinstance(arg, ir.IdentifiedStructType):
+            # this is a different class
+            clazz_name = arg.name.split('.')[1]
+            return f'{len(clazz_name)}{clazz_name}'
+        elif isinstance(arg, ir.PointerType):
+            return 'P' + self.getArgMangledName(arg.pointee)
+        else:
+            print(type(arg))
 
     def createClassMethodPointer(self, method: CParser.ClassMethodContext):
         # this method need to be executed before function block
@@ -892,7 +934,6 @@ class Visitor(CVisitor):
         clazz = self.manager.current_clazz
         rtype = self.visitTypeSpecifier(method.typeSpecifier())
         method_name: str = method.identifier().getText()
-        alias: str = f'{clazz.name}.{method_name}'
         args, var_arg = self.visitFunctionArgs(method.functionArgs())
         args = [(clazz.as_pointer(), 'this'), *args]
         ir_args = [arg[0] for arg in args]
@@ -900,7 +941,15 @@ class Visitor(CVisitor):
         method_type.var_arg = var_arg
 
         method_ptr = ir.PointerType(method_type)
-        method_ptr.name = alias
+        # get method mangled name
+        clazz_name = clazz.name.split('.')[1]
+        mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
+                            f'{len(method_name)}{method_name}E'
+        for arg in method_type.args:
+            mangled_name += self.getArgMangledName(arg)
+        # alias: str = f'{clazz.name}.{method_name}'
+        method_ptr.name = method_name
+        method_ptr.mangled_name = mangled_name
         clazz.elements.append(method_ptr)
         clazz.counter += 1
         clazz.elements[clazz.counter].index = clazz.counter
@@ -909,16 +958,25 @@ class Visitor(CVisitor):
         clazz = self.manager.current_clazz
         rtype = self.visitTypeSpecifier(ctx.typeSpecifier())
         method_name: str = ctx.identifier().getText()
-        alias: str = f'{clazz.name}.{method_name}'
         args, var_arg = self.visitFunctionArgs(ctx.functionArgs())
         args = [(clazz.as_pointer(), 'this'), *args]
 
+        # get method mangled name
+        clazz_name = clazz.name.split('.')[1]
+        mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
+                            f'{len(method_name)}{method_name}E'
+        for arg in args:
+            mangled_name += self.getArgMangledName(arg[0])
+
         method_type: ir.FunctionType | None = None
         for element in clazz.elements:
-            if element.name == alias:
-                method_type = element.pointee
-
-        method = ir.Function(module, method_type, alias)
+            if isinstance(element, ir.PointerType):
+                if isinstance(element.pointee, ir.FunctionType):
+                    if element.mangled_name == mangled_name:
+                        method_type = element.pointee
+                        break
+        # assign method mangled name to its method definition
+        method = ir.Function(module, method_type, mangled_name)
 
         for i in range(len(method.args)):
             _, arg_identifier = args[i]
@@ -946,16 +1004,18 @@ class Visitor(CVisitor):
         obj = builder.alloca(clazz, name=identifier)
         self.manager.add_variable(obj)
         elements = obj.type.pointee.elements
-        constructor_alias = f'{clazz.name}.{clazz.name}'
         for element in elements:
-            if element.name == constructor_alias:
-                constructor = self.manager.get_function(element.name)
-                args = self.visitFunctionCallArgs(ctx.functionCallArgs())
-                if args is None:
-                    args = [obj]
-                else:
-                    args = [obj, *args]
-                builder.call(constructor, args)
+            try:
+                assert element.is_constructor
+            except AttributeError:
+                continue
+            constructor = self.manager.get_function(element.mangled_name)
+            args = self.visitFunctionCallArgs(ctx.functionCallArgs())
+            if args is None:
+                args = [obj]
+            else:
+                args = [obj, *args]
+            builder.call(constructor, args)
         return obj
 
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
@@ -975,9 +1035,8 @@ class Visitor(CVisitor):
                             attribute = builder.load(attribute)
                 case CParser.FunctionCallExpressionContext:
                     name = child.identifier().getText()
-                    alias = f'{obj.type.pointee.name}.{name}'
                     for element in elements:
-                        if element.name == alias:
+                        if element.name == name:
                             method = builder.gep(obj, [i32(0),
                                                        i32(element.index)])
                             method = builder.load(method)
