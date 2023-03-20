@@ -101,27 +101,27 @@ class Visitor(CVisitor):
                     t = ir.PointerType(t)
                 return t
             case 'char', *ptr_count:
-                t = ir.IntType(8)
+                t = i8
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
             case 'short', 'int', *ptr_count:
-                t = ir.IntType(16)
+                t = i16
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
             case 'long', 'int', *ptr_count:
-                t = ir.IntType(64)
+                t = i64
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
             case 'long', *ptr_count:
-                t = ir.IntType(64)
+                t = i64
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
             case 'int', *ptr_count:
-                t = ir.IntType(32)
+                t = i32
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
@@ -147,10 +147,7 @@ class Visitor(CVisitor):
                     # this is a ptr and treated as a ptr
                     if isinstance(value, ir.GlobalVariable):
                         if isinstance(value.value_type, ir.ArrayType):
-                            start_ptr = value.gep([
-                                ir.Constant(i64, 0),
-                                ir.Constant(i64, 0)
-                            ])
+                            start_ptr = value.gep([i64(0), i64(0)])
                             start_ptr = builder.bitcast(
                                 start_ptr,
                                 ptr.type.pointee
@@ -359,7 +356,7 @@ class Visitor(CVisitor):
                                 attribute = builder.gep(obj, idx)
                             except AttributeError:
                                 # this is if like it is in func args
-                                attribute = obj.type.gep(ir.IntType(32)(0))
+                                attribute = obj.type.gep(i32(0))
                             break
                     else:
                         print_error(
@@ -591,7 +588,7 @@ class Visitor(CVisitor):
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         constant: CParser.ConstantContext = ctx.constant()
         if constant.INTEGER_CONSTANT():
-            return ir.Constant(ir.IntType(32), ctx.getText())
+            return i32(ctx.getText())
         if constant.STRING_LITERAL():
             value = ctx.getText()
 
@@ -621,14 +618,14 @@ class Visitor(CVisitor):
             value = value.replace('\\n', '\n')
             string_array = ir.GlobalVariable(
                 module,
-                ir.ArrayType(ir.IntType(8), len(value)),
+                ir.ArrayType(i8, len(value)),
                 name=self.manager.slc,
             )
             string_array.unnamed_addr = True
             string_array.linkage = 'private'
             string_array.global_constant = True
             string_array.initializer = ir.Constant(
-                ir.ArrayType(ir.IntType(8), len(value)),
+                ir.ArrayType(i8, len(value)),
                 bytearray(value.encode()))
 
             return string_array
