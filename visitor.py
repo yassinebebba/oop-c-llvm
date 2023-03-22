@@ -125,14 +125,16 @@ class Visitor(CVisitor):
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
-            case clazz_name:
-                clazz_name = f'class.{clazz_name[0]}'
-                return module.context.get_identified_type(clazz_name)
+            case clazz_name, *ptr_count:
+                clazz_name = f'class.{clazz_name}'
+                t = module.context.get_identified_type(clazz_name)
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
 
                 # if cls := self.manager.get_clazz(clazz_name):
                 #     return cls
                 # print_error('Type was not recognized!')
-
     def store(self, value, ptr):
         """
         keep it simple with only 1 ptr deep
