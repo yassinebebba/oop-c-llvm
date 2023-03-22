@@ -15,17 +15,18 @@ def print_error(error: str):
 
 class ClazzMap:
     def __init__(self):
-        self.elements = {}
+        self.attributes = {}
+        self.methods = {}
 
     def add_attribute(self, index, name):
-        self.elements[name] = {
-            'index': index
+        self.attributes[name] = {
+            'index': index,
         }
 
-    def add_method(self, index, name, mangled_name):
-        self.elements[name] = {
-            'index': index,
+    def add_method(self, name, mangled_name, is_constructor=False):
+        self.methods[name] = {
             'mangled_name': mangled_name,
+            'is_constructor': is_constructor
         }
 
 

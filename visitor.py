@@ -135,6 +135,7 @@ class Visitor(CVisitor):
                 # if cls := self.manager.get_clazz(clazz_name):
                 #     return cls
                 # print_error('Type was not recognized!')
+
     def store(self, value, ptr):
         """
         keep it simple with only 1 ptr deep
@@ -337,23 +338,23 @@ class Visitor(CVisitor):
             try:
                 # this is if allocated so pointee is needed
                 elements = obj.type.pointee.elements
-                clazz_map = obj.type.pointee.map
+                clazz_map: ClazzMap = obj.type.pointee.map
             except AttributeError:
                 # this is if like it is in func args
                 elements = obj.type.elements
-                clazz_map = obj.type.map
+                clazz_map: ClazzMap = obj.type.map
             attribute = None
 
             for child in chain.children[1:]:
                 if isinstance(child, CParser.IdentifierContext):
                     identifier = child.getText()
-                    for element, name in zip(elements, clazz_map.elements):
+                    for element, name in zip(elements, clazz_map.attributes):
                         if name == identifier:
                             try:
                                 # this is if allocated so pointee is needed
                                 idx = [
                                     i32(0),
-                                    i32(clazz_map.elements[name]['index'])
+                                    i32(clazz_map.attributes[name]['index'])
                                 ]
                                 attribute = builder.gep(obj, idx)
                             except AttributeError:
@@ -793,103 +794,73 @@ class Visitor(CVisitor):
 
     def createConstructor(self, constructor: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
-        if constructor is None:
-            # create an empty constructor
-            method_type = ir.FunctionType(ir.VoidType(), [clazz.as_pointer()])
-            # get method mangled name
-            clazz_name = clazz.name.split('.')[1]
-            mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
-                                f'{len(clazz_name)}{clazz_name}E'
-            for arg in method_type.args:
-                mangled_name += self.getArgMangledName(arg)
-            method = ir.Function(module, method_type, mangled_name)
-            method.args[0].name = 'this'
-            method_ptr = ir.PointerType(method_type)
-            method_ptr.name = clazz_name
-            method_ptr.mangled_name = mangled_name
-            method_ptr.is_constructor = True
-            clazz.elements.append(method_ptr)
-            clazz.counter += 1
-            clazz.elements[clazz.counter].index = clazz.counter
-            block = method.append_basic_block(name='entry')
-            builder = ir.IRBuilder(block)
+        rtype = self.visitTypeSpecifier(constructor.typeSpecifier())
+        method_name: str = constructor.identifier().getText()
+        args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
+        args = [(clazz.as_pointer(), 'this'), *args]
+        ir_args = [arg[0] for arg in args]
+        method_type = ir.FunctionType(rtype, ir_args)
+        method_type.var_arg = var_arg
 
-            self.manager.builder = builder
-            scope = Scope(ScopeType.FUNC, function=method)
-            self.manager.scope_stack.push(scope)
-            self.manager.current_function = method
-            self.manager.add_function(method)
+        # get method mangled name
+        clazz_name = clazz.name.split('.')[1]
+        mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
+                            f'{len(method_name)}{method_name}E'
+        for arg in method_type.args:
+            mangled_name += self.getArgMangledName(arg)
 
-            clazz_map: ClazzMap = clazz.map
-            for element, name in zip(clazz.elements, clazz_map.elements):
-                if isinstance(element, ir.PointerType):
-                    if isinstance(element.pointee, ir.FunctionType):
-                        if name != clazz_name:
-                            m: ir.Function = module.get_global(
-                                clazz_map.elements[name]['mangled_name'])
-                            obj = method.args[0]
-                            idx = clazz_map.elements[name]['index']
-                            m_idx = [i32(0), i32(idx)]
-                            m_ptr = builder.gep(obj, m_idx)
-                            builder.store(m, m_ptr)
+        method: ir.Function = module.get_global(mangled_name)
+
+        for i in range(len(method.args)):
+            _, arg_identifier = args[i]
+            if arg_identifier:
+                method.args[i].name = arg_identifier
+
+        block = method.append_basic_block(name='entry')
+        builder = ir.IRBuilder(block)
+
+        self.manager.builder = builder
+        self.manager.current_function = method
+        self.manager.add_function(method)
+
+        scope = Scope(ScopeType.FUNC, function=method)
+        self.manager.scope_stack.push(scope)
+        self.visitBlock(constructor.block())
+
+        if rtype == ir.VoidType() and not builder.block.is_terminated:
             builder.ret_void()
 
-        else:
-            rtype = self.visitTypeSpecifier(constructor.typeSpecifier())
-            method_name: str = constructor.identifier().getText()
-            args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
-            args = [(clazz.as_pointer(), 'this'), *args]
-            ir_args = [arg[0] for arg in args]
-            method_type = ir.FunctionType(rtype, ir_args)
-            method_type.var_arg = var_arg
+    def autoDeclareConstructor(self):
+        clazz = self.manager.current_clazz
+        # create an empty constructor
+        method_type = ir.FunctionType(ir.VoidType(), [clazz.as_pointer()])
+        # get method mangled name
+        clazz_name = clazz.name.split('.')[1]
+        mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
+                            f'{len(clazz_name)}{clazz_name}E'
+        for arg in method_type.args:
+            mangled_name += self.getArgMangledName(arg)
+        method = ir.Function(module, method_type, mangled_name)
+        method.args[0].name = 'this'
+        clazz.map.add_method(clazz_name, mangled_name, True)
+        self.manager.current_function = method
 
-            # get method mangled name
-            clazz_name = clazz.name.split('.')[1]
-            mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
-                                f'{len(method_name)}{method_name}E'
-            for arg in method_type.args:
-                mangled_name += self.getArgMangledName(arg)
+    def autoDefineConstructor(self):
+        clazz = self.manager.current_clazz
+        for _, info in clazz.map.methods.items():
+            if info['is_constructor']:
+                constructor = module.get_global(info['mangled_name'])
+                block = constructor.append_basic_block(name='entry')
+                builder = ir.IRBuilder(block)
 
-            method_ptr = ir.PointerType(method_type)
-            method_ptr.name = method_name
-            method_ptr.mangled_name = mangled_name
-            method_ptr.is_constructor = True
-            clazz.elements.append(method_ptr)
-            clazz.counter += 1
-            clazz.elements[clazz.counter].index = clazz.counter
-
-            method = ir.Function(module, method_type, mangled_name)
-
-            for i in range(len(method.args)):
-                _, arg_identifier = args[i]
-                if arg_identifier:
-                    method.args[i].name = arg_identifier
-
-            block = method.append_basic_block(name='entry')
-            builder = ir.IRBuilder(block)
-
-            self.manager.builder = builder
-            scope = Scope(ScopeType.FUNC, function=method)
-            self.manager.scope_stack.push(scope)
-            self.manager.current_function = method
-            self.manager.add_function(method)
-
-            clazz_map: ClazzMap = clazz.map
-            for element, name in zip(clazz.elements, clazz_map.elements):
-                if isinstance(element, ir.PointerType):
-                    if isinstance(element.pointee, ir.FunctionType):
-                        if name != method_name:
-                            m: ir.Function = module.get_global(
-                                clazz_map.elements[name]['mangled_name'])
-                            obj = method.args[0]
-                            idx = clazz_map.elements[name]['index']
-                            m_idx = [i32(0), i32(idx)]
-                            m_ptr = builder.gep(obj, m_idx)
-                            builder.store(m, m_ptr)
-            self.visitBlock(constructor.block())
-
-            if rtype == ir.VoidType() and not builder.block.is_terminated:
+                self.manager.builder = builder
+                scope = Scope(ScopeType.FUNC, function=constructor)
+                self.manager.scope_stack.push(scope)
+                self.manager.current_function = constructor
+                self.manager.add_function(constructor)
+                # self.visitBlock(ctx.block())
                 builder.ret_void()
+                break
 
     def visitClassBlock(self, ctx: CParser.ClassBlockContext):
         clazz = self.manager.current_clazz
@@ -901,23 +872,23 @@ class Visitor(CVisitor):
         # bc if a method 1 created before method 2
         # and method 1 calls method 2, without this
         # it will cause a problem
-        for method in ctx.classMethod():
-            if method.identifier().getText() == clazz.name:
-                # TODO: should I add the constructor too?
-                # TODO: so this.__init__(...) works?
-                # TODO: you get what I mean
-                continue
-            self.createClassMethodPointer(method)
 
         class_name = clazz.name.split('.')[1]
-        constructor = None
+        has_constructor = False
         for method in ctx.classMethod():
             if method.identifier().getText() == class_name:
-                constructor = method
+                has_constructor = True
+            self.createClassMethodDeclaration(method)
+
+        if not has_constructor:
+            self.autoDeclareConstructor()
+            self.autoDefineConstructor()
+
+        for method in ctx.classMethod():
+            if method.identifier().getText() == class_name:
+                self.createConstructor(method)
                 continue
             self.visitClassMethod(method)
-
-        self.createConstructor(constructor)
 
     def getArgMangledName(self, arg: ir.Argument) -> str:
         if arg == i8:
@@ -941,7 +912,7 @@ class Visitor(CVisitor):
         else:
             print(type(arg))
 
-    def createClassMethodPointer(self, method: CParser.ClassMethodContext):
+    def createClassMethodDeclaration(self, method: CParser.ClassMethodContext):
         # this method need to be executed before function block
         # gets created so methods can have access to each other
         # despite being declared after it
@@ -950,21 +921,22 @@ class Visitor(CVisitor):
         method_name: str = method.identifier().getText()
         args, var_arg = self.visitFunctionArgs(method.functionArgs())
         args = [(clazz.as_pointer(), 'this'), *args]
-        ir_args = [arg[0] for arg in args]
-        method_type = ir.FunctionType(rtype, ir_args)
+        method_type = ir.FunctionType(rtype, [arg[0] for arg in args])
         method_type.var_arg = var_arg
 
-        method_ptr = ir.PointerType(method_type)
         # get method mangled name
         clazz_name = clazz.name.split('.')[1]
         mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
                             f'{len(method_name)}{method_name}E'
         for arg in method_type.args:
             mangled_name += self.getArgMangledName(arg)
-        # alias: str = f'{clazz.name}.{method_name}'
-        clazz.elements.append(method_ptr)
-        clazz.counter += 1
-        clazz.map.add_method(clazz.counter, method_name, mangled_name)
+
+        ir.Function(module, method_type, mangled_name)
+
+        is_constructor = False
+        if method_name == clazz_name:
+            is_constructor = True
+        clazz.map.add_method(method_name, mangled_name, is_constructor)
 
     def visitClassMethod(self, ctx: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
@@ -980,18 +952,13 @@ class Visitor(CVisitor):
         for arg in args:
             mangled_name += self.getArgMangledName(arg[0])
 
-        method_type: ir.FunctionType | None = None
+        # assign method mangled name to its method definition
+        method_type = ir.FunctionType(rtype, [arg[0] for arg in args])
+        method_type.var_arg = var_arg
+        method = module.get_global(mangled_name)
 
         clazz_map: ClazzMap = clazz.map
-        for element, name in zip(clazz.elements, clazz_map.elements):
-            if isinstance(element, ir.PointerType):
-                if isinstance(element.pointee, ir.FunctionType):
-                    mn = clazz_map.elements[name]['mangled_name']
-                    if mn == mangled_name:
-                        method_type = element.pointee
-                        break
-        # assign method mangled name to its method definition
-        method = ir.Function(module, method_type, mangled_name)
+        clazz_map.add_method(method_name, mangled_name)
 
         for i in range(len(method.args)):
             _, arg_identifier = args[i]
@@ -1018,19 +985,16 @@ class Visitor(CVisitor):
         builder = self.manager.builder
         obj = builder.alloca(clazz, name=identifier)
         self.manager.add_variable(obj)
-        elements = obj.type.pointee.elements
-        for element in elements:
-            try:
-                assert element.is_constructor
-            except AttributeError:
-                continue
-            constructor = self.manager.get_function(element.mangled_name)
-            args = self.visitFunctionCallArgs(ctx.functionCallArgs())
-            if args is None:
-                args = [obj]
-            else:
-                args = [obj, *args]
-            builder.call(constructor, args)
+
+        for name, info in clazz.map.methods.items():
+            if info['is_constructor']:
+                constructor = module.get_global(info['mangled_name'])
+                args = self.visitFunctionCallArgs(ctx.functionCallArgs())
+                if args is None:
+                    args = [obj]
+                else:
+                    args = [obj, *args]
+                builder.call(constructor, args)
         return obj
 
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
@@ -1044,20 +1008,18 @@ class Visitor(CVisitor):
         for child in list(ctx.getChildren())[1:]:
             match type(child):
                 case CParser.IdentifierContext:
-                    for element, name in zip(elements, clazz_map.elements):
+                    for element, name in zip(elements, clazz_map.attributes):
                         if name == child.getText():
-                            idx = clazz_map.elements[name]['index']
+                            idx = clazz_map.attributes[name]['index']
                             attr_idx = [i32(0), i32(idx)]
                             attribute = builder.gep(obj, attr_idx)
                             attribute = builder.load(attribute)
                 case CParser.FunctionCallExpressionContext:
                     identifier = child.identifier().getText()
-                    for element, name in zip(elements, clazz_map.elements):
+                    for name in clazz_map.methods:
                         if name == identifier:
-                            idx = clazz_map.elements[name]['index']
-                            method_idx = [i32(0), i32(idx)]
-                            method = builder.gep(obj, method_idx)
-                            method = builder.load(method)
+                            mn = clazz_map.methods[name]['mangled_name']
+                            method = module.get_global(mn)
                             attribute = builder.call(method, [obj])
                 case antlr4.tree.Tree.TerminalNodeImpl:
                     # this is to check -> or . later on
