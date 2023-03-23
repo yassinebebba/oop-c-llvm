@@ -591,7 +591,18 @@ class Visitor(CVisitor):
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         constant: CParser.ConstantContext = ctx.constant()
         if constant.INTEGER_CONSTANT():
-            return i32(ctx.getText())
+            value = constant.INTEGER_CONSTANT()
+            sign = 0
+            if (constant.unarySign()):
+                for i in constant.unarySign().getText():
+                    if i == '+':
+                        sign += 1
+                    if i == '-':
+                        sign -= 1
+            if sign == 1:
+                return i32(f'-{value}')
+            else:
+                return i32(value)
         if constant.STRING_LITERAL():
             value = ctx.getText()
 

@@ -25,7 +25,8 @@ entry:
   %".4" = load i32, i32* %".3"
   %".5" = call i32 @"_ZN6Player4getyEPS_"(%"class.Player"* %"this")
   %".6" = add i32 %".4", %".5"
-  ret i32 %".6"
+  %".7" = add i32 %".6", 2
+  ret i32 %".7"
 }
 
 define i32 @"_ZN6Player4getyEPS_"(%"class.Player"* %"this")
@@ -48,8 +49,7 @@ define i32 @"_ZN6Target4getaEPS_"(%"class.Target"* %"this")
 entry:
   %".3" = getelementptr %"class.Target", %"class.Target"* %"this", i32 0, i32 0
   %".4" = load i32, i32* %".3"
-  %".5" = add i32 %".4", 10
-  ret i32 %".5"
+  ret i32 %".4"
 }
 
 define void @"_ZN6Target6TargetEPS_"(%"class.Target"* %"this")
