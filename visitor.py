@@ -110,7 +110,17 @@ class Visitor(CVisitor):
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
+            case 'short', *ptr_count:
+                t = i16
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
             case 'long', 'int', *ptr_count:
+                t = i64
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'long', 'long', *ptr_count:
                 t = i64
                 for _ in ptr_count:
                     t = ir.PointerType(t)
@@ -127,7 +137,12 @@ class Visitor(CVisitor):
                 return t
             case clazz_name, *ptr_count:
                 clazz_name = f'class.{clazz_name}'
+                if clazz_name not in module.context.identified_types:
+                    print_error(f'Class \'{clazz_name.split(".")[1]}\''
+                                ' does not exist!')
+                    exit(1)
                 t = module.context.get_identified_type(clazz_name)
+
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
@@ -1008,6 +1023,18 @@ class Visitor(CVisitor):
                 builder.call(constructor, args)
         return obj
 
+    def castFunctionArg(self, func, args):
+        for fa, a in zip(func.args, args):
+            # if f
+            if isinstance(fa.type, ir.IdentifiedStructType):
+                if isinstance(a.type, ir.PointerType):
+                    if fa.type == a.type.pointee:
+                        # copy the object
+                        print('#################')
+                        print(func.name)
+                        print('yes')
+        return args
+
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
         obj_name: str = ctx.identifier(0).getText()
         obj = self.manager.get_variable(obj_name)
@@ -1031,7 +1058,14 @@ class Visitor(CVisitor):
                         if name == identifier:
                             mn = clazz_map.methods[name]['mangled_name']
                             method = module.get_global(mn)
-                            attribute = builder.call(method, [obj])
+                            args = self.visitFunctionCallArgs(
+                                child.functionCallArgs())
+                            if args is None:
+                                args = [obj]
+                            else:
+                                args = [obj, *args]
+                            args = self.castFunctionArg(method, args)
+                            attribute = builder.call(method, args)
                 case antlr4.tree.Tree.TerminalNodeImpl:
                     # this is to check -> or . later on
                     continue

@@ -3,6 +3,9 @@ int printf(char *, ...);
 int T = 1;
 char d;
 class Player {
+    short a;
+    short int b;
+    long c;
     int x;
     int y;
     void Player(int x, int y) {
@@ -27,6 +30,9 @@ class Player {
 class Target {
     int a;
     Player player;
+//    int test(Player player) {
+//        return 1;
+//    }
     int geta() {
         return this->a;
     }
@@ -35,6 +41,8 @@ class Target {
 int main() {
     Player player = new Player(1, 2);
     Target target =  new Target();
+    long a = 62;
+//    printf("hey %d\n", target.test(player));
     printf("hey %d\n", target.geta());
     char * fmt = "player.x = %d\n"
                  "player.y = %d\n"
