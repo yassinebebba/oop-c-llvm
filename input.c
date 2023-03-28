@@ -41,7 +41,7 @@ class Target {
 int main() {
     Player player = new Player(1, 2);
     Target target =  new Target();
-    long a = 62;
+//    long a = 62;
 //    printf("hey %d\n", target.test(player));
     printf("hey %d\n", target.geta());
     char * fmt = "player.x = %d\n"
@@ -51,8 +51,14 @@ int main() {
                  "add x + y = %d\n"
                  "add getters x + y = %d\n";
     printf("hey\n");
-    printf(fmt, player.x, player.y, player.getx(), player.gety(),
-                player.x + player.y,player.getx()+ player.gety());
+    printf(fmt,
+           player.x,
+           player.y,
+           player.getx(),
+           player.gety(),
+           player.x + player.y,
+           player.getx() + player.gety()
+           );
     printf("%s", player.__repr__());
     return 0;
 }

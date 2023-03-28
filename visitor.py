@@ -429,10 +429,7 @@ class Visitor(CVisitor):
             if isinstance(arg.type.pointee, ir.ArrayType):
                 if arg.type.pointee.element == i8 \
                         and arg_type.type == i8.as_pointer():
-                    start_ptr = args[i].gep([
-                        ir.Constant(i64, 0),
-                        ir.Constant(i64, 0)
-                    ])
+                    start_ptr = args[i].gep([i64(0), i64(0)])
                     start_ptr = builder.bitcast(
                         start_ptr,
                         i8.as_pointer()
@@ -466,10 +463,7 @@ class Visitor(CVisitor):
                 if isinstance(expression.type.pointee, ir.ArrayType):
                     expr_type = expression.type.pointee.element.as_pointer()
                     if func.return_value.type == i8.as_pointer() == expr_type:
-                        start_ptr = expression.gep([
-                            ir.Constant(i64, 0),
-                            ir.Constant(i64, 0)
-                        ])
+                        start_ptr = expression.gep([i64(0), i64(0)])
                         start_ptr = self.manager.builder.bitcast(
                             start_ptr,
                             i8.as_pointer()
@@ -925,8 +919,6 @@ class Visitor(CVisitor):
             return 'i'
         elif arg == i64:
             return 'l'
-        elif arg == self.manager.current_clazz:
-            return 'S_'
         elif arg == self.manager.current_clazz:
             return 'S_'
         elif isinstance(arg, ir.IdentifiedStructType):
