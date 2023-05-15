@@ -162,11 +162,10 @@ typeSpecifier
             (
                   CHAR
                 | SHORT
-                | SHORT? INT
-                | LONG
+                | (SHORT | LONG LONG?)? INT
+                | LONG LONG?
                 | FLOAT
                 | LONG? DOUBLE
-                | INT
             )
         | identifier
       ) STAR*
