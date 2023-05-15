@@ -17,12 +17,24 @@ a = 30
 
 def test_2():
     """
-    test short declaration and declaration with addition expression;
+    test short declaration and declaration with addition expression
     """
     compile('./sourcecode/short/test_2.c')
     stdout, stderr, return_code = run_script()
     expected = """a = 2
 b = 5
+"""
+    assert return_code == 0
+    assert stdout == expected
+
+def test_3():
+    """
+    assign one short variable to another
+    """
+    compile('./sourcecode/short/test_3.c')
+    stdout, stderr, return_code = run_script()
+    expected = """a = 3
+b = 3
 """
     assert return_code == 0
     assert stdout == expected
