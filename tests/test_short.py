@@ -39,4 +39,15 @@ b = 3
     assert return_code == 0
     assert stdout == expected
 
+def test_4():
+    """
+    assign a short to itself
+    """
+    compile('./sourcecode/short/test_4.c')
+    stdout, stderr, return_code = run_script()
+    expected = "a = 2\n"
+    assert return_code == 0
+    assert stdout == expected
+
+
 
