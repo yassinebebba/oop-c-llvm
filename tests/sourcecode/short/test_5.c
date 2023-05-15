@@ -3,6 +3,6 @@ int printf(char *, ...);
 int main() {
     short a = 2;
     a = a + a;
-    printf("a = %d\n", 2);
+    printf("a = %d\n", a);
     return 0;
 }

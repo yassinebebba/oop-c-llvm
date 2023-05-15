@@ -49,5 +49,16 @@ def test_4():
     assert return_code == 0
     assert stdout == expected
 
+def test_5():
+    """
+    test: a = a + a;
+    """
+    compile('./sourcecode/short/test_5.c')
+    stdout, stderr, return_code = run_script()
+    expected = "a = 4\n"
+    assert return_code == 0
+    assert stdout == expected
+
+
 
 
