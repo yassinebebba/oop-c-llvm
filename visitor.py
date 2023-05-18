@@ -651,12 +651,9 @@ class Visitor(CVisitor):
         if expr2_ir.type.is_pointer:
             expr2_ir = self.manager.builder.load(expr2_ir)
 
-        # TODO: this code down below was not reviewed
-        try:
-            return self.manager.builder.add(expr1_ir, expr2_ir)
-        except ValueError:
-            expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
-            return self.manager.builder.add(expr1_ir, expr2_ir)
+        # TODO: this code works for now
+        expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
+        return self.manager.builder.sub(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
@@ -665,6 +662,9 @@ class Visitor(CVisitor):
             expr1_ir = self.manager.builder.load(expr1_ir)
         if expr2_ir.type.is_pointer:
             expr2_ir = self.manager.builder.load(expr2_ir)
+
+        # TODO: this code works for now
+        expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
         return self.manager.builder.sub(expr1_ir, expr2_ir)
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
@@ -1119,11 +1119,12 @@ class Visitor(CVisitor):
 
     def promoteType(self, src1, src2):
         # TODO: this code down below was not reviewed
-
         if src1.type.width > src2.type.width:
+            return src1, self.manager.builder.sext(src2, src1.type)
+        elif src1.type.width < src2.type.width:
             return self.manager.builder.sext(src1, src2.type), src2
         else:
-            return src1, self.manager.builder.sext(src2, src1.type)
+            return src1, src2
 
     def castFunctionArg(self, func, args):
         for fa, a in zip(func.args, args):
