@@ -236,6 +236,20 @@ class Visitor(CVisitor):
                     else:
                         return builder.store(value, ptr)
                 print('4: Not implemented yet!')
+            case ir.AllocaInstr, ir.Instruction:
+                ptr_type, ptr_level = self.gplp(ptr.type)
+                value_type, value_level = self.gplp(value.type)
+                match type(ptr_type), type(value_type):
+                    case ir.IntType, ir.IntType:
+                        if ptr_type.width < value_type.width:
+                            value = builder.trunc(value, ptr_type)
+                            return builder.store(value, ptr)
+                        elif ptr_type.width > value_type.width:
+                            value = builder.sext(value, ptr_type)
+                            return builder.store(value, ptr)
+                        else:
+                            return builder.store(value, ptr)
+                print('5: Not implemented yet!')
             case _, _:
                 # print(type(ptr), '\n\t', type(value))
                 # print(ptr.type, '\n\t', value.type)
