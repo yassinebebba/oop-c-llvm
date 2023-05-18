@@ -115,7 +115,17 @@ class Visitor(CVisitor):
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
+            case 'int', *ptr_count:
+                t = i32
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
             case 'long', 'int', *ptr_count:
+                t = i64
+                for _ in ptr_count:
+                    t = ir.PointerType(t)
+                return t
+            case 'long', 'long', 'int', *ptr_count:
                 t = i64
                 for _ in ptr_count:
                     t = ir.PointerType(t)
@@ -127,11 +137,6 @@ class Visitor(CVisitor):
                 return t
             case 'long', *ptr_count:
                 t = i64
-                for _ in ptr_count:
-                    t = ir.PointerType(t)
-                return t
-            case 'int', *ptr_count:
-                t = i32
                 for _ in ptr_count:
                     t = ir.PointerType(t)
                 return t
@@ -151,47 +156,90 @@ class Visitor(CVisitor):
                 #     return cls
                 # print_error('Type was not recognized!')
 
-    def store(self, value, ptr):
-        """
-        keep it simple with only 1 ptr deep
-        everything should be hardcoded for now
-        """
-        builder = self.manager.builder
-        try:
-            builder.store(value, ptr)
-        except TypeError:
-            if isinstance(ptr, ir.AllocaInstr):
-                if ptr.type.pointee.is_pointer:
-                    # this is a ptr and treated as a ptr
-                    if isinstance(value, ir.GlobalVariable):
-                        if isinstance(value.value_type, ir.ArrayType):
-                            start_ptr = value.gep([i64(0), i64(0)])
-                            start_ptr = builder.bitcast(
-                                start_ptr,
-                                ptr.type.pointee
-                            )
-                            builder.store(start_ptr, ptr)
+    def gplp(self, ptr: ir.PointerType):
+        # get pointer level and pointee
+        ptr_level = 0
+        ptr_type = ptr
+        while isinstance(ptr_type, ir.PointerType):
+            ptr_level += 1
+            ptr_type = ptr_type.pointee
+        return ptr_type, ptr_level
 
-                else:
-                    # this is a ptr but treated as a dereferenced ptr
-                    if isinstance(value, ir.GlobalVariable):
-                        if isinstance(value.value_type, ir.ArrayType):
-                            print_error('Incompatible pointer to integer '
-                                        'conversion initializing \'int\' '
-                                        'with an expression of type '
-                                        f'\'char[{value.value_type.count}]\'')
+    def store(self, value, ptr):
+        builder = self.manager.builder
+        match type(ptr), type(value):
+            case ir.AllocaInstr, ir.Constant:
+                # check if ptr is pointer
+                match type(ptr.type), type(value.type):
+                    case ir.PointerType, ir.PointerType:
+                        print('1: Not implemented yet!')
+                    case ir.PointerType, ir.IntType:
+                        # get count of pointer level
+                        ptr_type, ptr_level = self.gplp(ptr.type)
+                        # check if ptr_type is int
+                        if isinstance(ptr_type, ir.IntType):
+                            # check if ptr_level is 1
+                            if ptr_level == 1:
+                                # check if ptr_type width is less than value width
+                                if ptr_type.width < value.type.width:
+                                    # truncate value
+                                    value = builder.trunc(value, ptr_type)
+                                    # store truncated value
+                                    return builder.store(value, ptr)
+                                elif ptr_type.width > value.type.width:
+                                    # extend value
+                                    value = builder.sext(value, ptr_type)
+                                    # store extended value
+                                    return builder.store(value, ptr)
+                                else:
+                                    return builder.store(value, ptr)
+
+                            else:
+                                return print_error('Incompatible integer to '
+                                                   'pointer conversion '
+                                                   'initializing `ptr` with an'
+                                                   ' expression of type `int`')
+                        print('2: Not implemented yet!')
+
+            case ir.AllocaInstr, ir.GlobalVariable:
+                # check global variable type is string
+                ptr_type, ptr_level = self.gplp(ptr.type)
+                if isinstance(value.value_type, ir.ArrayType):
+                    if ptr_level >= 2:
+                        start_ptr = value.gep([i64(0), i64(0)])
+                        start_ptr = builder.bitcast(
+                            start_ptr,
+                            ptr.type.pointee
+                        )
+                        return builder.store(start_ptr, ptr)
+
                     else:
-                        # handle type casting
-                        if isinstance(value, ir.AllocaInstr):
-                            sext_val = builder.sext(
-                                builder.load(value),
-                                ptr.type.pointee)
-                            builder.store(sext_val, ptr)
-                        else:
-                            trunc_val = builder.trunc(value, ptr.type.pointee)
-                            builder.store(trunc_val, ptr)
-            else:
-                print('not allocated')
+                        return print_error('Incompatible pointer to integer '
+                                           'conversion initializing \'int\' '
+                                           'with an expression of type '
+                                           f'\'char[{value.value_type.count}]\'')
+                # print(ptr.type, '\n\t', value.type)
+                # print(type(ptr.type), '\n\t', value.value_type)
+                print('3: Not implemented yet!')
+            case ir.AllocaInstr, ir.AllocaInstr:
+                ptr_type, ptr_level = self.gplp(ptr.type)
+                value_type, value_level = self.gplp(value.type)
+                if ptr_level == value_level:
+                    # load value because it is alloca instruction
+                    value = builder.load(value)
+                    if ptr_type.width < value_type.width:
+                        value = builder.trunc(value, ptr_type)
+                        return builder.store(value, ptr)
+                    elif ptr_type.width > value_type.width:
+                        value = builder.sext(value, ptr_type)
+                        return builder.store(value, ptr)
+                    else:
+                        return builder.store(value, ptr)
+                print('4: Not implemented yet!')
+            case _, _:
+                # print(type(ptr), '\n\t', type(value))
+                # print(ptr.type, '\n\t', value.type)
+                print('default: Not implemented yet!')
 
     def visitVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
         type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
@@ -470,8 +518,10 @@ class Visitor(CVisitor):
                         )
                         self.manager.builder.ret(start_ptr)
         else:
-            print_error(
-                'function return type does not match function return type')
+            # TODO: this code down below was not reviewed
+            print(ctx.getText())
+            temp = self.castType(expression, func.return_value)
+            self.manager.builder.ret(temp)
 
     def visitIfStatementStructure(self,
                                   ctx: CParser.IfStatementStructureContext):
@@ -586,7 +636,13 @@ class Visitor(CVisitor):
             expr1_ir = self.manager.builder.load(expr1_ir)
         if expr2_ir.type.is_pointer:
             expr2_ir = self.manager.builder.load(expr2_ir)
-        return self.manager.builder.add(expr1_ir, expr2_ir)
+
+        # TODO: this code down below was not reviewed
+        try:
+            return self.manager.builder.add(expr1_ir, expr2_ir)
+        except ValueError:
+            expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
+            return self.manager.builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
@@ -1014,6 +1070,46 @@ class Visitor(CVisitor):
                     args = [obj, *args]
                 builder.call(constructor, args)
         return obj
+
+    def castType(self, src, dest):
+        # TODO: this code down below was not reviewed
+
+        src: ir.Instruction
+        src_ptr_count = 0
+        src_temp = src
+        if hasattr(src, 'type'):
+            src_temp = src.type
+
+        while src_temp.is_pointer:
+            src_ptr_count += 1
+            src_temp = src.type.pointee
+
+        dest_ptr_count = 0
+        dest_temp = dest
+        if hasattr(dest, 'type'):
+            dest_temp = dest.type
+        while dest_temp.is_pointer:
+            dest_ptr_count += 1
+            dest_temp = dest_temp.pointee
+
+        if src_ptr_count != dest_ptr_count:
+            print_error('Incompatible function return type and return value')
+        print(src_temp, dest_temp, src_ptr_count, dest_ptr_count)
+
+        if isinstance(src_temp, ir.IntType) \
+                and isinstance(dest_temp, ir.IntType):
+            c = src_ptr_count - dest_ptr_count
+            for _ in range(c):
+                src = self.manager.builder.load(src)
+            return self.manager.builder.sext(src, dest_temp)
+
+    def promoteType(self, src1, src2):
+        # TODO: this code down below was not reviewed
+
+        if src1.type.width > src2.type.width:
+            return self.manager.builder.sext(src1, src2.type), src2
+        else:
+            return src1, self.manager.builder.sext(src2, src1.type)
 
     def castFunctionArg(self, func, args):
         for fa, a in zip(func.args, args):
