@@ -1,12 +1,57 @@
 int printf(char *, ...);
 
+class Player {
+    short a;
+    short int b;
+    long c;
+    int x;
+    int y;
+    void Player(int x, long y) {
+        this->x = x;
+        this->y = y;
+    }
+
+    int getx() {
+        return this->x + this->gety() + 2;
+    }
+
+    int gety() {
+        return this->y;
+    }
+
+    char * __repr__() {
+        return "This is a Player object\n";
+    }
+}
+
+
+class Target {
+    int a;
+    Player player;
+//    int test(Player player) {
+//        return 1;
+//    }
+    int geta() {
+        return this->a;
+    }
+}
+
 int main() {
-    short a = 2;
-    int b = 10 - 7 + a;
-    long c = b;
-    a = b;
-    char * str = "a = %d\n";
-    char * str2 = str;
-    printf(str2, c);
+    Player player = new Player(1, 2);
+    char * fmt = "player.x = %d\n"
+                 "player.y = %d\n"
+                 "player.getx() = %d\n"
+                 "player.gety() = %d\n"
+                 "add x + y = %d\n"
+                 "add getters x + y = %d\n";
+    printf(fmt,
+           player.x,
+           player.y,
+           player.getx(),
+           player.gety(),
+           player.x + player.y,
+           player.getx() + player.gety()
+           );
+    printf("%s", player.__repr__());
     return 0;
 }

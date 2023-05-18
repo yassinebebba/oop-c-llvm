@@ -250,6 +250,19 @@ class Visitor(CVisitor):
                         else:
                             return builder.store(value, ptr)
                 print('5: Not implemented yet!')
+            case ir.GEPInstr, ir.Argument:
+                ptr_type, ptr_level = self.gplp(ptr.type)
+                value_type, value_level = self.gplp(value.type)
+                match type(ptr_type), type(value_type):
+                    case ir.IntType, ir.IntType:
+                        if ptr_type.width < value_type.width:
+                            value = builder.trunc(value, ptr_type)
+                            return builder.store(value, ptr)
+                        elif ptr_type.width > value_type.width:
+                            value = builder.sext(value, ptr_type)
+                            return builder.store(value, ptr)
+                        else:
+                            return builder.store(value, ptr)
             case _, _:
                 # print(type(ptr), '\n\t', type(value))
                 # print(ptr.type, '\n\t', value.type)
@@ -636,11 +649,25 @@ class Visitor(CVisitor):
     def visitMultiplyExpression(self, ctx: CParser.MultiplyExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
         expr2_ir = self.visitExpression(ctx.expression(1))
+        if expr1_ir.type.is_pointer:
+            expr1_ir = self.manager.builder.load(expr1_ir)
+        if expr2_ir.type.is_pointer:
+            expr2_ir = self.manager.builder.load(expr2_ir)
+
+        # TODO: this code works for now
+        expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
         return self.manager.builder.mul(expr1_ir, expr2_ir)
 
     def visitDivideExpression(self, ctx: CParser.DivideExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
         expr2_ir = self.visitExpression(ctx.expression(1))
+        if expr1_ir.type.is_pointer:
+            expr1_ir = self.manager.builder.load(expr1_ir)
+        if expr2_ir.type.is_pointer:
+            expr2_ir = self.manager.builder.load(expr2_ir)
+
+        # TODO: this code works for now
+        expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
         return self.manager.builder.sdiv(expr1_ir, expr2_ir)
 
     def visitAddExpression(self, ctx: CParser.AddExpressionContext):
@@ -653,7 +680,7 @@ class Visitor(CVisitor):
 
         # TODO: this code works for now
         expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
-        return self.manager.builder.sub(expr1_ir, expr2_ir)
+        return self.manager.builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
@@ -1082,6 +1109,8 @@ class Visitor(CVisitor):
                     args = [obj]
                 else:
                     args = [obj, *args]
+                    args = self.castFunctionArg(constructor, args)
+
                 builder.call(constructor, args)
         return obj
 
@@ -1127,16 +1156,40 @@ class Visitor(CVisitor):
             return src1, src2
 
     def castFunctionArg(self, func, args):
-        for fa, a in zip(func.args, args):
-            # if f
-            if isinstance(fa.type, ir.IdentifiedStructType):
-                if isinstance(a.type, ir.PointerType):
-                    if fa.type == a.type.pointee:
-                        # copy the object
-                        print('#################')
-                        print(func.name)
-                        print('yes')
-        return args
+        builder = self.manager.builder
+        # ignore the first argument because it is the object reference
+        new_args = [args[0]]
+        for fa, a in zip(func.args[1:], args[1:]):
+            match type(fa.type), type(a.type):
+                case ir.IntType, ir.IntType:
+                    fa_type, fa_level = self.gplp(fa.type)
+                    a_type, a_level = self.gplp(a.type)
+                    # cast a to fa
+                    if fa_type.width > a_type.width:
+                        new_args.append(builder.sext(a, fa_type))
+                    elif fa_type.width < a_type.width:
+                        new_args.append(builder.trunc(a, fa_type))
+                    else:
+                        new_args.append(a)
+                case _, _:
+                    print('not implemented yet')
+
+        # print new args with tabs for better readability
+        # print(func.name)
+        # for i, arg in enumerate(func.args):
+        #     print('\t' * i, arg)
+        # for i, arg in enumerate(new_args):
+        #     print('\t' * i, arg)
+
+        return new_args
+        #     if isinstance(fa.type, ir.IdentifiedStructType):
+        #         if isinstance(a.type, ir.PointerType):
+        #             if fa.type == a.type.pointee:
+        #                 # copy the object
+        #                 print('#################')
+        #                 print(func.name)
+        #                 print('yes')
+        # return args
 
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
         obj_name: str = ctx.identifier(0).getText()
