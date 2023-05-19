@@ -11,11 +11,11 @@ class Player {
         this->y = y;
     }
 
-    int getx() {
-        return this->x + this->gety() + 2;
+    int get_x() {
+        return this->x + this->get_y() + 2;
     }
 
-    int gety() {
+    int get_y() {
         return this->y;
     }
 
@@ -28,16 +28,22 @@ class Player {
 class Target {
     int a;
     Player player;
-//    int test(Player player) {
-//        return 1;
+//    void Target(Player player) {
+//        this->a = 1;
+//        this->player = player;
 //    }
-    int geta() {
+//    int test(Player player) {
+//        printf("player.x = %d\n", player.x);
+//    }
+    int get_a() {
         return this->a;
     }
 }
 
 int main() {
     Player player = new Player(1, 2);
+//    Target target = new Target(player);
+//    printf("target.a = %d\n", target.a);
     char * fmt = "player.x = %d\n"
                  "player.y = %d\n"
                  "player.getx() = %d\n"
@@ -47,10 +53,10 @@ int main() {
     printf(fmt,
            player.x,
            player.y,
-           player.getx(),
-           player.gety(),
+           player.get_x(),
+           player.get_y(),
            player.x + player.y,
-           player.getx() + player.gety()
+           player.get_x() + player.get_y()
            );
     printf("%s", player.__repr__());
     return 0;

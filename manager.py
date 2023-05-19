@@ -14,7 +14,9 @@ def print_error(error: str):
 
 
 class ClazzMap:
-    def __init__(self):
+    def __init__(self, name: str, alias: str):
+        self.name = name
+        self.alias = alias
         self.attributes = {}
         self.methods = {}
 
@@ -22,6 +24,9 @@ class ClazzMap:
         self.attributes[name] = {
             'index': index,
         }
+
+    def get_attribute(self, name):
+        return self.attributes.get(name, None)
 
     def add_method(self, name, mangled_name, is_constructor=False):
         self.methods[name] = {

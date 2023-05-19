@@ -884,13 +884,17 @@ class Visitor(CVisitor):
                     self.visitClassInstantiation(child)
 
     def visitClassDefinition(self, ctx: CParser.ClassDefinitionContext):
-        identifier: str = f'class.{ctx.identifier().getText()}'
-        clazz = module.context.get_identified_type(identifier)
+        name = ctx.identifier().getText()
+        alias: str = f'class.{ctx.identifier().getText()}'
+        clazz = module.context.get_identified_type(alias)
         # using a list instead of set_body() bc it returns a tuple
         # so I cannot modify it later on unless I copy it
         clazz.elements = []
         # to map elements to their names and position in memory
-        clazz.map = ClazzMap()
+        clazz.map = ClazzMap(
+            name=name,
+            alias=alias,
+        )
         self.manager.add_clazz(clazz)
         # count struct elements padding in memory
         clazz.counter = -1
@@ -1223,7 +1227,5 @@ class Visitor(CVisitor):
                             args = self.castFunctionArg(method, args)
                             attribute = builder.call(method, args)
                 case antlr4.tree.Tree.TerminalNodeImpl:
-                    # this is to check -> or . later on
                     continue
-
         return attribute
