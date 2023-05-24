@@ -9,7 +9,9 @@ from core.CVisitor import CVisitor
 from manager import Manager
 from manager import ClazzMap
 from manager import Scope
-from manager import ScopeType
+from manager import FuncScope
+from manager import Func
+from manager import Variable
 
 # Create a module
 module = ir.Module(name="main")
@@ -339,9 +341,10 @@ class Visitor(CVisitor):
         self.manager.builder = builder
 
         self.manager.current_function = func
-        scope = Scope(ScopeType.FUNC)
+        scope = FuncScope(func=func, builder=builder)
         self.manager.push_scope(scope)
         self.visitBlock(ctx.block())
+        self.manager.pop_scope()
         self.manager.current_function = None
 
         return func
@@ -483,11 +486,13 @@ class Visitor(CVisitor):
             return f'{chained_call} {operator} {expression};'
 
     def visitFuncCallExpression(self, ctx: CParser.FuncCallExpressionContext):
-        unary = ''
-        if ctx.unarySign():
-            unary += ctx.unarySign().getText()
-        return self.visitFunctionCall(ctx.functionCallExpression())
 
+        result = self.visitFunctionCall(ctx.functionCallExpression())
+        if ctx.unarySign():
+            unary = ctx.unarySign().getText()
+            if unary == '-':
+                result = self.manager.builder.neg(result)
+        return result
     def visitFunctionCall(self, ctx: CParser.FunctionCallContext):
         builder = self.manager.builder
         args = self.visitFunctionCallArgs(ctx.functionCallArgs())
@@ -495,12 +500,17 @@ class Visitor(CVisitor):
         for i, v in enumerate(args):
             if isinstance(v, ir.AllocaInstr):
                 args[i] = builder.load(v)
+
         func = self.manager.get_function(
-            ctx.identifier().getText())
+            module,
+            ctx.identifier().getText()
+        )
 
         # this code below fixes errors like this
         # TypeError: Type of #1 arg mismatch: i8* != [4 x i8]*
         for (i, arg_type), arg in zip(enumerate(func.args), args):
+            if not arg.type.is_pointer:
+                continue
             if isinstance(arg.type.pointee, ir.ArrayType):
                 if arg.type.pointee.element == i8 \
                         and arg_type.type == i8.as_pointer():
@@ -511,7 +521,7 @@ class Visitor(CVisitor):
                     )
                     args[i] = start_ptr
 
-        builder.call(func, args)
+        return builder.call(func, args)
 
     def visitFunctionCallArgs(self, ctx: CParser.FunctionCallArgsContext):
         if ctx is None:
@@ -899,8 +909,9 @@ class Visitor(CVisitor):
         # count struct elements padding in memory
         clazz.counter = -1
         self.manager.current_clazz = clazz
-        scope = Scope(ScopeType.CLAZZ)
-        self.manager.scope_stack.push(scope)
+        # TODO: FIX SCOPE
+        # scope = Scope(ScopeType.CLAZZ)
+        # self.manager.scope_stack.push(scope)
         self.visitClassBlock(ctx.classBlock())
 
     def visitClassAttributeDeclaration(
@@ -944,10 +955,10 @@ class Visitor(CVisitor):
         self.manager.current_function = method
         self.manager.add_function(method)
 
-        scope = Scope(ScopeType.FUNC, function=method)
+        scope = FuncScope()
         self.manager.scope_stack.push(scope)
         self.visitBlock(constructor.block())
-
+        self.manager.pop_scope()
         if rtype == ir.VoidType() and not builder.block.is_terminated:
             builder.ret_void()
 
@@ -975,8 +986,9 @@ class Visitor(CVisitor):
                 builder = ir.IRBuilder(block)
 
                 self.manager.builder = builder
-                scope = Scope(ScopeType.FUNC, function=constructor)
-                self.manager.scope_stack.push(scope)
+                # TODO: FIX SCOPE
+                # scope = Scope(ScopeType.FUNC, function=constructor)
+                # self.manager.scope_stack.push(scope)
                 self.manager.current_function = constructor
                 self.manager.add_function(constructor)
                 # self.visitBlock(ctx.block())
@@ -1088,8 +1100,9 @@ class Visitor(CVisitor):
         builder = ir.IRBuilder(block)
 
         self.manager.builder = builder
-        scope = Scope(ScopeType.FUNC, function=method)
-        self.manager.scope_stack.push(scope)
+        # TODO: FIX SCOPE
+        # scope = Scope(ScopeType.FUNC, function=method)
+        # self.manager.scope_stack.push(scope)
         self.manager.current_function = method
         self.manager.add_function(method)
         self.visitBlock(ctx.block())

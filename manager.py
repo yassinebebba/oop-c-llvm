@@ -1,19 +1,15 @@
 import llvmlite.ir as ir
 from termcolor import colored
-from enum import Enum
-
-
-class ScopeType(Enum):
-    GLOBAL = 0
-    FUNC = 1
-    CLAZZ = 2
-
+from typing import Union
 
 def print_error(error: str):
     print(colored(error, 'red'))
 
 
 class ClazzMap:
+    """
+    this is a map for class and is not part of the scope stack
+    """
     def __init__(self, name: str, alias: str):
         self.name = name
         self.alias = alias
@@ -34,44 +30,65 @@ class ClazzMap:
             'is_constructor': is_constructor
         }
 
+class Func:
+    def __init__(self, name: str):
+        self.name = name
+
+class Variable:
+    def __init__(self, name: str):
+        self.name = name
+
 
 class Scope:
-    def __init__(self, scope_type: ScopeType, function=None):
-        self.parent: Scope | None = None
-        self.function = function
-        self.scope_type: ScopeType = scope_type
-        self.functions = []
-        self.variables = []
-        self.clazzes = []
-        self.scopes: list[Scope] = []
-        # a scope has vars, objs, functions, methods and attributes
+    def __init__(self):
+        self.symbol_table = {}
 
-    def add_scope(self, scope: 'Scope'):
-        self.scopes.append(scope)
+    def add_variable(self, variable: Variable) -> None:
+        self.symbol_table[variable.name] = variable
 
-    def add_variable(self, variable):
-        self.variables.append(variable)
+    def get_variable(self, identifier: str) -> Variable:
+        return self.symbol_table.get(identifier, None)
 
-    def add_function(self, func):
-        self.functions.append(func)
+    def add_function(self, func: Func) -> None:
+        self.symbol_table[func.name] = func
 
-    def add_clazz(self, clazz):
-        self.clazzes.append(clazz)
-
+    def get_function(self, identifier: str) -> Func:
+        return self.symbol_table.get(identifier, None)
 
 class GlobalScope(Scope):
     def __init__(self):
-        super().__init__(ScopeType.GLOBAL)
+        super().__init__()
 
+class FuncScope(Scope):
+    def __init__(self, func: ir.Function=None, builder: ir.IRBuilder=None):
+        super().__init__()
+        self.func = func
+        self.builder = builder
 
+    def get_variable(self, identifier: str) -> Variable | None:
+        var = super().get_variable(identifier)
+        if var:
+            return var
+        else:
+            for arg in self.func.args:
+                if arg.name == identifier:
+                    return arg
+            else:
+                return None
+
+    def get_function(self, identifier: str) -> None:
+        # functions cannot be nested
+        return None
+
+ALL_SCOPES = Union[GlobalScope, FuncScope]
 class ScopeStack:
     def __init__(self):
-        self.stack: list[Scope] = [GlobalScope()]
+        self.stack: list[ALL_SCOPES] = [GlobalScope()]
 
-    def push(self, scope: Scope) -> None:
+    def push(self, scope: ALL_SCOPES) -> None:
         self.stack.append(scope)
 
-    def pop(self) -> Scope | None:
+    def pop(self) -> ALL_SCOPES | None:
         try:
             return self.stack.pop()
         except IndexError:
@@ -80,34 +97,25 @@ class ScopeStack:
     def is_global_scope(self):
         return isinstance(self.stack[-1], GlobalScope)
 
-    def add_variable(self, variable) -> None:
+    def add_variable(self, variable: Variable) -> None:
         self.stack[-1].add_variable(variable)
 
-    def get_variable(self, identifier):
-        # this need optimisation meh not bothered for now
-        # TODO: fix flaw where it skips func args
-        # TODO: probably fixed it
-        for lvl, scope in enumerate(self.stack[::-1]):
-            for _, var in enumerate(scope.variables[::-1]):
-                if var.name == identifier:
-                    return var
-            if scope.scope_type == ScopeType.FUNC:
-                for _, arg in enumerate(scope.function.args):
-                    if arg.name == identifier:
-                        return arg
+    def get_variable(self, identifier: str) -> Variable:
+        for scope in self.stack[::-1]:
+            var = scope.get_variable(identifier)
+            if var:
+                return var
         else:
             print_error(f'`{identifier}` has never been declared!')
 
     def add_function(self, func):
         self.stack[-1].add_function(func)
 
-    def get_function(self, identifier):
-        # this need optimisation meh not bothered for now
-        for lvl, scope in enumerate(self.stack[::-1]):
-            for _, var in enumerate(scope.functions[::-1]):
-                if var.name == identifier:
-                    return var
-        else:
+    def get_function(self, module, identifier):
+        # functions are global so use module.get_global from llvm
+        try:
+            return module.get_global(identifier)
+        except KeyError:
             print_error(f'`{identifier}` has never been declared!')
 
     def add_clazz(self, clazz):
@@ -127,9 +135,6 @@ class Manager:
     def __init__(self):
         # this is for nested scope push and pop
         self.scope_stack: ScopeStack = ScopeStack()
-        self.functions = []
-        self.variables = []
-        self.clazzes = []
         self.current_clazz = None
         self.current_function: ir.Function | None = None
         self.builder: ir.IRBuilder | None = None
@@ -151,6 +156,9 @@ class Manager:
     def push_scope(self, scope):
         self.scope_stack.push(scope)
 
+    def pop_scope(self):
+        return self.scope_stack.pop()
+
     def add_clazz(self, clazz):
         self.scope_stack.add_clazz(clazz)
 
@@ -160,5 +168,6 @@ class Manager:
     def get_variable(self, identifier):
         return self.scope_stack.get_variable(identifier)
 
-    def get_function(self, identifier):
-        return self.scope_stack.get_function(identifier)
+    def get_function(self,module, identifier):
+        return self.scope_stack.get_function(module, identifier)
+
