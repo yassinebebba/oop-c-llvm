@@ -494,6 +494,15 @@ class CListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by CParser#classConstructor.
+    def enterClassConstructor(self, ctx:CParser.ClassConstructorContext):
+        pass
+
+    # Exit a parse tree produced by CParser#classConstructor.
+    def exitClassConstructor(self, ctx:CParser.ClassConstructorContext):
+        pass
+
+
     # Enter a parse tree produced by CParser#classMethod.
     def enterClassMethod(self, ctx:CParser.ClassMethodContext):
         pass

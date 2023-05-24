@@ -10,6 +10,7 @@ from manager import Manager
 from manager import ClazzMap
 from manager import Scope
 from manager import FuncScope
+from manager import ClazzScope
 from manager import Func
 from manager import Variable
 
@@ -25,6 +26,7 @@ i64 = ir.IntType(64)
 
 def print_error(error: str):
     print(colored(error, 'red'))
+    exit(-1)
 
 
 class Visitor(CVisitor):
@@ -493,6 +495,7 @@ class Visitor(CVisitor):
             if unary == '-':
                 result = self.manager.builder.neg(result)
         return result
+
     def visitFunctionCall(self, ctx: CParser.FunctionCallContext):
         builder = self.manager.builder
         args = self.visitFunctionCallArgs(ctx.functionCallArgs())
@@ -909,10 +912,10 @@ class Visitor(CVisitor):
         # count struct elements padding in memory
         clazz.counter = -1
         self.manager.current_clazz = clazz
-        # TODO: FIX SCOPE
-        # scope = Scope(ScopeType.CLAZZ)
-        # self.manager.scope_stack.push(scope)
+        scope = ClazzScope(clazz=clazz)
+        self.manager.push_scope(scope)
         self.visitClassBlock(ctx.classBlock())
+        self.manager.pop_scope()
 
     def visitClassAttributeDeclaration(
             self,
@@ -923,44 +926,8 @@ class Visitor(CVisitor):
         clazz.elements.append(type_specifier)
         clazz.counter += 1
         clazz.map.add_attribute(clazz.counter, identifier)
-
-    def createConstructor(self, constructor: CParser.ClassMethodContext):
-        clazz = self.manager.current_clazz
-        rtype = self.visitTypeSpecifier(constructor.typeSpecifier())
-        method_name: str = constructor.identifier().getText()
-        args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
-        args = [(clazz.as_pointer(), 'this'), *args]
-        ir_args = [arg[0] for arg in args]
-        method_type = ir.FunctionType(rtype, ir_args)
-        method_type.var_arg = var_arg
-
-        # get method mangled name
-        clazz_name = clazz.name.split('.')[1]
-        mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
-                            f'{len(method_name)}{method_name}E'
-        for arg in method_type.args:
-            mangled_name += self.getArgMangledName(arg)
-
-        method: ir.Function = module.get_global(mangled_name)
-
-        for i in range(len(method.args)):
-            _, arg_identifier = args[i]
-            if arg_identifier:
-                method.args[i].name = arg_identifier
-
-        block = method.append_basic_block(name='entry')
-        builder = ir.IRBuilder(block)
-
-        self.manager.builder = builder
-        self.manager.current_function = method
-        self.manager.add_function(method)
-
-        scope = FuncScope()
-        self.manager.scope_stack.push(scope)
-        self.visitBlock(constructor.block())
-        self.manager.pop_scope()
-        if rtype == ir.VoidType() and not builder.block.is_terminated:
-            builder.ret_void()
+        var = Variable(name=identifier)
+        self.manager.add_variable(var)
 
     def autoDeclareConstructor(self):
         clazz = self.manager.current_clazz
@@ -986,17 +953,14 @@ class Visitor(CVisitor):
                 builder = ir.IRBuilder(block)
 
                 self.manager.builder = builder
-                # TODO: FIX SCOPE
-                # scope = Scope(ScopeType.FUNC, function=constructor)
-                # self.manager.scope_stack.push(scope)
                 self.manager.current_function = constructor
                 self.manager.add_function(constructor)
-                # self.visitBlock(ctx.block())
                 builder.ret_void()
                 break
 
     def visitClassBlock(self, ctx: CParser.ClassBlockContext):
         clazz = self.manager.current_clazz
+        clazz_name = clazz.name.split('.')[1]
         for attribute in ctx.classAttributeDeclaration():
             self.visitClassAttributeDeclaration(attribute)
 
@@ -1006,21 +970,24 @@ class Visitor(CVisitor):
         # and method 1 calls method 2, without this
         # it will cause a problem
 
-        class_name = clazz.name.split('.')[1]
-        has_constructor = False
+        constructor = None
+        for constructor in ctx.classConstructor():
+            name = constructor.identifier().getText()
+            if name != clazz_name:
+                print_error('Constructor name must be the same as class name')
+            constructor = constructor
+            self.createClassConstructorDeclaration(constructor)
+
         for method in ctx.classMethod():
-            if method.identifier().getText() == class_name:
-                has_constructor = True
             self.createClassMethodDeclaration(method)
 
-        if not has_constructor:
+        if not constructor:
             self.autoDeclareConstructor()
             self.autoDefineConstructor()
+        else:
+            self.visitClassConstructor(constructor)
 
         for method in ctx.classMethod():
-            if method.identifier().getText() == class_name:
-                self.createConstructor(method)
-                continue
             self.visitClassMethod(method)
 
     def getArgMangledName(self, arg: ir.Argument) -> str:
@@ -1042,6 +1009,32 @@ class Visitor(CVisitor):
             return 'P' + self.getArgMangledName(arg.pointee)
         else:
             print(type(arg))
+
+    def createClassConstructorDeclaration(self,
+                                          constructor: CParser.ClassConstructorContext):
+        # this method need to be executed before function block
+        # gets created so methods can have access to each other
+        # despite being declared after it
+        clazz = self.manager.current_clazz
+        method_name: str = constructor.identifier().getText()
+        args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
+        args = [(clazz.as_pointer(), 'this'), *args]
+        method_type = ir.FunctionType(ir.VoidType(), [arg[0] for arg in args])
+        method_type.var_arg = var_arg
+
+        # get method mangled name
+        clazz_name = clazz.name.split('.')[1]
+        mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
+                            f'{len(method_name)}{method_name}E'
+        for arg in method_type.args:
+            mangled_name += self.getArgMangledName(arg)
+
+        ir.Function(module, method_type, mangled_name)
+
+        is_constructor = False
+        if method_name == clazz_name:
+            is_constructor = True
+        clazz.map.add_method(method_name, mangled_name, is_constructor)
 
     def createClassMethodDeclaration(self, method: CParser.ClassMethodContext):
         # this method need to be executed before function block
@@ -1068,6 +1061,50 @@ class Visitor(CVisitor):
         if method_name == clazz_name:
             is_constructor = True
         clazz.map.add_method(method_name, mangled_name, is_constructor)
+
+    def visitClassConstructor(self, constructor: CParser.ClassMethodContext):
+        clazz = self.manager.current_clazz
+        method_name: str = constructor.identifier().getText()
+        args, var_arg = self.visitFunctionArgs(constructor.functionArgs())
+        args = [(clazz.as_pointer(), 'this'), *args]
+        ir_args = [arg[0] for arg in args]
+        method_type = ir.FunctionType(ir.VoidType(), ir_args)
+        method_type.var_arg = var_arg
+
+        # get method mangled name
+        clazz_name = clazz.name.split('.')[1]
+        mangled_name: str = f'_ZN{len(clazz_name)}{clazz_name}' \
+                            f'{len(method_name)}{method_name}E'
+        for arg in method_type.args:
+            mangled_name += self.getArgMangledName(arg)
+
+        method: ir.Function = module.get_global(mangled_name)
+
+        for i in range(len(method.args)):
+            _, arg_identifier = args[i]
+            if arg_identifier:
+                method.args[i].name = arg_identifier
+
+        block = method.append_basic_block(name='entry')
+        builder = ir.IRBuilder(block)
+
+        self.manager.builder = builder
+        self.manager.current_function = method
+        func = Func(
+            name=method_name,
+        )
+        self.manager.add_function(func)
+
+        scope = FuncScope(
+            func=method,
+            builder=builder,
+        )
+
+        self.manager.push_scope(scope)
+        self.visitBlock(constructor.block())
+        self.manager.pop_scope()
+        if not builder.block.is_terminated:
+            builder.ret_void()
 
     def visitClassMethod(self, ctx: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
@@ -1101,11 +1138,16 @@ class Visitor(CVisitor):
 
         self.manager.builder = builder
         # TODO: FIX SCOPE
-        # scope = Scope(ScopeType.FUNC, function=method)
-        # self.manager.scope_stack.push(scope)
+        scope = FuncScope(
+            func=method,
+            builder=builder,
+        )
+        scope.is_constructor = method_name == clazz_name
+        self.manager.scope_stack.push(scope)
         self.manager.current_function = method
         self.manager.add_function(method)
         self.visitBlock(ctx.block())
+        self.manager.pop_scope()
 
         if rtype == ir.VoidType() and not builder.block.is_terminated:
             builder.ret_void()

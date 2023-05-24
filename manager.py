@@ -2,6 +2,7 @@ import llvmlite.ir as ir
 from termcolor import colored
 from typing import Union
 
+
 def print_error(error: str):
     print(colored(error, 'red'))
 
@@ -10,6 +11,7 @@ class ClazzMap:
     """
     this is a map for class and is not part of the scope stack
     """
+
     def __init__(self, name: str, alias: str):
         self.name = name
         self.alias = alias
@@ -30,9 +32,11 @@ class ClazzMap:
             'is_constructor': is_constructor
         }
 
+
 class Func:
     def __init__(self, name: str):
         self.name = name
+
 
 class Variable:
     def __init__(self, name: str):
@@ -55,15 +59,22 @@ class Scope:
     def get_function(self, identifier: str) -> Func:
         return self.symbol_table.get(identifier, None)
 
+    def add_clazz(self, clazz) -> None:
+        self.symbol_table[clazz.name] = clazz
+
+
 class GlobalScope(Scope):
     def __init__(self):
         super().__init__()
 
+
 class FuncScope(Scope):
-    def __init__(self, func: ir.Function=None, builder: ir.IRBuilder=None):
+    def __init__(self, func: ir.Function = None, builder: ir.IRBuilder = None):
         super().__init__()
         self.func = func
         self.builder = builder
+        is_clazz_method = False
+        is_constructor = False
 
     def get_variable(self, identifier: str) -> Variable | None:
         var = super().get_variable(identifier)
@@ -74,13 +85,22 @@ class FuncScope(Scope):
                 if arg.name == identifier:
                     return arg
             else:
-                return None
+                print_error(f'`{identifier}` has never been declared!')
 
     def get_function(self, identifier: str) -> None:
         # functions cannot be nested
         return None
 
+
+class ClazzScope(Scope):
+    def __init__(self, clazz):
+        super().__init__()
+        self.clazz = clazz
+
+
 ALL_SCOPES = Union[GlobalScope, FuncScope]
+
+
 class ScopeStack:
     def __init__(self):
         self.stack: list[ALL_SCOPES] = [GlobalScope()]
@@ -118,7 +138,7 @@ class ScopeStack:
         except KeyError:
             print_error(f'`{identifier}` has never been declared!')
 
-    def add_clazz(self, clazz):
+    def add_clazz(self, clazz: ClazzScope):
         self.stack[-1].add_clazz(clazz)
 
     def get_clazz(self, identifier):
@@ -147,27 +167,26 @@ class Manager:
         self.__slc += 1
         return f'.str.{self.__slc}'
 
-    def add_variable(self, variable):
-        self.scope_stack.add_variable(variable)
-
-    def add_function(self, func):
-        self.scope_stack.add_function(func)
-
     def push_scope(self, scope):
         self.scope_stack.push(scope)
 
     def pop_scope(self):
         return self.scope_stack.pop()
 
+    def add_variable(self, variable):
+        self.scope_stack.add_variable(variable)
+
+    def get_variable(self, identifier):
+        return self.scope_stack.get_variable(identifier)
+
+    def add_function(self, func):
+        self.scope_stack.add_function(func)
+
+    def get_function(self, module, identifier):
+        return self.scope_stack.get_function(module, identifier)
+
     def add_clazz(self, clazz):
         self.scope_stack.add_clazz(clazz)
 
     def get_clazz(self, identifier):
         return self.scope_stack.get_clazz(identifier)
-
-    def get_variable(self, identifier):
-        return self.scope_stack.get_variable(identifier)
-
-    def get_function(self,module, identifier):
-        return self.scope_stack.get_function(module, identifier)
-

@@ -206,9 +206,12 @@ classBlock
     : LC (
         classAttributeDefinition
       | classAttributeDeclaration
+      | classConstructor
       | classMethod
      )* RC
    ;
+
+classConstructor: identifier LP functionArgs? RP block;
 
 classMethod: typeSpecifier identifier LP functionArgs? RP block;
 
