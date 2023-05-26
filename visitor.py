@@ -13,6 +13,7 @@ from manager import FuncScope
 from manager import ClazzScope
 from manager import Func
 from manager import Variable
+from cexceptions import CAttributeNotFound
 
 # Create a module
 module = ir.Module(name="main")
@@ -222,8 +223,6 @@ class Visitor(CVisitor):
                                            'conversion initializing \'int\' '
                                            'with an expression of type '
                                            f'\'char[{value.value_type.count}]\'')
-                # print(ptr.type, '\n\t', value.type)
-                # print(type(ptr.type), '\n\t', value.value_type)
                 print('3: Not implemented yet!')
             case ir.AllocaInstr, ir.AllocaInstr:
                 ptr_type, ptr_level = self.gplp(ptr.type)
@@ -268,8 +267,6 @@ class Visitor(CVisitor):
                         else:
                             return builder.store(value, ptr)
             case _, _:
-                # print(type(ptr), '\n\t', type(value))
-                # print(ptr.type, '\n\t', value.type)
                 print('default: Not implemented yet!')
 
     def visitVariableDefinition(self, ctx: CParser.VariableDefinitionContext):
@@ -559,7 +556,6 @@ class Visitor(CVisitor):
                         self.manager.builder.ret(start_ptr)
         else:
             # TODO: this code down below was not reviewed
-            print(ctx.getText())
             temp = self.castType(expression, func.return_value)
             self.manager.builder.ret(temp)
 
@@ -1168,7 +1164,7 @@ class Visitor(CVisitor):
                     args = [obj]
                 else:
                     args = [obj, *args]
-                    args = self.castFunctionArg(constructor, args)
+                    args = self.castMethodArg(constructor, args)
 
                 builder.call(constructor, args)
         return obj
@@ -1204,6 +1200,7 @@ class Visitor(CVisitor):
             for _ in range(c):
                 src = self.manager.builder.load(src)
             return self.manager.builder.sext(src, dest_temp)
+        return src
 
     def promoteType(self, src1, src2):
         # TODO: this code down below was not reviewed
@@ -1214,7 +1211,7 @@ class Visitor(CVisitor):
         else:
             return src1, src2
 
-    def castFunctionArg(self, func, args):
+    def castMethodArg(self, func, args):
         builder = self.manager.builder
         # ignore the first argument because it is the object reference
         new_args = [args[0]]
@@ -1230,25 +1227,11 @@ class Visitor(CVisitor):
                         new_args.append(builder.trunc(a, fa_type))
                     else:
                         new_args.append(a)
+                case ir.PointerType, ir.PointerType:
+                    new_args.append(a)
                 case _, _:
                     print('not implemented yet')
-
-        # print new args with tabs for better readability
-        # print(func.name)
-        # for i, arg in enumerate(func.args):
-        #     print('\t' * i, arg)
-        # for i, arg in enumerate(new_args):
-        #     print('\t' * i, arg)
-
         return new_args
-        #     if isinstance(fa.type, ir.IdentifiedStructType):
-        #         if isinstance(a.type, ir.PointerType):
-        #             if fa.type == a.type.pointee:
-        #                 # copy the object
-        #                 print('#################')
-        #                 print(func.name)
-        #                 print('yes')
-        # return args
 
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
         obj_name: str = ctx.identifier(0).getText()
@@ -1259,14 +1242,18 @@ class Visitor(CVisitor):
         clazz_map: ClazzMap = obj.type.pointee.map
 
         for child in list(ctx.getChildren())[1:]:
+            attr_name = child.getText()
             match type(child):
                 case CParser.IdentifierContext:
                     for element, name in zip(elements, clazz_map.attributes):
-                        if name == child.getText():
+                        if name == attr_name:
                             idx = clazz_map.attributes[name]['index']
                             attr_idx = [i32(0), i32(idx)]
                             attribute = builder.gep(obj, attr_idx)
                             attribute = builder.load(attribute)
+                            break
+                    else:
+                        CAttributeNotFound(ctx, clazz_map, attr_name)
                 case CParser.FunctionCallExpressionContext:
                     identifier = child.identifier().getText()
                     for name in clazz_map.methods:
@@ -1279,7 +1266,7 @@ class Visitor(CVisitor):
                                 args = [obj]
                             else:
                                 args = [obj, *args]
-                            args = self.castFunctionArg(method, args)
+                            args = self.castMethodArg(method, args)
                             attribute = builder.call(method, args)
                 case antlr4.tree.Tree.TerminalNodeImpl:
                     continue

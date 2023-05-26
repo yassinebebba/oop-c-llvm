@@ -1,11 +1,9 @@
 int printf(char *, ...);
 
-class Point {
+class Point1D {
     int x;
-    int y;
-    Point(int x, int y) {
+    Point1D(int x) {
         this->x = x;
-        this->y = y;
     }
 
     int get_x() {
@@ -15,27 +13,10 @@ class Point {
     int get_y() {
         return this->y;
     }
-
-    void set_x(int x) {
-        this->x = x;
-    }
-}
-
-class Target {
-
-    int get_t() {
-    return 1;
-    }
-
 }
 
 int main() {
-    Point p = new Point(1, 2);
-    p.set_x(10);
-    printf("%d %d\n", p.x, p.y);
-    printf("%d\n", p.get_x());
-    printf("%d\n", p.get_y());
-    Target t = new Target();
-    printf("%d\n", t.get_t());
+    Point1D p1d = new Point1D(10);
+    printf("1D point: (%d)\n", p1d.get_x());
     return 0;
 }
