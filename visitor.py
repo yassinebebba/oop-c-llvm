@@ -1237,7 +1237,7 @@ class Visitor(CVisitor):
         obj_name: str = ctx.identifier(0).getText()
         obj = self.manager.get_variable(obj_name)
         builder = self.manager.builder
-        attribute = None
+        last = None
         elements = obj.type.pointee.elements
         clazz_map: ClazzMap = obj.type.pointee.map
 
@@ -1245,15 +1245,21 @@ class Visitor(CVisitor):
             attr_name = child.getText()
             match type(child):
                 case CParser.IdentifierContext:
-                    for element, name in zip(elements, clazz_map.attributes):
-                        if name == attr_name:
-                            idx = clazz_map.attributes[name]['index']
-                            attr_idx = [i32(0), i32(idx)]
-                            attribute = builder.gep(obj, attr_idx)
-                            attribute = builder.load(attribute)
-                            break
-                    else:
+                    attr = clazz_map.get_attribute(attr_name)
+                    if attr is None:
                         CAttributeNotFound(ctx, clazz_map, attr_name)
+                    else:
+                        idx = attr['index']
+                        if isinstance(elements[idx], ir.IdentifiedStructType):
+                            obj = builder.gep(obj, [i32(0), i32(idx)])
+                            clazz_map = elements[idx].map
+                            elements = elements[idx].elements
+                            last = builder.load(obj)
+                        else:
+                            attr_idx = [i32(0), i32(idx)]
+                            last = builder.gep(obj, attr_idx)
+                            last = builder.load(last)
+
                 case CParser.FunctionCallExpressionContext:
                     identifier = child.identifier().getText()
                     for name in clazz_map.methods:
@@ -1267,7 +1273,7 @@ class Visitor(CVisitor):
                             else:
                                 args = [obj, *args]
                             args = self.castMethodArg(method, args)
-                            attribute = builder.call(method, args)
+                            last = builder.call(method, args)
                 case antlr4.tree.Tree.TerminalNodeImpl:
                     continue
-        return attribute
+        return last
