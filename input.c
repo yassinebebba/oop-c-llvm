@@ -12,7 +12,7 @@ class Point1D {
 }
 
 class Test {
-    Point1D p1d;
+    Point1D * p1d;
     Test(Point1D * p1d) {
         this->p1d = p1d;
     }
@@ -21,7 +21,7 @@ class Test {
 int main() {
     Point1D p1d = new Point1D(10);
     Test t = new Test(p1d);
-    printf("1D point: (%d)\n", t.p1d.x);
+    printf("1D point: (%d)\n", t.p1d->x);
     return 0;
 }
 

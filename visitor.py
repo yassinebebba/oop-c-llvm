@@ -266,6 +266,10 @@ class Visitor(CVisitor):
                             return builder.store(value, ptr)
                         else:
                             return builder.store(value, ptr)
+                    case ir.IdentifiedStructType, ir.IdentifiedStructType:
+                        return builder.store(value, ptr)
+                    case _, _:
+                        print('6: Not implemented yet!')
             case _, _:
                 print('default: Not implemented yet!')
 
@@ -1237,29 +1241,37 @@ class Visitor(CVisitor):
         obj_name: str = ctx.identifier(0).getText()
         obj = self.manager.get_variable(obj_name)
         builder = self.manager.builder
-        last = None
+        last = obj
         elements = obj.type.pointee.elements
         clazz_map: ClazzMap = obj.type.pointee.map
 
         for child in list(ctx.getChildren())[1:]:
-            attr_name = child.getText()
             match type(child):
                 case CParser.IdentifierContext:
+                    attr_name = child.getText()
                     attr = clazz_map.get_attribute(attr_name)
                     if attr is None:
                         CAttributeNotFound(ctx, clazz_map, attr_name)
                     else:
                         idx = attr['index']
-                        if isinstance(elements[idx], ir.IdentifiedStructType):
-                            obj = builder.gep(obj, [i32(0), i32(idx)])
-                            clazz_map = elements[idx].map
-                            elements = elements[idx].elements
-                            last = builder.load(obj)
-                        else:
-                            attr_idx = [i32(0), i32(idx)]
-                            last = builder.gep(obj, attr_idx)
-                            last = builder.load(last)
-
+                        match type(elements[idx]):
+                            case ir.IntType:
+                                attr_idx = [i32(0), i32(idx)]
+                                last = builder.gep(obj, attr_idx)
+                                last = builder.load(last)
+                            case ir.IdentifiedStructType:
+                                obj = builder.gep(obj, [i32(0), i32(idx)])
+                                clazz_map = elements[idx].map
+                                elements = elements[idx].elements
+                                last = builder.load(obj)
+                            case ir.PointerType:
+                                obj = builder.gep(obj, [i32(0), i32(idx)])
+                                obj = builder.load(obj)
+                                clazz_map = elements[idx].pointee.map
+                                elements = elements[idx].pointee.elements
+                                last = obj
+                            case _:
+                                print_error('not implemented yet')
                 case CParser.FunctionCallExpressionContext:
                     identifier = child.identifier().getText()
                     for name in clazz_map.methods:
@@ -1275,5 +1287,9 @@ class Visitor(CVisitor):
                             args = self.castMethodArg(method, args)
                             last = builder.call(method, args)
                 case antlr4.tree.Tree.TerminalNodeImpl:
-                    continue
+                    value = child.getText()
+                    if value == '.':
+                        continue
+                    elif value == '->':
+                        last = builder.load(last)
         return last
