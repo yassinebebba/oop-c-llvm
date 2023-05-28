@@ -32,6 +32,8 @@ class ClazzMap:
             'is_constructor': is_constructor
         }
 
+    def get_method(self, name):
+        return self.methods.get(name, None)
 
 class Func:
     def __init__(self, name: str):

@@ -41,9 +41,8 @@ entry:
   %".4" = getelementptr %"class.Test", %"class.Test"* %"t", i32 0, i32 0
   %".5" = load %"class.Point1D"*, %"class.Point1D"** %".4"
   %".6" = load %"class.Point1D", %"class.Point1D"* %".5"
-  %".7" = getelementptr %"class.Point1D", %"class.Point1D"* %".5", i32 0, i32 0
-  %".8" = load i32, i32* %".7"
-  %".9" = call i32 (i8*, ...) @"printf"(i8* getelementptr ([16 x i8], [16 x i8]* @".str.1", i64 0, i64 0), i32 %".8")
+  %".7" = call i32 @"_ZN7Point1D5get_xEPS_"(%"class.Point1D"* %".5")
+  %".8" = call i32 (i8*, ...) @"printf"(i8* getelementptr ([16 x i8], [16 x i8]* @".str.1", i64 0, i64 0), i32 %".7")
   ret i32 0
 }
 

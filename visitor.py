@@ -14,6 +14,7 @@ from manager import ClazzScope
 from manager import Func
 from manager import Variable
 from cexceptions import CAttributeNotFound
+from cexceptions import CMethodNotFound
 
 # Create a module
 module = ir.Module(name="main")
@@ -1274,18 +1275,21 @@ class Visitor(CVisitor):
                                 print_error('not implemented yet')
                 case CParser.FunctionCallExpressionContext:
                     identifier = child.identifier().getText()
-                    for name in clazz_map.methods:
-                        if name == identifier:
-                            mn = clazz_map.methods[name]['mangled_name']
-                            method = module.get_global(mn)
-                            args = self.visitFunctionCallArgs(
-                                child.functionCallArgs())
-                            if args is None:
-                                args = [obj]
-                            else:
-                                args = [obj, *args]
-                            args = self.castMethodArg(method, args)
-                            last = builder.call(method, args)
+                    method = clazz_map.get_method(identifier)
+                    if method is None:
+                        CMethodNotFound(ctx, clazz_map, identifier)
+                    else:
+                        method_to_call = module.get_global(
+                            method['mangled_name']
+                        )
+                        args = self.visitFunctionCallArgs(
+                            child.functionCallArgs())
+                        if args is None:
+                            args = [obj]
+                        else:
+                            args = [obj, *args]
+                        args = self.castMethodArg(method_to_call, args)
+                        last = builder.call(method_to_call, args)
                 case antlr4.tree.Tree.TerminalNodeImpl:
                     value = child.getText()
                     if value == '.':
