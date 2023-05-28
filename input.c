@@ -21,6 +21,9 @@ class Test {
 int main() {
     Point1D p1d = new Point1D(10);
     Test t = new Test(p1d);
+    p1d.x = 20;
+    Point1D p1d2 = new Point1D(30);
+    t.p1d = p1d2;
     printf("1D point: (%d)\n", t.p1d->get_x());
     return 0;
 }

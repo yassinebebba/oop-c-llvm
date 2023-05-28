@@ -271,6 +271,40 @@ class Visitor(CVisitor):
                         return builder.store(value, ptr)
                     case _, _:
                         print('6: Not implemented yet!')
+            case ir.GEPInstr, ir.Constant:
+                ptr_type, ptr_level = self.gplp(ptr.type)
+                value_type, value_level = self.gplp(value.type)
+                match type(ptr_type), type(value_type):
+                    case ir.IntType, ir.IntType:
+                        if ptr_type.width < value_type.width:
+                            value = builder.trunc(value, ptr_type)
+                            return builder.store(value, ptr)
+                        elif ptr_type.width > value_type.width:
+                            value = builder.sext(value, ptr_type)
+                            return builder.store(value, ptr)
+                        else:
+                            return builder.store(value, ptr)
+                    case ir.IdentifiedStructType, ir.IdentifiedStructType:
+                        return builder.store(value, ptr)
+                    case _, _:
+                        print('7: Not implemented yet!')
+            case ir.GEPInstr, ir.AllocaInstr:
+                ptr_type, ptr_level = self.gplp(ptr.type)
+                value_type, value_level = self.gplp(value.type)
+                match type(ptr_type), type(value_type):
+                    case ir.IntType, ir.IntType:
+                        if ptr_type.width < value_type.width:
+                            value = builder.trunc(value, ptr_type)
+                            return builder.store(value, ptr)
+                        elif ptr_type.width > value_type.width:
+                            value = builder.sext(value, ptr_type)
+                            return builder.store(value, ptr)
+                        else:
+                            return builder.store(value, ptr)
+                    case ir.IdentifiedStructType, ir.IdentifiedStructType:
+                        return builder.store(value, ptr)
+                    case _, _:
+                        print('8: Not implemented yet!')
             case _, _:
                 print('default: Not implemented yet!')
 
