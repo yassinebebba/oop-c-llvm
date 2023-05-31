@@ -31,6 +31,17 @@ entry:
   ret void
 }
 
+define i32 @"_ZN4Test5get_xEPS_"(%"class.Test"* %"this")
+{
+entry:
+  %".3" = load %"class.Test", %"class.Test"* %"this"
+  %".4" = getelementptr %"class.Test", %"class.Test"* %"this", i32 0, i32 0
+  %".5" = load %"class.Point1D"*, %"class.Point1D"** %".4"
+  %".6" = load %"class.Point1D", %"class.Point1D"* %".5"
+  %".7" = call i32 @"_ZN7Point1D5get_xEPS_"(%"class.Point1D"* %".5")
+  ret i32 %".7"
+}
+
 define i32 @"main"()
 {
 entry:
@@ -38,17 +49,9 @@ entry:
   call void @"_ZN7Point1D7Point1DEPS_i"(%"class.Point1D"* %"p1d", i32 10)
   %"t" = alloca %"class.Test"
   call void @"_ZN4Test4TestEPS_P7Point1D"(%"class.Test"* %"t", %"class.Point1D"* %"p1d")
-  %".4" = getelementptr %"class.Point1D", %"class.Point1D"* %"p1d", i32 0, i32 0
-  store i32 20, i32* %".4"
-  %"p1d2" = alloca %"class.Point1D"
-  call void @"_ZN7Point1D7Point1DEPS_i"(%"class.Point1D"* %"p1d2", i32 30)
-  %".7" = getelementptr %"class.Test", %"class.Test"* %"t", i32 0, i32 0
-  store %"class.Point1D"* %"p1d2", %"class.Point1D"** %".7"
-  %".9" = getelementptr %"class.Test", %"class.Test"* %"t", i32 0, i32 0
-  %".10" = load %"class.Point1D"*, %"class.Point1D"** %".9"
-  %".11" = load %"class.Point1D", %"class.Point1D"* %".10"
-  %".12" = call i32 @"_ZN7Point1D5get_xEPS_"(%"class.Point1D"* %".10")
-  %".13" = call i32 (i8*, ...) @"printf"(i8* getelementptr ([16 x i8], [16 x i8]* @".str.1", i64 0, i64 0), i32 %".12")
+  %".4" = call i32 @"_ZN4Test5get_xEPS_"(%"class.Test"* %"t")
+  %".5" = mul i32 %".4", 2
+  %".6" = call i32 (i8*, ...) @"printf"(i8* getelementptr ([16 x i8], [16 x i8]* @".str.1", i64 0, i64 0), i32 %".5")
   ret i32 0
 }
 

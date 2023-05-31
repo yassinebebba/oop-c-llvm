@@ -175,23 +175,16 @@ typeSpecifier
 ifStatementStructure
     : ifStatement elseIfStatement* elseStatement?
     ;
-ifStatement: IF LP condition RP block;
+ifStatement: IF LP expression RP block;
 elseIfStatement: ELSE ifStatement;
 elseStatement: ELSE block;
 
 whileStatement
-    : WHILE LP condition RP block
+    : WHILE LP expression RP block
     ;
 
 doWhileStatement
-    : DO block WHILE LP condition RP SEMI
-    ;
-
-condition
-    : NOT? expression (
-           (COMMA | AND_AND | EQ | NEQ | OR_OR | GT | GTE | LT | LTE)
-           NOT? expression
-          )*
+    : DO block WHILE LP expression RP SEMI
     ;
 
 // START OOP SECTION

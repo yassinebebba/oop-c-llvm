@@ -172,7 +172,7 @@ class Visitor(CVisitor):
         return ptr_type, ptr_level
 
     def store(self, value, ptr):
-        builder = self.manager.builder
+        builder = self.manager.get_last_builder()
         match type(ptr), type(value):
             case ir.AllocaInstr, ir.Constant:
                 # check if ptr is pointer
@@ -320,7 +320,7 @@ class Visitor(CVisitor):
             self.manager.add_variable(variable)
             return variable
         else:
-            builder = self.manager.builder
+            builder = self.manager.get_last_builder()
             variable = builder.alloca(type_specifier, name=identifier)
             self.manager.add_variable(variable)
             self.store(expression, variable)
@@ -339,7 +339,7 @@ class Visitor(CVisitor):
             self.manager.add_variable(variable)
             return variable
         else:
-            builder = self.manager.builder
+            builder = self.manager.get_last_builder()
             variable = builder.alloca(type_specifier, name=identifier)
             self.manager.add_variable(variable)
             return variable
@@ -376,15 +376,10 @@ class Visitor(CVisitor):
                 func.args[i].name = arg_identifier
         block = func.append_basic_block(name='entry')
         builder = ir.IRBuilder(block)
-        self.manager.builder = builder
-
-        self.manager.current_function = func
         scope = FuncScope(func=func, builder=builder)
         self.manager.push_scope(scope)
         self.visitBlock(ctx.block())
         self.manager.pop_scope()
-        self.manager.current_function = None
-
         return func
 
     def visitFunctionArgs(self, ctx: CParser.FunctionArgsContext):
@@ -465,7 +460,7 @@ class Visitor(CVisitor):
             chain: CParser.ChainedCallContext = ctx.chainedCall()
             identifier: str = chain.identifier(0).getText()
             obj = self.manager.get_variable(identifier)
-            builder = self.manager.builder
+            builder = self.manager.get_last_builder()
             try:
                 # this is if allocated so pointee is needed
                 elements = obj.type.pointee.elements
@@ -533,7 +528,7 @@ class Visitor(CVisitor):
         return result
 
     def visitFunctionCall(self, ctx: CParser.FunctionCallContext):
-        builder = self.manager.builder
+        builder = self.manager.get_last_builder()
         args = self.visitFunctionCallArgs(ctx.functionCallArgs())
         # TODO: load from pointers this needs more work
         for i, v in enumerate(args):
@@ -574,29 +569,30 @@ class Visitor(CVisitor):
 
     def visitFunctionReturn(self, ctx: CParser.FunctionReturnContext):
         expression = self.visitExpression(ctx.expression())
-        func = self.manager.current_function
+        func = self.manager.get_last_function()
+        builder = self.manager.get_last_builder()
         if expression is None:
-            self.manager.builder.ret_void()
+            builder.ret_void()
         elif func.return_value.type == expression.type:
-            self.manager.builder.ret(expression)
+            builder.ret(expression)
         elif func.return_value.type.as_pointer() == expression.type:
-            val = self.manager.builder.load(expression)
-            self.manager.builder.ret(val)
+            val = builder.load(expression)
+            builder.ret(val)
         elif isinstance(expression, ir.GlobalVariable):
             if isinstance(expression.type, ir.PointerType):
                 if isinstance(expression.type.pointee, ir.ArrayType):
                     expr_type = expression.type.pointee.element.as_pointer()
                     if func.return_value.type == i8.as_pointer() == expr_type:
                         start_ptr = expression.gep([i64(0), i64(0)])
-                        start_ptr = self.manager.builder.bitcast(
+                        start_ptr = builder.bitcast(
                             start_ptr,
                             i8.as_pointer()
                         )
-                        self.manager.builder.ret(start_ptr)
+                        builder.ret(start_ptr)
         else:
             # TODO: this code down below was not reviewed
             temp = self.castType(expression, func.return_value)
-            self.manager.builder.ret(temp)
+            builder.ret(temp)
 
     def visitIfStatementStructure(self,
                                   ctx: CParser.IfStatementStructureContext):
@@ -628,32 +624,11 @@ class Visitor(CVisitor):
         raise NotImplementedError
 
     def visitWhileStatement(self, ctx: CParser.WhileStatementContext):
-        conditions: list[CParser.ConditionContext] = [
-            condition for condition in ctx.getChildren()
-            if isinstance(condition, CParser.ConditionContext)
-        ]
-        map(self.visitCondition, conditions)
-        self.visitBlock(ctx.block())
-        raise NotImplementedError
+        condition = self.visitExpression(ctx.expression())
+        block = self.visitBlock(ctx.block())
 
     def visitDoWhileStatement(self, ctx: CParser.DoWhileStatementContext):
-        conditions: list[CParser.ConditionContext] = [
-            condition for condition in ctx.getChildren()
-            if isinstance(condition, CParser.ConditionContext)
-        ]
-        map(self.visitCondition, conditions)
-        self.visitBlock(ctx.block())
         raise NotImplementedError
-
-    def visitCondition(self, ctx: CParser.ConditionContext):
-        result = ''
-        for child in ctx.getChildren():
-            match type(child):
-                case CParser.ExpressionContext:
-                    result += ' ' + self.visitExpression(child)
-                case _:
-                    result += ' ' + child.getText()
-        return result
 
     def visitExpression(self, ctx):
         match type(ctx):
@@ -697,50 +672,54 @@ class Visitor(CVisitor):
     def visitMultiplyExpression(self, ctx: CParser.MultiplyExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
         expr2_ir = self.visitExpression(ctx.expression(1))
+        builder = self.manager.get_last_builder()
         if expr1_ir.type.is_pointer:
-            expr1_ir = self.manager.builder.load(expr1_ir)
+            expr1_ir = builder.load(expr1_ir)
         if expr2_ir.type.is_pointer:
-            expr2_ir = self.manager.builder.load(expr2_ir)
+            expr2_ir = builder.load(expr2_ir)
 
         # TODO: this code works for now
         expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
-        return self.manager.builder.mul(expr1_ir, expr2_ir)
+        return builder.mul(expr1_ir, expr2_ir)
 
     def visitDivideExpression(self, ctx: CParser.DivideExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
         expr2_ir = self.visitExpression(ctx.expression(1))
+        builder = self.manager.get_last_builder()
         if expr1_ir.type.is_pointer:
-            expr1_ir = self.manager.builder.load(expr1_ir)
+            expr1_ir = builder.load(expr1_ir)
         if expr2_ir.type.is_pointer:
-            expr2_ir = self.manager.builder.load(expr2_ir)
+            expr2_ir = builder.load(expr2_ir)
 
         # TODO: this code works for now
         expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
-        return self.manager.builder.sdiv(expr1_ir, expr2_ir)
+        return builder.sdiv(expr1_ir, expr2_ir)
 
     def visitAddExpression(self, ctx: CParser.AddExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
         expr2_ir = self.visitExpression(ctx.expression(1))
+        builder = self.manager.get_last_builder()
         if expr1_ir.type.is_pointer:
-            expr1_ir = self.manager.builder.load(expr1_ir)
+            expr1_ir = builder.load(expr1_ir)
         if expr2_ir.type.is_pointer:
-            expr2_ir = self.manager.builder.load(expr2_ir)
+            expr2_ir = builder.load(expr2_ir)
 
         # TODO: this code works for now
         expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
-        return self.manager.builder.add(expr1_ir, expr2_ir)
+        return builder.add(expr1_ir, expr2_ir)
 
     def visitSubtractExpression(self, ctx: CParser.SubtractExpressionContext):
         expr1_ir = self.visitExpression(ctx.expression(0))
         expr2_ir = self.visitExpression(ctx.expression(1))
+        builder = self.manager.get_last_builder()
         if expr1_ir.type.is_pointer:
-            expr1_ir = self.manager.builder.load(expr1_ir)
+            expr1_ir = builder.load(expr1_ir)
         if expr2_ir.type.is_pointer:
-            expr2_ir = self.manager.builder.load(expr2_ir)
+            expr2_ir = builder.load(expr2_ir)
 
         # TODO: this code works for now
         expr1_ir, expr2_ir = self.promoteType(expr1_ir, expr2_ir)
-        return self.manager.builder.sub(expr1_ir, expr2_ir)
+        return builder.sub(expr1_ir, expr2_ir)
 
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         constant: CParser.ConstantContext = ctx.constant()
@@ -805,21 +784,12 @@ class Visitor(CVisitor):
     def visitChainedCallExpression(self,
                                    ctx: CParser.ChainedCallExpressionContext):
         if ctx.unarySign():
-            return self.manager.builder.neg(
+            return self.manager.get_last_builder().neg(
                 self.visitChainedCall(ctx.chainedCall()))
         return self.visitChainedCall(ctx.chainedCall())
 
     def visitEqExpression(self, ctx: CParser.EqExpressionContext):
-        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
-        obj1 = self.manager.get_variable(exp1)
-        obj2 = self.manager.get_variable(exp2)
-        if obj1 and obj2:
-            overridden_method = obj1.clazz.get_method('eq').alias
-            return f'{obj1.name}->{overridden_method}' \
-                   f'({obj1.name}, {obj2.name})'
-        exp1_ir = self.visitExpression(ctx.expression(0))
-        exp2_ir = self.visitExpression(ctx.expression(1))
-        return self.manager.builder.icmp_signed('==', exp1_ir, exp2_ir)
+        raise NotImplementedError()
 
     def visitGtExpression(self, ctx: CParser.GtExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
@@ -842,14 +812,10 @@ class Visitor(CVisitor):
         return ctx.getText()
 
     def visitLtExpression(self, ctx: CParser.LtExpressionContext):
-        exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
-        obj1 = self.manager.get_variable(exp1)
-        obj2 = self.manager.get_variable(exp2)
-        if obj1 and obj2:
-            overridden_method = obj1.clazz.get_method('lt').alias
-            return f'{obj1.name}->{overridden_method}' \
-                   f'({obj1.name}, {obj2.name})'
-        return ctx.getText()
+        expr1_ir = self.visitExpression(ctx.expression(0))
+        expr2_ir = self.visitExpression(ctx.expression(1))
+        builder = self.manager.get_last_builder()
+        return builder.icmp_signed('<', expr1_ir, expr2_ir)
 
     def visitLteExpression(self, ctx: CParser.LteExpressionContext):
         exp1, exp2 = ctx.expression(0).getText(), ctx.expression(1).getText()
@@ -923,6 +889,8 @@ class Visitor(CVisitor):
                                 self.visitFunctionReturn(statement)
                             case CParser.LeftShiftExpressionContext:
                                 self.visitLeftShiftExpression(statement)
+                            case CParser.WhileStatementContext:
+                                self.visitWhileStatement(statement)
                             case antlr4.tree.Tree.TerminalNodeImpl:
                                 # this is the `;`
                                 pass
@@ -977,7 +945,6 @@ class Visitor(CVisitor):
         method = ir.Function(module, method_type, mangled_name)
         method.args[0].name = 'this'
         clazz.map.add_method(clazz_name, mangled_name, True)
-        self.manager.current_function = method
 
     def autoDefineConstructor(self):
         clazz = self.manager.current_clazz
@@ -986,9 +953,6 @@ class Visitor(CVisitor):
                 constructor = module.get_global(info['mangled_name'])
                 block = constructor.append_basic_block(name='entry')
                 builder = ir.IRBuilder(block)
-
-                self.manager.builder = builder
-                self.manager.current_function = constructor
                 self.manager.add_function(constructor)
                 builder.ret_void()
                 break
@@ -1123,8 +1087,6 @@ class Visitor(CVisitor):
         block = method.append_basic_block(name='entry')
         builder = ir.IRBuilder(block)
 
-        self.manager.builder = builder
-        self.manager.current_function = method
         func = Func(
             name=method_name,
         )
@@ -1171,7 +1133,6 @@ class Visitor(CVisitor):
         block = method.append_basic_block(name='entry')
         builder = ir.IRBuilder(block)
 
-        self.manager.builder = builder
         # TODO: FIX SCOPE
         scope = FuncScope(
             func=method,
@@ -1179,7 +1140,6 @@ class Visitor(CVisitor):
         )
         scope.is_constructor = method_name == clazz_name
         self.manager.scope_stack.push(scope)
-        self.manager.current_function = method
         self.manager.add_function(method)
         self.visitBlock(ctx.block())
         self.manager.pop_scope()
@@ -1191,7 +1151,7 @@ class Visitor(CVisitor):
         # TODO: fix this
         clazz = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier: str = ctx.identifier(0).getText()
-        builder = self.manager.builder
+        builder = self.manager.get_last_builder()
         obj = builder.alloca(clazz, name=identifier)
         self.manager.add_variable(obj)
 
@@ -1233,25 +1193,27 @@ class Visitor(CVisitor):
             print_error('Incompatible function return type and return value')
         print(src_temp, dest_temp, src_ptr_count, dest_ptr_count)
 
+        builder = self.manager.get_last_builder()
         if isinstance(src_temp, ir.IntType) \
                 and isinstance(dest_temp, ir.IntType):
             c = src_ptr_count - dest_ptr_count
             for _ in range(c):
-                src = self.manager.builder.load(src)
-            return self.manager.builder.sext(src, dest_temp)
+                src = builder.load(src)
+            return builder.sext(src, dest_temp)
         return src
 
     def promoteType(self, src1, src2):
         # TODO: this code down below was not reviewed
+        builder = self.manager.get_last_builder()
         if src1.type.width > src2.type.width:
-            return src1, self.manager.builder.sext(src2, src1.type)
+            return src1, builder.sext(src2, src1.type)
         elif src1.type.width < src2.type.width:
-            return self.manager.builder.sext(src1, src2.type), src2
+            return builder.sext(src1, src2.type), src2
         else:
             return src1, src2
 
     def castMethodArg(self, func, args):
-        builder = self.manager.builder
+        builder = self.manager.get_last_builder()
         # ignore the first argument because it is the object reference
         new_args = [args[0]]
         for fa, a in zip(func.args[1:], args[1:]):
@@ -1275,7 +1237,7 @@ class Visitor(CVisitor):
     def visitChainedCall(self, ctx: CParser.ChainedCallContext):
         obj_name: str = ctx.identifier(0).getText()
         obj = self.manager.get_variable(obj_name)
-        builder = self.manager.builder
+        builder = self.manager.get_last_builder()
         last = obj
         elements = obj.type.pointee.elements
         clazz_map: ClazzMap = obj.type.pointee.map

@@ -449,15 +449,6 @@ class CListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CParser#condition.
-    def enterCondition(self, ctx:CParser.ConditionContext):
-        pass
-
-    # Exit a parse tree produced by CParser#condition.
-    def exitCondition(self, ctx:CParser.ConditionContext):
-        pass
-
-
     # Enter a parse tree produced by CParser#classDefinition.
     def enterClassDefinition(self, ctx:CParser.ClassDefinitionContext):
         pass

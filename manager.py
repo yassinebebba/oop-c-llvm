@@ -152,15 +152,26 @@ class ScopeStack:
         else:
             print_error(f'`{identifier}` has never been declared!')
 
+    def get_last_builder(self):
+        for scope in self.stack[::-1]:
+            if isinstance(scope, FuncScope):
+                return scope.builder
+        else:
+            return None
+
+    def get_last_function(self):
+        for scope in self.stack[::-1]:
+            if isinstance(scope, FuncScope):
+                return scope.func
+        else:
+            return None
+
 
 class Manager:
     def __init__(self):
         # this is for nested scope push and pop
         self.scope_stack: ScopeStack = ScopeStack()
         self.current_clazz = None
-        self.current_function: ir.Function | None = None
-        self.builder: ir.IRBuilder | None = None
-
         # string literal counter to prevent global duplication
         self.__slc = 0
 
@@ -192,3 +203,8 @@ class Manager:
 
     def get_clazz(self, identifier):
         return self.scope_stack.get_clazz(identifier)
+
+    def get_last_function(self):
+        return self.scope_stack.get_last_function()
+    def get_last_builder(self):
+        return self.scope_stack.get_last_builder()

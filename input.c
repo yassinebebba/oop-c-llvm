@@ -16,15 +16,20 @@ class Test {
     Test(Point1D * p1d) {
         this->p1d = p1d;
     }
+    int get_x() {
+        return this->p1d->get_x();
+    }
 }
 
 int main() {
     Point1D p1d = new Point1D(10);
     Test t = new Test(p1d);
-    p1d.x = 20;
-    Point1D p1d2 = new Point1D(30);
-    t.p1d = p1d2;
-    printf("1D point: (%d)\n", t.p1d->get_x());
+    printf("1D point: (%d)\n", t.get_x());
+    int x = 0;
+    while (x < 10) {
+        printf("x: %d\n", x);
+        x = x + 1;
+    }
     return 0;
 }
 
