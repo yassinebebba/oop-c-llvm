@@ -29,6 +29,7 @@ int main() {
     while (x < 10) {
         printf("x: %d\n", x);
         x = x + 1;
+        return x;
     }
     return 0;
 }

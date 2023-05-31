@@ -624,8 +624,22 @@ class Visitor(CVisitor):
         raise NotImplementedError
 
     def visitWhileStatement(self, ctx: CParser.WhileStatementContext):
+        builder = self.manager.get_last_builder()
+        loop_block = builder.append_basic_block(name="loop")
+        # Add the condition for the loop
+        builder.branch(loop_block)
+        builder.position_at_end(loop_block)
         condition = self.visitExpression(ctx.expression())
-        block = self.visitBlock(ctx.block())
+        # Create the loop body
+        body_block = builder.append_basic_block(name="body")
+        exit_block = builder.append_basic_block(name="exit")
+        builder.cbranch(condition, body_block, exit_block)
+        # Add the loop body instructions
+        builder.position_at_start(body_block)
+        self.visitBlock(ctx.block())
+        builder.branch(loop_block)
+        # Exit the loop
+        builder.position_at_end(exit_block)
 
     def visitDoWhileStatement(self, ctx: CParser.DoWhileStatementContext):
         raise NotImplementedError
@@ -815,6 +829,10 @@ class Visitor(CVisitor):
         expr1_ir = self.visitExpression(ctx.expression(0))
         expr2_ir = self.visitExpression(ctx.expression(1))
         builder = self.manager.get_last_builder()
+        if expr1_ir.type.is_pointer:
+            expr1_ir = builder.load(expr1_ir)
+        if expr2_ir.type.is_pointer:
+            expr2_ir = builder.load(expr2_ir)
         return builder.icmp_signed('<', expr1_ir, expr2_ir)
 
     def visitLteExpression(self, ctx: CParser.LteExpressionContext):
