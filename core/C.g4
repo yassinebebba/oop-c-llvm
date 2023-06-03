@@ -229,7 +229,17 @@ INCLUDE_DIRECTIVE
      //   -> channel(HIDDEN)
     ;
 
-STRING_LITERAL: '"' (~('"') | '\\"')* '"';
+STRING_LITERAL
+    : '"' (ESC|.)*? '"' ('"' (ESC|.)*? '"')* ;
+
+fragment ESC
+    : '\\' (["\\/bfnrt] | UNICODE) ;
+
+fragment UNICODE
+    : 'u' HEX HEX HEX HEX ;
+
+fragment HEX
+    : [0-9a-fA-F] ;
 CHAR_CONSTANT: '\'' (~('\'') | '\'')* '\'';
 INTEGER_CONSTANT: '0' | [1-9][0-9]*;
 FLOAT_CONSTANT

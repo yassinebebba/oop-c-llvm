@@ -1,3 +1,4 @@
+import re
 from io import FileIO
 
 import antlr4.tree.Tree
@@ -751,32 +752,13 @@ class Visitor(CVisitor):
             else:
                 return i32(value)
         if constant.STRING_LITERAL():
-            value = ctx.getText()
+            regex = r'"([^"\\]*(?:\\.[^"\\]*)*)"'
+            parts = [re.sub(r'^"|"$', '', part)
+                     for part in re.findall(regex, ctx.getText())]
+            concat = ''.join(parts) + '\0'
+            value = bytes(concat, 'utf-8').decode('unicode_escape')
 
-            chunks: list[str] = []
-            temp: str = ''
-            inside = False
-
-            for i in value:
-                if i == '"':
-                    try:
-                        if temp[-1] == '\\':
-                            temp += i
-                            continue
-                    except IndexError:
-                        pass
-                    if not inside:
-                        inside = True
-                    else:
-                        inside = False
-                        chunks.append(temp)
-                        temp = ''
-                    continue
-                if inside:
-                    temp += i
-
-            value = ''.join(chunks) + '\0'
-            value = value.replace('\\n', '\n')
+            # change value to string bytes
             string_array = ir.GlobalVariable(
                 module,
                 ir.ArrayType(i8, len(value)),

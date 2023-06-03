@@ -24,12 +24,11 @@ class Test {
 int main() {
     Point1D p1d = new Point1D(10);
     Test t = new Test(p1d);
-    printf("1D point: (%d)\n", t.get_x());
+    printf("1D point: (%d)\n" "asd\nad" "\t\\" "asdsad\n", t.get_x());
     int x = 0;
     while (x < 10) {
         printf("x: %d\n", x);
         x = x + 1;
-        return x;
     }
     return 0;
 }
