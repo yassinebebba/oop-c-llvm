@@ -7,7 +7,7 @@ class Point1D {
     }
 
     int get_x() {
-        return this->x;
+        return this->x + +-+-+-+1;
     }
 }
 

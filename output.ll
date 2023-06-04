@@ -20,7 +20,8 @@ entry:
   %".3" = load %"class.Point1D", %"class.Point1D"* %"this"
   %".4" = getelementptr %"class.Point1D", %"class.Point1D"* %"this", i32 0, i32 0
   %".5" = load i32, i32* %".4"
-  ret i32 %".5"
+  %".6" = add i32 %".5", -1
+  ret i32 %".6"
 }
 
 define void @"_ZN4Test4TestEPS_P7Point1D"(%"class.Test"* %"this", %"class.Point1D"* %"p1d")

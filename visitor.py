@@ -739,18 +739,18 @@ class Visitor(CVisitor):
     def visitConstantExpression(self, ctx: CParser.ConstantExpressionContext):
         constant: CParser.ConstantContext = ctx.constant()
         if constant.INTEGER_CONSTANT():
-            value = constant.INTEGER_CONSTANT()
-            sign = 0
+            value = constant.INTEGER_CONSTANT().getText()
+            is_positive = True
             if (constant.unarySign()):
                 for i in constant.unarySign().getText():
-                    if i == '+':
-                        sign += 1
-                    if i == '-':
-                        sign -= 1
-            if sign == 1:
-                return i32(f'-{value}')
+                    if i == '-' and is_positive:
+                        is_positive = False
+                    elif i == '-' and not is_positive:
+                        is_positive = True
+            if is_positive:
+                return i32(int(value))
             else:
-                return i32(value)
+                return i32(-int(value))
         if constant.STRING_LITERAL():
             regex = r'"([^"\\]*(?:\\.[^"\\]*)*)"'
             parts = [re.sub(r'^"|"$', '', part)
