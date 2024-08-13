@@ -7,7 +7,7 @@ from termcolor import colored
 
 from core.CParser import CParser
 from core.CVisitor import CVisitor
-from manager import Manager
+from manager import Manager, ClazzMethod
 from manager import ClazzMap
 from manager import Scope
 from manager import FuncScope
@@ -16,10 +16,6 @@ from manager import Func
 from manager import Variable
 from cexceptions import CAttributeNotFound
 from cexceptions import CMethodNotFound
-
-# Create a module
-module = ir.Module(name="main")
-module.triple = "x86_64-redhat-linux-gnu"
 
 i8 = ir.IntType(8)
 i16 = ir.IntType(16)
@@ -35,6 +31,8 @@ def print_error(error: str):
 class Visitor(CVisitor):
     def __init__(self, stream, output):
         # steam is CommonTokenStream to get hidden channel
+        self.module = ir.Module(name="main")
+        self.module.triple = "x86_64-redhat-linux-gnu"
         self.stream = stream
         self.output: FileIO = output
         self.manager = Manager()
@@ -72,7 +70,7 @@ class Visitor(CVisitor):
                     self.visitAssignment(child)
                 case CParser.ClassDefinitionContext:
                     self.visitClassDefinition(child)
-        self.write(str(module))
+        self.write(str(self.module))
 
     def visitTypeSpecifier(self, ctx: CParser.TypeSpecifierContext):
         type_specifier: list[str] = []
@@ -149,11 +147,11 @@ class Visitor(CVisitor):
                 return t
             case clazz_name, *ptr_count:
                 clazz_name = f'class.{clazz_name}'
-                if clazz_name not in module.context.identified_types:
+                if clazz_name not in self.module.context.identified_types:
                     print_error(f'Class \'{clazz_name.split(".")[1]}\''
                                 ' does not exist!')
                     exit(1)
-                t = module.context.get_identified_type(clazz_name)
+                t = self.module.context.get_identified_type(clazz_name)
 
                 for _ in ptr_count:
                     t = ir.PointerType(t)
@@ -314,7 +312,7 @@ class Visitor(CVisitor):
         identifier = ctx.identifier().getText()
         expression = self.visitExpression(ctx.expression())
         if self.manager.scope_stack.is_global_scope():
-            variable = ir.GlobalVariable(module, type_specifier,
+            variable = ir.GlobalVariable(self.module, type_specifier,
                                          name=identifier)
             variable.initializer = expression
             variable.linkage = 'dso_local'
@@ -333,7 +331,7 @@ class Visitor(CVisitor):
         type_specifier = self.visitTypeSpecifier(ctx.typeSpecifier())
         identifier = ctx.identifier().getText()
         if self.manager.scope_stack.is_global_scope():
-            variable = ir.GlobalVariable(module, type_specifier,
+            variable = ir.GlobalVariable(self.module, type_specifier,
                                          name=identifier)
             variable.initializer = ir.Constant(type_specifier, 0)
             variable.linkage = 'dso_local'
@@ -354,7 +352,7 @@ class Visitor(CVisitor):
         ir_args = [arg[0] for arg in args]
         func_type = ir.FunctionType(rtype, ir_args)
         func_type.var_arg = var_arg
-        func = ir.Function(module, func_type, name=identifier)
+        func = ir.Function(self.module, func_type, name=identifier)
         for i in range(len(func.args)):
             _, arg_identifier = args[i]
             if arg_identifier:
@@ -370,7 +368,7 @@ class Visitor(CVisitor):
         ir_args = [arg[0] for arg in args]
         func_type = ir.FunctionType(rtype, ir_args)
         func_type.var_arg = var_arg
-        func = ir.Function(module, func_type, name=identifier)
+        func = ir.Function(self.module, func_type, name=identifier)
         for i in range(len(func.args)):
             _, arg_identifier = args[i]
             if arg_identifier:
@@ -537,7 +535,7 @@ class Visitor(CVisitor):
                 args[i] = builder.load(v)
 
         func = self.manager.get_function(
-            module,
+            self.module,
             ctx.identifier().getText()
         )
 
@@ -760,7 +758,7 @@ class Visitor(CVisitor):
 
             # change value to string bytes
             string_array = ir.GlobalVariable(
-                module,
+                self.module,
                 ir.ArrayType(i8, len(value)),
                 name=self.manager.slc,
             )
@@ -902,7 +900,7 @@ class Visitor(CVisitor):
     def visitClassDefinition(self, ctx: CParser.ClassDefinitionContext):
         name = ctx.identifier().getText()
         alias: str = f'class.{ctx.identifier().getText()}'
-        clazz = module.context.get_identified_type(alias)
+        clazz = self.module.context.get_identified_type(alias)
         # using a list instead of set_body() bc it returns a tuple
         # so I cannot modify it later on unless I copy it
         clazz.elements = []
@@ -942,15 +940,21 @@ class Visitor(CVisitor):
                             f'{len(clazz_name)}{clazz_name}E'
         for arg in method_type.args:
             mangled_name += self.getArgMangledName(arg)
-        method = ir.Function(module, method_type, mangled_name)
+        method = ir.Function(self.module, method_type, mangled_name)
         method.args[0].name = 'this'
-        clazz.map.add_method(clazz_name, mangled_name, True)
+        clazz.map.add_method(
+            ClazzMethod(
+                name=clazz_name,
+                mangled_name=mangled_name,
+                is_constructor=True,
+            )
+        )
 
     def autoDefineConstructor(self):
         clazz = self.manager.current_clazz
         for _, info in clazz.map.methods.items():
             if info['is_constructor']:
-                constructor = module.get_global(info['mangled_name'])
+                constructor = self.module.get_global(info['mangled_name'])
                 block = constructor.append_basic_block(name='entry')
                 builder = ir.IRBuilder(block)
                 self.manager.add_function(constructor)
@@ -1028,12 +1032,14 @@ class Visitor(CVisitor):
         for arg in method_type.args:
             mangled_name += self.getArgMangledName(arg)
 
-        ir.Function(module, method_type, mangled_name)
-
-        is_constructor = False
-        if method_name == clazz_name:
-            is_constructor = True
-        clazz.map.add_method(method_name, mangled_name, is_constructor)
+        ir.Function(self.module, method_type, mangled_name)
+        clazz.map.add_method(
+            ClazzMethod(
+                name=method_name,
+                mangled_name=mangled_name,
+                is_constructor=True if method_name == clazz_name else False,
+            )
+        )
 
     def createClassMethodDeclaration(self, method: CParser.ClassMethodContext):
         # this method need to be executed before function block
@@ -1054,12 +1060,15 @@ class Visitor(CVisitor):
         for arg in method_type.args:
             mangled_name += self.getArgMangledName(arg)
 
-        ir.Function(module, method_type, mangled_name)
+        ir.Function(self.module, method_type, mangled_name)
 
-        is_constructor = False
-        if method_name == clazz_name:
-            is_constructor = True
-        clazz.map.add_method(method_name, mangled_name, is_constructor)
+        clazz.map.add_method(
+            ClazzMethod(
+                name=method_name,
+                mangled_name=mangled_name,
+                is_constructor=True if method_name == clazz_name else False,
+            )
+        )
 
     def visitClassConstructor(self, constructor: CParser.ClassMethodContext):
         clazz = self.manager.current_clazz
@@ -1077,7 +1086,7 @@ class Visitor(CVisitor):
         for arg in method_type.args:
             mangled_name += self.getArgMangledName(arg)
 
-        method: ir.Function = module.get_global(mangled_name)
+        method: ir.Function = self.module.get_global(mangled_name)
 
         for i in range(len(method.args)):
             _, arg_identifier = args[i]
@@ -1120,10 +1129,15 @@ class Visitor(CVisitor):
         # assign method mangled name to its method definition
         method_type = ir.FunctionType(rtype, [arg[0] for arg in args])
         method_type.var_arg = var_arg
-        method = module.get_global(mangled_name)
+        method = self.module.get_global(mangled_name)
 
         clazz_map: ClazzMap = clazz.map
-        clazz_map.add_method(method_name, mangled_name)
+        clazz_map.add_method(
+            ClazzMethod(
+                name=method_name,
+                mangled_name=mangled_name,
+            )
+        )
 
         for i in range(len(method.args)):
             _, arg_identifier = args[i]
@@ -1154,10 +1168,10 @@ class Visitor(CVisitor):
         builder = self.manager.get_last_builder()
         obj = builder.alloca(clazz, name=identifier)
         self.manager.add_variable(obj)
-
+        info: ClazzMethod
         for name, info in clazz.map.methods.items():
-            if info['is_constructor']:
-                constructor = module.get_global(info['mangled_name'])
+            if info.is_constructor:
+                constructor = self.module.get_global(info.mangled_name)
                 args = self.visitFunctionCallArgs(ctx.functionCallArgs())
                 if args is None:
                     args = [obj]
@@ -1271,13 +1285,11 @@ class Visitor(CVisitor):
                                 print_error('not implemented yet')
                 case CParser.FunctionCallExpressionContext:
                     identifier = child.identifier().getText()
-                    method = clazz_map.get_method(identifier)
+                    method: ClazzMethod = clazz_map.get_method(identifier)
                     if method is None:
                         CMethodNotFound(ctx, clazz_map, identifier)
                     else:
-                        method_to_call = module.get_global(
-                            method['mangled_name']
-                        )
+                        method_to_call = self.module.get_global(method.mangled_name)
                         args = self.visitFunctionCallArgs(
                             child.functionCallArgs())
                         if args is None:

@@ -6,7 +6,11 @@ from typing import Union
 def print_error(error: str):
     print(colored(error, 'red'))
 
-
+class ClazzMethod:
+    def __init__(self, name, mangled_name, is_constructor=False):
+        self.name = name
+        self.mangled_name = mangled_name
+        self.is_constructor = is_constructor
 class ClazzMap:
     """
     this is a map for class and is not part of the scope stack
@@ -26,12 +30,8 @@ class ClazzMap:
     def get_attribute(self, name):
         return self.attributes.get(name, None)
 
-    def add_method(self, name, mangled_name, is_constructor=False):
-        self.methods[name] = {
-            'mangled_name': mangled_name,
-            'is_constructor': is_constructor
-        }
-
+    def add_method(self, method: ClazzMethod):
+        self.methods[method.name] = method
     def get_method(self, name):
         return self.methods.get(name, None)
 
